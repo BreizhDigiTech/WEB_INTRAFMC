@@ -47,7 +47,7 @@ export const debounce = <T extends (...args: any[]) => any>(
     func: T,
     wait: number
 ): ((...args: Parameters<T>) => void) => {
-    let timeout: NodeJS.Timeout | null = null
+    let timeout: number | null = null
 
     return (...args: Parameters<T>) => {
         if (timeout) clearTimeout(timeout)
@@ -91,6 +91,16 @@ export const getStatusLabel = (status: string): string => {
         cancelled: 'Annulé'
     }
     return labels[status] || status
+}
+
+/**
+ * Formate un montant en euros
+ */
+export const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'EUR'
+    }).format(amount)
 }
 
 /**
