@@ -32,22 +32,7 @@ const requireGuest = (to: any, from: any, next: any) => {
     next()
 }
 
-const requireCustomer = (to: any, from: any, next: any) => {
-    const authStore = useAuthStore()
 
-    if (!authStore.isAuthenticated) {
-        next('/login')
-        return
-    }
-
-    // Si c'est un admin qui essaie d'accéder à la boutique, on le redirige vers le dashboard
-    if (authStore.isAdmin) {
-        next('/dashboard')
-        return
-    }
-
-    next()
-}
 
 const requireAdmin = (to: any, from: any, next: any) => {
     const authStore = useAuthStore()
@@ -58,7 +43,7 @@ const requireAdmin = (to: any, from: any, next: any) => {
     }
 
     if (!authStore.isAdmin) {
-        next('/boutique') // Redirection vers la boutique pour les non-admin
+        next('/dashboard') // Redirection vers dashboard pour les non-admin
         return
     }
 
@@ -66,16 +51,10 @@ const requireAdmin = (to: any, from: any, next: any) => {
 }
 
 const routes: RouteRecordRaw[] = [
-    // Redirection racine selon le rôle
+    // Redirection racine vers dashboard
     {
         path: '/',
-        redirect: (to) => {
-            const authStore = useAuthStore()
-            if (authStore.isAuthenticated) {
-                return authStore.isAdmin ? '/dashboard' : '/boutique'
-            }
-            return '/login'
-        }
+        redirect: '/dashboard'
     },
 
     // Page de connexion
@@ -89,22 +68,11 @@ const routes: RouteRecordRaw[] = [
         }
     },
 
-    // Page boutique (utilisateurs non-admin)
-    {
-        path: '/boutique',
-        name: 'Boutique',
-        component: () => import('@/views/BoutiqueView.vue'),
-        beforeEnter: requireCustomer,
-        meta: {
-            title: 'Boutique FMC'
-        }
-    },
-
-    // Layout principal avec authentification (ADMIN SEULEMENT)
+    // Layout principal avec authentification
     {
         path: '/',
         component: () => import('@/components/AppLayout.vue'),
-        beforeEnter: requireAdmin, // Seuls les admins peuvent accéder aux fonctionnalités de gestion
+        beforeEnter: requireAuth,
         children: [
             // Dashboard
             {
@@ -114,75 +82,8 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: 'Dashboard - WEB IntraFMC'
                 }
-            },
-
-            // Module CBD
-            {
-                path: '/cbd',
-                name: 'CBD',
-                component: () => import('@/modules/cbd/views/CBDHomeView.vue'),
-                meta: {
-                    title: 'CBD - WEB IntraFMC'
-                }
-            },
-            {
-                path: '/cbd/products',
-                name: 'CBDProducts',
-                component: () => import('@/modules/cbd/views/ProductsView.vue'),
-                meta: {
-                    title: 'Produits CBD - WEB IntraFMC'
-                }
-            },
-            {
-                path: '/cbd/orders',
-                name: 'CBDOrders',
-                component: () => import('@/modules/cbd/views/OrdersView.vue'),
-                meta: {
-                    title: 'Commandes CBD - WEB IntraFMC'
-                }
-            },
-            {
-                path: '/cbd/arrivals',
-                name: 'CBDArrivals',
-                component: () => import('@/modules/cbd/views/ArrivalsView.vue'),
-                meta: {
-                    title: 'Arrivages CBD - WEB IntraFMC'
-                }
-            },
-
-            // Administration (Admin seulement)
-            {
-                path: '/admin',
-                name: 'Admin',
-                component: () => import('@/views/AdminView.vue'),
-                beforeEnter: (to, from, next) => {
-                    const authStore = useAuthStore()
-                    if (!authStore.isAuthenticated) {
-                        next('/login')
-                        return
-                    }
-                    if (!authStore.isAdmin) {
-                        next('/boutique') // Redirection vers la boutique pour les non-admin
-                        return
-                    }
-                    next()
-                },
-                meta: {
-                    title: 'Administration - WEB IntraFMC'
-                }
             }
         ]
-    },
-
-    // Profil utilisateur (accessible à tous les utilisateurs connectés)
-    {
-        path: '/profile',
-        name: 'Profile',
-        component: () => import('@/views/ProfileView.vue'),
-        beforeEnter: requireAuth,
-        meta: {
-            title: 'Mon profil - WEB IntraFMC'
-        }
     },
 
     // Route 404
