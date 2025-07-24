@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', {
                 // Configuration du service GraphQL
                 graphqlService.setToken(access_token)
 
-                return { success: true }
+                return { success: true, user, isAdmin: user.is_admin }
             } catch (error: any) {
                 this.error = error.message
                 return { success: false, error: error.message }

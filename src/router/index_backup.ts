@@ -100,7 +100,7 @@ const routes: RouteRecordRaw[] = [
         }
     },
 
-    // Layout principal avec authentification (ADMIN SEULEMENT)
+    // Layout principal avec authentification
     {
         path: '/',
         component: () => import('@/components/AppLayout.vue'),
@@ -148,7 +148,20 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: 'Arrivages CBD - WEB IntraFMC'
                 }
-            },
+            }
+        ]
+    },
+
+    // Profil utilisateur (accessible à tous les utilisateurs connectés)
+    {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('@/views/ProfileView.vue'),
+        beforeEnter: requireAuth,
+        meta: {
+            title: 'Mon profil - WEB IntraFMC'
+        }
+    },
 
             // Administration (Admin seulement)
             {

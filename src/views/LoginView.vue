@@ -139,17 +139,24 @@ const handleLogin = async () => {
   isLoading.value = true
   
   try {
-    await authStore.login(credentials.value)
+    const result = await authStore.login(credentials.value)
     
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && result.success) {
       notificationStore.add({
         type: 'success',
         title: 'Connexion réussie',
-        message: 'Bienvenue !',
+        message: `Bienvenue ${authStore.userName} !`,
         duration: 2000
       })
       
-      router.push('/')
+      // Redirection conditionnelle selon le rôle
+      if (authStore.isAdmin) {
+        // Admin -> Dashboard intranet
+        router.push('/dashboard')
+      } else {
+        // Utilisateur standard -> Site e-commerce (pour l'instant page temporaire)
+        router.push('/boutique')
+      }
     }
   } catch (error) {
     console.error('Erreur lors de la connexion:', error)
