@@ -140,8 +140,6 @@ const handleLogin = async () => {
     const result = await authStore.login(credentials.value)
     
     if (authStore.isAuthenticated && result.success) {
-      console.log(`Connexion réussie - Bienvenue ${authStore.userName} !`)
-      
       // Redirection vers le dashboard pour tous les utilisateurs
       router.push('/dashboard')
     }

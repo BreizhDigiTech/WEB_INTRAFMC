@@ -1,77 +1,77 @@
 // Service GraphQL centralisé pour WEB_INTRAFMC
 
-import type { ApiError } from '@/shared/types/app'
+import type { ApiError } from '@/shared/types'
 
 export class GraphQLService {
-    private endpoint = 'http://localhost:8000/graphql'
-    private token: string | null = null
+  private endpoint = 'http://localhost:8000/graphql'
+  private token: string | null = null
 
-    setToken(token: string | null) {
-        this.token = token
-        if (token) {
-            localStorage.setItem('auth_token', token)
-        } else {
-            localStorage.removeItem('auth_token')
-        }
+  setToken(token: string | null) {
+    this.token = token
+    if (token) {
+      localStorage.setItem('auth_token', token)
+    } else {
+      localStorage.removeItem('auth_token')
+    }
+  }
+
+  getToken(): string | null {
+    if (!this.token) {
+      this.token = localStorage.getItem('auth_token')
+    }
+    return this.token
+  }
+
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     }
 
-    getToken(): string | null {
-        if (!this.token) {
-            this.token = localStorage.getItem('auth_token')
-        }
-        return this.token
+    const token = this.getToken()
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
 
-    private getHeaders(): Record<string, string> {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
+    return headers
+  }
 
-        const token = this.getToken()
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`
-        }
+  async request<T = any>(query: string, variables?: any): Promise<T> {
+    try {
+      const response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          query,
+          variables
+        })
+      })
 
-        return headers
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      if (result.errors) {
+        const error = result.errors[0]
+        throw new GraphQLError(error.message, error.extensions)
+      }
+
+      return result.data
+    } catch (error) {
+      if (error instanceof GraphQLError) {
+        throw error
+      }
+      throw new GraphQLError(
+        error instanceof Error ? error.message : 'Une erreur inconnue est survenue'
+      )
     }
+  }
 
-    async request<T = any>(query: string, variables?: any): Promise<T> {
-        try {
-            const response = await fetch(this.endpoint, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                body: JSON.stringify({
-                    query,
-                    variables
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
-            }
-
-            const result = await response.json()
-
-            if (result.errors) {
-                const error = result.errors[0]
-                throw new GraphQLError(error.message, error.extensions)
-            }
-
-            return result.data
-        } catch (error) {
-            if (error instanceof GraphQLError) {
-                throw error
-            }
-            throw new GraphQLError(
-                error instanceof Error ? error.message : 'Une erreur inconnue est survenue'
-            )
-        }
-    }
-
-    // Méthodes pour l'authentification
-    async login(email: string, password: string) {
-        const query = `
+  // Méthodes pour l'authentification
+  async login(email: string, password: string) {
+    const query = `
       mutation Login($email: String!, $password: String!) {
         login(email: $email, password: $password) {
           access_token
@@ -89,22 +89,22 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query, { email, password })
-    }
+    return this.request(query, { email, password })
+  }
 
-    async logout() {
-        const query = `
+  async logout() {
+    const query = `
       mutation Logout {
         logout {
           message
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    async getMe() {
-        const query = `
+  async getMe() {
+    const query = `
       query Me {
         me {
           id
@@ -117,12 +117,12 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    // Méthodes pour les produits
-    async getProducts(page = 1, perPage = 10) {
-        const query = `
+  // Méthodes pour les produits
+  async getProducts(page = 1, perPage = 10) {
+    const query = `
       query Products($page: Int, $per_page: Int) {
         products(page: $page, per_page: $per_page) {
           data {
@@ -154,11 +154,11 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query, { page, per_page: perPage })
-    }
+    return this.request(query, { page, per_page: perPage })
+  }
 
-    async getProduct(id: string) {
-        const query = `
+  async getProduct(id: string) {
+    const query = `
       query Product($id: ID!) {
         product(id: $id) {
           id
@@ -186,12 +186,12 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query, { id })
-    }
+    return this.request(query, { id })
+  }
 
-    // Méthodes pour le panier
-    async getCart() {
-        const query = `
+  // Méthodes pour le panier
+  async getCart() {
+    const query = `
       query MyCart {
         myCart {
           id
@@ -216,11 +216,11 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    async getCartTotal() {
-        const query = `
+  async getCartTotal() {
+    const query = `
       query CartTotal {
         cartTotal {
           total
@@ -228,11 +228,11 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    async addToCart(productId: string, quantity: number) {
-        const query = `
+  async addToCart(productId: string, quantity: number) {
+    const query = `
       mutation AddToCart($input: AddToCartInput!) {
         addToCart(input: $input) {
           id
@@ -250,17 +250,17 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query, {
-            input: {
-                product_id: productId,
-                quantity
-            }
-        })
-    }
+    return this.request(query, {
+      input: {
+        product_id: productId,
+        quantity
+      }
+    })
+  }
 
-    // Méthodes pour les commandes
-    async getOrders() {
-        const query = `
+  // Méthodes pour les commandes
+  async getOrders() {
+    const query = `
       query Orders {
         orders {
           id
@@ -285,11 +285,11 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    async checkout() {
-        const query = `
+  async checkout() {
+    const query = `
       mutation Checkout {
         checkout {
           id
@@ -314,12 +314,12 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    // Méthodes pour les catégories
-    async getCategories() {
-        const query = `
+  // Méthodes pour les catégories
+  async getCategories() {
+    const query = `
       query Categories {
         categories {
           id
@@ -335,12 +335,12 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    // Méthodes pour les arrivages (admin)
-    async getArrivals() {
-        const query = `
+  // Méthodes pour les arrivages (admin)
+  async getArrivals() {
+    const query = `
       query Arrivals {
         arrivals {
           id
@@ -365,11 +365,11 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query)
-    }
+    return this.request(query)
+  }
 
-    async createArrival(input: any) {
-        const query = `
+  async createArrival(input: any) {
+    const query = `
       mutation CreateArrival($input: CreateArrivalInput!) {
         createArrival(input: $input) {
           id
@@ -391,18 +391,18 @@ export class GraphQLService {
         }
       }
     `
-        return this.request(query, { input })
-    }
+    return this.request(query, { input })
+  }
 }
 
 export class GraphQLError extends Error {
-    public extensions?: any
+  public extensions?: any
 
-    constructor(message: string, extensions?: any) {
-        super(message)
-        this.name = 'GraphQLError'
-        this.extensions = extensions
-    }
+  constructor(message: string, extensions?: any) {
+    super(message)
+    this.name = 'GraphQLError'
+    this.extensions = extensions
+  }
 }
 
 // Instance singleton

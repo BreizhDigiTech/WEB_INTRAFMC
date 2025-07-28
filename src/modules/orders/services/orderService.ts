@@ -3,8 +3,6 @@ import { GraphQLService } from '@/shared/services/graphql'
 import type {
     Order,
     OrderFilters,
-    OrderStats,
-    CreateOrderData,
     UpdateOrderData
 } from '../types'
 import type { PaginatedResponse } from '@/shared/types'
@@ -145,31 +143,6 @@ export class OrderService extends GraphQLService {
     }
 
     /**
-     * Crée une nouvelle commande
-     */
-    async createOrder(data: CreateOrderData): Promise<Order> {
-        const mutation = `
-            mutation CreateOrder($data: CreateOrderInput!) {
-                createOrder(data: $data) {
-                    id
-                    total
-                    status
-                    created_at
-                    updated_at
-                    user {
-                        id
-                        name
-                        email
-                    }
-                }
-            }
-        `
-
-        return this.request(mutation, { data })
-            .then((response: any) => response.createOrder)
-    }
-
-    /**
      * Met à jour une commande
      */
     async updateOrder(id: string, data: UpdateOrderData): Promise<Order> {
@@ -206,33 +179,6 @@ export class OrderService extends GraphQLService {
 
         return this.request(mutation, { id })
             .then((response: any) => response.deleteOrder)
-    }
-
-    /**
-     * Récupère les statistiques des commandes
-     * NOTE: Cette méthode n'est actuellement pas utilisée car la requête orderStats
-     * n'est pas implémentée sur le backend. Les statistiques sont calculées côté client.
-     */
-    async getOrderStats(): Promise<OrderStats> {
-        const query = `
-      query GetOrderStats {
-        orderStats {
-          total_orders
-          total_revenue
-          orders_today
-          orders_this_week
-          orders_this_month
-          pending_orders
-          processing_orders
-          shipped_orders
-          cancelled_orders
-          average_order_value
-        }
-      }
-    `
-
-        return this.request(query)
-            .then((response: any) => response.orderStats)
     }
 
     /**

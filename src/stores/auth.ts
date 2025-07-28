@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia'
 import { graphqlService } from '@/shared/services/graphql'
-import type { User, AuthState, LoginCredentials, AuthResponse } from '@/shared/types/app'
+import type { User, AuthState, LoginCredentials, AuthResponse } from '@/shared/types'
 
 export const useAuthStore = defineStore('auth', {
     state: (): AuthState => ({
@@ -105,30 +105,6 @@ export const useAuthStore = defineStore('auth', {
             } catch (error: any) {
                 this.error = error.message
                 throw error
-            }
-        },
-
-        // Mise à jour du profil utilisateur
-        async updateProfile(userData: Partial<User>) {
-            this.isLoading = true
-            this.error = null
-
-            try {
-                // TODO: Implémenter la mutation updateProfile
-                // const response = await graphqlService.updateProfile(userData)
-                // this.user = { ...this.user, ...response.updateProfile }
-
-                // Pour l'instant, mise à jour locale
-                if (this.user) {
-                    this.user = { ...this.user, ...userData }
-                }
-
-                return { success: true }
-            } catch (error: any) {
-                this.error = error.message
-                return { success: false, error: error.message }
-            } finally {
-                this.isLoading = false
             }
         },
 
