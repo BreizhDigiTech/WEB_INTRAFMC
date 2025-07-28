@@ -23,9 +23,8 @@ const requireGuest = (to: any, from: any, next: any) => {
     const authStore = useAuthStore()
 
     if (authStore.isAuthenticated) {
-        // Redirection selon le rôle utilisateur
-        const redirectPath = authStore.isAdmin ? '/dashboard' : '/boutique'
-        next(redirectPath)
+        // Redirection vers le dashboard pour tous les utilisateurs connectés
+        next('/dashboard')
         return
     }
 

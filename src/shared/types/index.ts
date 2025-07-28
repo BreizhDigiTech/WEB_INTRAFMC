@@ -34,123 +34,12 @@ export interface AuthState {
     error: string | null
 }
 
-// ==================== PRODUITS CBD ====================
-export interface ProductCBD {
-    id: string
-    name: string
-    description: string
-    price: number
-    images: string[]
-    stock: number
-    analysis_file?: string
-    analysis_file_url?: string
-    category_id?: number
-    created_at: string
-    updated_at: string
-    category?: Category
-    categories: Category[]
-    suppliers: Supplier[]
-}
-
-export interface Category {
-    id: string
-    name: string
-    description?: string
-    created_at: string
-    products: ProductCBD[]
-}
-
-export interface Supplier {
-    id: string
-    name: string
-    email?: string
-    phone?: string
-    products: ProductCBD[]
-}
-
-// ==================== COMMANDES ====================
-export interface Order {
-    id: string
-    user: User
-    total: number
-    status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-    products: OrderProduct[]
-    created_at: string
-    updated_at: string
-}
-
-export interface OrderProduct {
-    id: string
-    name: string
-    price: number
-    pivot: {
-        quantity: number
-        unit_price: number
-    }
-}
-
-// ==================== PANIER ====================
-export interface CartItem {
-    id: string
-    user_id: string
-    product_id: string
-    quantity: number
-    user: User
-    product: ProductCBD
-    created_at: string
-    updated_at: string
-}
-
-export interface CartState {
-    items: CartItem[]
-    total: number
-    itemCount: number
-    isOpen: boolean
-    isLoading: boolean
-}
-
-export interface AddToCartInput {
-    product_id: string
-    quantity: number
-}
-
-// ==================== ARRIVAGES ====================
-export interface Arrival {
-    id: string
-    amount: number
-    status: 'pending' | 'received' | 'processed'
-    products: ArrivalProduct[]
-    created_at: string
-    updated_at: string
-}
-
-export interface ArrivalProduct {
-    id: string
-    arrival_id: string
-    product_id: string
-    quantity: number
-    unit_price: number
-    product: ProductCBD
-}
-
-export interface CreateArrivalInput {
-    amount: number
-    status: string
-    products: {
-        product_id: string
-        quantity: number
-        unit_price: number
-    }[]
-}
-
 // ==================== DASHBOARD ====================
 export interface DashboardStats {
-    totalProducts: number
-    totalOrders: number
-    totalRevenue: number
-    lowStockProducts: number
-    recentOrders: Order[]
-    topProducts: ProductCBD[]
+    totalUsers: number
+    totalSessions: number
+    activeUsers: number
+    systemStatus: 'operational' | 'maintenance' | 'error'
 }
 
 // ==================== NAVIGATION ====================
@@ -205,11 +94,11 @@ export interface NotificationAction {
     style?: 'primary' | 'secondary'
 }
 
-// ==================== LEGACY COMPATIBILITY ====================
+// ==================== BASE TYPES ====================
 export interface BaseEntity {
-    id: number
-    createdAt: Date
-    updatedAt: Date
+    id: string
+    created_at: string
+    updated_at: string
 }
 
 export interface ApiResponse<T> {
@@ -226,35 +115,9 @@ export interface PaginationParams {
     sortOrder?: 'asc' | 'desc'
 }
 
-export interface PaginatedResponse<T> {
-    data: T[]
-    pagination: {
-        total: number
-        page: number
-        limit: number
-        totalPages: number
-    }
-}
-
 export type Status = 'active' | 'inactive' | 'pending'
 
-export interface User {
-    id: number
-    name: string
-    email: string
-    role: string
-    avatar?: string
-}
-
-// Types pour la navigation
-export interface NavigationItem {
-    label: string
-    path: string
-    icon?: string
-    children?: NavigationItem[]
-}
-
-// Types pour les modules
+// ==================== MODULE TYPES ====================
 export interface ModuleConfig {
     name: string
     version: string

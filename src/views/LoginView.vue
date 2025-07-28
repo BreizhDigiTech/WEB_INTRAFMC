@@ -113,12 +113,10 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useNotificationStore } from '@/stores/notifications'
-import type { LoginCredentials } from '@/shared/types/app'
+import type { LoginCredentials } from '@/shared/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const notificationStore = useNotificationStore()
 
 const credentials = ref<LoginCredentials>({
   email: '',
@@ -142,30 +140,13 @@ const handleLogin = async () => {
     const result = await authStore.login(credentials.value)
     
     if (authStore.isAuthenticated && result.success) {
-      notificationStore.add({
-        type: 'success',
-        title: 'Connexion réussie',
-        message: `Bienvenue ${authStore.userName} !`,
-        duration: 2000
-      })
+      console.log(`Connexion réussie - Bienvenue ${authStore.userName} !`)
       
-      // Redirection conditionnelle selon le rôle
-      if (authStore.isAdmin) {
-        // Admin -> Dashboard intranet
-        router.push('/dashboard')
-      } else {
-        // Utilisateur standard -> Site e-commerce (pour l'instant page temporaire)
-        router.push('/boutique')
-      }
+      // Redirection vers le dashboard pour tous les utilisateurs
+      router.push('/dashboard')
     }
   } catch (error) {
     console.error('Erreur lors de la connexion:', error)
-    notificationStore.add({
-      type: 'error',
-      title: 'Erreur',
-      message: 'Connexion impossible',
-      duration: 3000
-    })
   } finally {
     isLoading.value = false
   }

@@ -31,23 +31,23 @@
           Les modules suivants seront bientôt disponibles :
         </p>
 
-        <!-- Liste des modules à venir -->
+        <!-- Liste des fonctionnalités disponibles -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
             <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span class="text-gray-300">Gestion des produits CBD</span>
+            <span class="text-gray-300">Gestion des utilisateurs</span>
           </div>
           <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
             <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-100"></div>
-            <span class="text-gray-300">Suivi des commandes</span>
+            <span class="text-gray-300">Monitoring système</span>
           </div>
           <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
             <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse delay-200"></div>
-            <span class="text-gray-300">Gestion des arrivages</span>
+            <span class="text-gray-300">Rapports et analytics</span>
           </div>
           <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
             <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse delay-300"></div>
-            <span class="text-gray-300">Tableaux de bord analytics</span>
+            <span class="text-gray-300">Configuration système</span>
           </div>
         </div>
 
@@ -56,7 +56,7 @@
             <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span class="text-sm">Développement en cours...</span>
+            <span class="text-sm">Système opérationnel</span>
           </div>
         </div>
       </div>
@@ -64,16 +64,16 @@
       <!-- Actions disponibles -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button 
-          @click="navigateTo('/cbd')"
+          @click="navigateTo('/dashboard')"
           class="flex flex-col items-center p-6 bg-gray-900/30 hover:bg-gray-800/50 rounded-2xl border border-gray-800 hover:border-gray-700 transition-all duration-300 group"
         >
           <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-3 group-hover:bg-green-500/30 transition-colors">
             <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 5l3 3-3 3m4-6l3 3-3 3" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <span class="text-white font-medium">Module CBD</span>
-          <span class="text-gray-400 text-sm">Bientôt disponible</span>
+          <span class="text-white font-medium">Dashboard</span>
+          <span class="text-gray-400 text-sm">Vue d'ensemble</span>
         </button>
 
         <button 
