@@ -15,7 +15,18 @@ export interface Order {
 export interface OrderProduct {
     id: string
     name: string
+    description?: string | null
     price: number
+    images?: string[] | null
+    image_metadata?: any | null
+    stock?: number
+    analysis_file?: string | null
+    analysis_file_original_name?: string | null
+    analysis_file_size?: number | null
+    analysis_file_mime_type?: string | null
+    category_id?: string | null
+    created_at?: string
+    updated_at?: string
     pivot: {
         quantity: number
         unit_price: number

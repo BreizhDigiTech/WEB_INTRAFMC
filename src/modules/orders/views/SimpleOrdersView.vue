@@ -1,4 +1,4 @@
-<template>
+Cannot query field "description" on type "OrderProduct".<template>
   <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold text-white">Gestion des commandes</h1>
@@ -93,6 +93,7 @@
           <thead class="bg-gray-700">
             <tr>
               <th class="text-gray-300">ID</th>
+              <th class="text-gray-300">Produits</th>
               <th class="text-gray-300">Client</th>
               <th class="text-gray-300">Total</th>
               <th class="text-gray-300">Statut</th>
@@ -102,13 +103,13 @@
           </thead>
           <tbody>
             <tr v-if="orderStore.loading" class="border-gray-700">
-              <td colspan="6" class="text-center py-8">
+              <td colspan="7" class="text-center py-8">
                 <span class="loading loading-spinner loading-lg text-blue-400"></span>
                 <p class="text-gray-400 mt-2">Chargement des commandes...</p>
               </td>
             </tr>
             <tr v-else-if="orderStore.orders.length === 0" class="border-gray-700">
-              <td colspan="6" class="text-center py-8 text-gray-400">
+              <td colspan="7" class="text-center py-8 text-gray-400">
                 Aucune commande trouvée
               </td>
             </tr>
@@ -120,6 +121,34 @@
               class="border-gray-700 hover:bg-gray-700/50 cursor-pointer transition-colors"
             >
               <td class="text-white font-mono">{{ order.id }}</td>
+              <td class="py-2">
+                <div class="flex -space-x-2 overflow-hidden">
+                  <template v-if="order.products && order.products.length > 0">
+                    <template v-for="(product, index) in order.products.slice(0, 3)" :key="product.id">
+                      <div class="relative">
+                        <img 
+                          :src="getProductImage(product)" 
+                          :alt="product.name"
+                          :title="product.name"
+                          class="w-10 h-10 rounded-full border-2 border-gray-600 object-cover bg-gray-700"
+                          @error="handleImageError"
+                        />
+                      </div>
+                    </template>
+                    <div 
+                      v-if="order.products.length > 3" 
+                      class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-600 flex items-center justify-center text-xs text-white font-medium"
+                    >
+                      +{{ order.products.length - 3 }}
+                    </div>
+                  </template>
+                  <div v-else class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-700 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8L9 5m0 0v4m0-4l4 4" />
+                    </svg>
+                  </div>
+                </div>
+              </td>
               <td class="text-white">{{ order.user?.name || order.user?.id || 'N/A' }}</td>
               <td class="text-white">{{ formatCurrency(order.total) }}</td>
               <td>
@@ -359,6 +388,52 @@ async function cancelOrder(orderId: string) {
 }
 
 // Utilitaires d'affichage
+function getProductImage(product: any): string {
+  // Image par défaut - une icône de produit élégante
+  const defaultImage = 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+      <rect width="100" height="100" fill="#374151"/>
+      <circle cx="50" cy="35" r="12" fill="#9CA3AF"/>
+      <rect x="25" y="55" width="50" height="30" rx="4" fill="#9CA3AF"/>
+      <rect x="30" y="60" width="40" height="3" fill="#6B7280"/>
+      <rect x="30" y="67" width="25" height="3" fill="#6B7280"/>
+      <rect x="30" y="74" width="35" height="3" fill="#6B7280"/>
+    </svg>
+  `)
+  
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    // Prendre la première image disponible
+    const firstImage = product.images[0]
+    if (typeof firstImage === 'string' && firstImage.trim() !== '') {
+      // Si l'image commence par http, c'est déjà une URL complète
+      if (firstImage.startsWith('http')) {
+        return firstImage
+      }
+      // Sinon, construire l'URL relative (adapter selon votre configuration)
+      return `/storage/products/${firstImage}`
+    }
+  }
+  
+  return defaultImage
+}
+
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement
+  if (img) {
+    // Image par défaut en cas d'erreur de chargement
+    img.src = 'data:image/svg+xml;base64,' + btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+        <rect width="100" height="100" fill="#374151"/>
+        <circle cx="50" cy="35" r="12" fill="#9CA3AF"/>
+        <rect x="25" y="55" width="50" height="30" rx="4" fill="#9CA3AF"/>
+        <rect x="30" y="60" width="40" height="3" fill="#6B7280"/>
+        <rect x="30" y="67" width="25" height="3" fill="#6B7280"/>
+        <rect x="30" y="74" width="35" height="3" fill="#6B7280"/>
+      </svg>
+    `)
+  }
+}
+
 function getStatusLabel(status: OrderStatus): string {
   const labels = {
     pending: 'En attente',

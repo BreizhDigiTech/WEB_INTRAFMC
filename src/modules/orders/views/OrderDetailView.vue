@@ -84,6 +84,94 @@
         </div>
       </div>
 
+      <!-- Liste des produits -->
+      <div v-if="order.products && order.products.length > 0" class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-white mb-6">
+          Produits commandés ({{ order.products.length }} {{ order.products.length > 1 ? 'articles' : 'article' }})
+        </h2>
+        
+        <!-- Grille de produits -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div 
+            v-for="product in order.products" 
+            :key="product.id"
+            class="bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-gray-500 transition-colors"
+          >
+            <!-- En-tête du produit -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-white mb-1">{{ product.name }}</h3>
+                <p class="text-gray-400 text-sm font-mono">ID: {{ product.id }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-white font-semibold">{{ formatCurrency(product.pivot.unit_price) }}</p>
+                <p class="text-gray-400 text-sm">Prix unitaire</p>
+              </div>
+            </div>
+
+            <!-- Images -->
+            <div class="mb-4">
+              <div class="flex gap-2">
+                <!-- Image par défaut car les images ne sont pas disponibles dans cette requête -->
+                <div class="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informations du produit -->
+            <div class="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                <label class="text-gray-400 text-xs uppercase tracking-wide">Prix catalogue</label>
+                <p class="text-white font-medium">{{ formatCurrency(product.price) }}</p>
+              </div>
+            </div>
+
+            <!-- Informations de commande -->
+            <div class="border-t border-gray-600 pt-4">
+              <div class="flex justify-between items-center">
+                <div>
+                  <label class="text-gray-400 text-xs uppercase tracking-wide">Quantité commandée</label>
+                  <p class="text-white font-semibold text-lg">{{ product.pivot.quantity }}</p>
+                </div>
+                <div class="text-right">
+                  <label class="text-gray-400 text-xs uppercase tracking-wide">Total produit</label>
+                  <p class="text-green-400 font-bold text-lg">{{ formatCurrency(product.pivot.quantity * product.pivot.unit_price) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé de la commande -->
+        <div class="mt-8 border-t border-gray-600 pt-6">
+          <div class="bg-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-lg font-semibold text-white">Total de la commande</h3>
+                <p class="text-gray-400 text-sm">{{ order.products.reduce((sum, p) => sum + p.pivot.quantity, 0) }} articles</p>
+              </div>
+              <div class="text-right">
+                <p class="text-green-400 font-bold text-2xl">{{ formatCurrency(order.total) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message si pas de produits -->
+      <div v-else class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-white mb-4">Produits commandés</h2>
+        <div class="text-center py-8">
+          <svg class="w-16 h-16 text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m0 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m0 0v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4" />
+          </svg>
+          <p class="text-gray-400">Aucun produit associé à cette commande</p>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="bg-gray-800 rounded-lg shadow-lg p-6">
         <h2 class="text-xl font-semibold text-white mb-4">Actions</h2>
@@ -202,6 +290,12 @@ async function cancelOrder() {
 
 function goBack() {
   router.push('/orders')
+}
+
+// Gestion des erreurs d'images
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
 }
 
 // Utilitaires d'affichage

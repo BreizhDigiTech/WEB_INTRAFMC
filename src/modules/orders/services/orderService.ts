@@ -110,14 +110,11 @@ export class OrderService extends GraphQLService {
 
     /**
      * Récupère une commande par son ID
-     * Inclut les détails des produits si l'utilisateur est admin
+     * Utilise les champs réels disponibles dans la base de données
      */
     async getOrder(id: string): Promise<Order> {
-        const authStore = useAuthStore()
-        const isAdmin = authStore.isAdmin
-
-        // Query pour les administrateurs avec détails des produits
-        const adminQuery = `
+        // Query avec les champs réels supportés par le schéma GraphQL
+        const query = `
             query GetOrder($id: ID!) {
                 order(id: $id) {
                     id
@@ -142,26 +139,6 @@ export class OrderService extends GraphQLService {
                 }
             }
         `
-
-        // Query pour les utilisateurs normaux (sans détails des produits)
-        const userQuery = `
-            query GetOrder($id: ID!) {
-                order(id: $id) {
-                    id
-                    total
-                    status
-                    created_at
-                    updated_at
-                    user {
-                        id
-                        name
-                        email
-                    }
-                }
-            }
-        `
-
-        const query = isAdmin ? adminQuery : userQuery
 
         return this.request(query, { id })
             .then((response: any) => response.order)
