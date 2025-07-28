@@ -236,17 +236,81 @@ export class OrderService extends GraphQLService {
     }
 
     /**
-     * Annule une commande (mise à jour du statut)
+     * Annule une commande (utilise UpdateOrderStatusInput)
      */
     async cancelOrder(id: string): Promise<Order> {
-        return this.updateOrder(id, { status: 'cancelled' })
+        const mutation = `
+            mutation UpdateOrderStatus($input: UpdateOrderStatusInput!) {
+                updateOrderStatus(input: $input) {
+                    id
+                    total
+                    status
+                    created_at
+                    updated_at
+                    products {
+                        id
+                        name
+                        price
+                        pivot {
+                            quantity
+                            unit_price
+                        }
+                    }
+                    user {
+                        id
+                        name
+                        email
+                    }
+                }
+            }
+        `
+
+        return this.request(mutation, {
+            input: {
+                id: id,
+                status: 'cancelled'
+            }
+        })
+            .then((response: any) => response.updateOrderStatus)
     }
 
     /**
-     * Valide une commande (mise à jour du statut)
+     * Valide une commande (utilise UpdateOrderStatusInput)
      */
     async validateOrder(id: string): Promise<Order> {
-        return this.updateOrder(id, { status: 'validated' })
+        const mutation = `
+            mutation UpdateOrderStatus($input: UpdateOrderStatusInput!) {
+                updateOrderStatus(input: $input) {
+                    id
+                    total
+                    status
+                    created_at
+                    updated_at
+                    products {
+                        id
+                        name
+                        price
+                        pivot {
+                            quantity
+                            unit_price
+                        }
+                    }
+                    user {
+                        id
+                        name
+                        email
+                    }
+                }
+            }
+        `
+
+        return this.request(mutation, {
+            input: {
+                id: id,
+                status: 'validated'
+            }
+        })
+            .then((response: any) => response.updateOrderStatus)
     }
 
     /**

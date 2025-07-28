@@ -263,8 +263,9 @@ async function validateOrder() {
   
   actionLoading.value = true
   try {
-    const updatedOrder = await orderStore.validateOrder(order.value.id)
-    order.value = updatedOrder
+    await orderStore.validateOrder(order.value.id)
+    // Rafraîchir toutes les données pour s'assurer que l'affichage est correct
+    await refreshOrder()
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Erreur lors de la validation'
     console.error('Erreur validateOrder:', err)
@@ -278,8 +279,9 @@ async function cancelOrder() {
   
   actionLoading.value = true
   try {
-    const updatedOrder = await orderStore.cancelOrder(order.value.id)
-    order.value = updatedOrder
+    await orderStore.cancelOrder(order.value.id)
+    // Rafraîchir toutes les données pour s'assurer que l'affichage est correct
+    await refreshOrder()
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Erreur lors de l\'annulation'
     console.error('Erreur cancelOrder:', err)
