@@ -81,6 +81,24 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: 'Dashboard - WEB IntraFMC'
                 }
+            },
+
+            // Gestion des commandes
+            {
+                path: '/orders',
+                name: 'Orders',
+                component: () => import('@/modules/orders/views/SimpleOrdersView.vue'),
+                meta: {
+                    title: 'Commandes - WEB IntraFMC'
+                }
+            },
+            {
+                path: '/orders/:id',
+                name: 'OrderDetail',
+                component: () => import('@/modules/orders/views/OrderDetailView.vue'),
+                meta: {
+                    title: 'Détail commande - WEB IntraFMC'
+                }
             }
         ]
     },
