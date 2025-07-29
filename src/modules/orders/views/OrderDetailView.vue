@@ -1,213 +1,323 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <!-- En-tête avec bouton retour -->
-    <div class="flex items-center gap-4 mb-6">
-      <button 
-        @click="goBack"
-        class="btn btn-ghost btn-sm text-gray-400 hover:text-white"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Retour
-      </button>
-      <h1 class="text-3xl font-bold text-white">Détail de la commande</h1>
-      <button 
-        @click="refreshOrder"
-        :disabled="loading"
-        class="btn bg-blue-600 hover:bg-blue-700 text-white border-none ml-auto"
-      >
-        <span v-if="loading" class="loading loading-spinner loading-sm mr-2"></span>
-        {{ loading ? 'Chargement...' : 'Actualiser' }}
-      </button>
-    </div>
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <!-- Header avec breadcrumb -->
+    <div class="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
+      <div class="container mx-auto px-4 py-4">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center space-x-2 text-sm text-gray-400 mb-4">
+          <RouterLink to="/dashboard" class="hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </RouterLink>
+          <span>/</span>
+          <RouterLink to="/orders" class="hover:text-white transition-colors">Commandes</RouterLink>
+          <span>/</span>
+          <span class="text-white font-medium">
+            {{ order ? `#${order.id}` : 'Détail' }}
+          </span>
+        </nav>
 
-    <!-- Chargement -->
-    <div v-if="loading && !order" class="flex justify-center items-center py-20">
-      <span class="loading loading-spinner loading-lg text-blue-400"></span>
-      <p class="text-gray-400 ml-4">Chargement de la commande...</p>
-    </div>
-
-    <!-- Erreur -->
-    <div v-else-if="error" class="alert alert-error">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>{{ error }}</span>
-    </div>
-
-    <!-- Détails de la commande -->
-    <div v-else-if="order" class="space-y-6">
-      <!-- Informations principales -->
-      <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <label class="text-gray-400 text-sm">ID de la commande</label>
-            <p class="text-white font-mono text-lg">{{ order.id }}</p>
-          </div>
-          <div>
-            <label class="text-gray-400 text-sm">Total</label>
-            <p class="text-white text-lg font-semibold">{{ formatCurrency(order.total) }}</p>
-          </div>
-          <div>
-            <label class="text-gray-400 text-sm">Statut</label>
-            <span 
-              :class="getStatusBadgeClass(order.status)"
-              class="badge badge-lg font-medium"
+        <!-- Header principal -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+          <div class="flex items-center space-x-4">
+            <button 
+              @click="goBack"
+              class="p-2 hover:bg-gray-800 rounded-xl transition-colors"
             >
-              {{ getStatusLabel(order.status) }}
-            </span>
-          </div>
-          <div>
-            <label class="text-gray-400 text-sm">Date de création</label>
-            <p class="text-white">{{ formatDate(order.created_at) }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Informations client -->
-      <div v-if="order.user" class="bg-gray-800 rounded-lg shadow-lg p-6">
-        <h2 class="text-xl font-semibold text-white mb-4">Informations client</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label class="text-gray-400 text-sm">ID Client</label>
-            <p class="text-white font-mono">{{ order.user.id }}</p>
-          </div>
-          <div>
-            <label class="text-gray-400 text-sm">Nom</label>
-            <p class="text-white">{{ order.user.name }}</p>
-          </div>
-          <div>
-            <label class="text-gray-400 text-sm">Email</label>
-            <p class="text-white">{{ order.user.email }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Liste des produits -->
-      <div v-if="order.products && order.products.length > 0" class="bg-gray-800 rounded-lg shadow-lg p-6">
-        <h2 class="text-xl font-semibold text-white mb-6">
-          Produits commandés ({{ order.products.length }} {{ order.products.length > 1 ? 'articles' : 'article' }})
-        </h2>
-        
-        <!-- Grille de produits -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div 
-            v-for="product in order.products" 
-            :key="product.id"
-            class="bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-gray-500 transition-colors"
-          >
-            <!-- En-tête du produit -->
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold text-white mb-1">{{ product.name }}</h3>
-                <p class="text-gray-400 text-sm font-mono">ID: {{ product.id }}</p>
-              </div>
-              <div class="text-right">
-                <p class="text-white font-semibold">{{ formatCurrency(product.pivot.unit_price) }}</p>
-                <p class="text-gray-400 text-sm">Prix unitaire</p>
-              </div>
+              <svg class="w-6 h-6 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
             </div>
+            
+            <div>
+              <h1 class="text-3xl font-bold text-white">
+                {{ order ? `Commande #${order.id}` : 'Détail de la commande' }}
+              </h1>
+              <p class="text-gray-400">
+                {{ order ? `Créée le ${formatDate(order.created_at)}` : 'Chargement...' }}
+              </p>
+            </div>
+          </div>
 
-            <!-- Images -->
-            <div class="mb-4">
-              <div class="flex gap-2">
-                <!-- Image par défaut car les images ne sont pas disponibles dans cette requête -->
-                <div class="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <!-- Actions -->
+          <div class="flex flex-wrap gap-3">
+            <button 
+              @click="refreshOrder"
+              :disabled="loading"
+              class="btn bg-gray-800 border-gray-600 text-white hover:bg-gray-700 min-w-fit"
+            >
+              <span v-if="loading" class="loading loading-spinner loading-sm"></span>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="hidden sm:inline ml-2">{{ loading ? 'Chargement...' : 'Actualiser' }}</span>
+            </button>
+
+            <!-- Actions de statut -->
+            <template v-if="order && order.status === 'pending'">
+              <button 
+                @click="validateOrder"
+                :disabled="actionLoading"
+                class="btn bg-green-600 hover:bg-green-700 text-white border-none min-w-fit"
+              >
+                <span v-if="actionLoading" class="loading loading-spinner loading-sm"></span>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="hidden sm:inline ml-2">Valider</span>
+              </button>
+              
+              <button 
+                @click="cancelOrder"
+                :disabled="actionLoading"
+                class="btn bg-red-600 hover:bg-red-700 text-white border-none min-w-fit"
+              >
+                <span v-if="actionLoading" class="loading loading-spinner loading-sm"></span>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span class="hidden sm:inline ml-2">Annuler</span>
+              </button>
+            </template>
+
+            <!-- Génération de facture pour les commandes validées -->
+            <template v-if="order && order.status === 'validated'">
+              <button 
+                @click="generateInvoice"
+                :disabled="invoiceLoading"
+                class="btn bg-purple-600 hover:bg-purple-700 text-white border-none min-w-fit"
+              >
+                <span v-if="invoiceLoading" class="loading loading-spinner loading-sm"></span>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="hidden sm:inline ml-2">{{ invoiceLoading ? 'Génération...' : 'Générer facture' }}</span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <!-- Message de succès -->
+      <div v-if="successMessage" class="mb-6">
+        <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-green-500/20 rounded-lg">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-green-400 font-medium">Succès</h4>
+              <p class="text-green-300 text-sm">{{ successMessage }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- États de chargement et d'erreur -->
+      <div v-if="loading && !order" class="flex flex-col items-center justify-center py-20">
+        <div class="w-16 h-16 relative mb-4">
+          <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-600 border-t-blue-500"></div>
+        </div>
+        <h3 class="text-xl font-medium text-gray-300 mb-2">Chargement de la commande</h3>
+        <p class="text-gray-500">Veuillez patienter...</p>
+      </div>
+
+      <div v-else-if="error" class="max-w-md mx-auto">
+        <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center">
+          <div class="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-medium text-red-400 mb-2">Erreur de chargement</h3>
+          <p class="text-red-300 mb-4">{{ error }}</p>
+          <button 
+            @click="refreshOrder"
+            class="btn bg-red-600/20 hover:bg-red-600/40 text-red-400 border-red-600/30"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenu principal -->
+      <div v-else-if="order" class="space-y-8">
+        <!-- Résumé de la commande -->
+        <div class="bg-gradient-to-r from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Statut -->
+            <div class="text-center lg:text-left">
+              <label class="text-sm font-medium text-gray-400 uppercase tracking-wide block mb-2">Statut</label>
+              <div class="flex justify-center lg:justify-start items-center space-x-2">
+                <span 
+                  :class="getStatusBadgeClass(order.status)"
+                  class="badge badge-lg font-medium px-4 py-2"
+                >
+                  <div class="w-2 h-2 rounded-full mr-2" :class="getStatusDotClass(order.status)"></div>
+                  {{ getStatusLabel(order.status) }}
+                </span>
+                <!-- Icône facture disponible pour les commandes validées -->
+                <div v-if="order.status === 'validated'" class="tooltip tooltip-top" data-tip="Facture disponible">
+                  <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            <!-- Informations du produit -->
-            <div class="grid grid-cols-1 gap-4 mb-4">
-              <div>
-                <label class="text-gray-400 text-xs uppercase tracking-wide">Prix catalogue</label>
-                <p class="text-white font-medium">{{ formatCurrency(product.price) }}</p>
+            <!-- Total -->
+            <div class="text-center lg:text-left">
+              <label class="text-sm font-medium text-gray-400 uppercase tracking-wide block mb-2">Total</label>
+              <p class="text-3xl font-bold text-white">{{ formatCurrency(order.total) }}</p>
+            </div>
+
+            <!-- Client -->
+            <div class="text-center lg:text-left">
+              <label class="text-sm font-medium text-gray-400 uppercase tracking-wide block mb-2">Client</label>
+              <div class="flex items-center justify-center lg:justify-start space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-white font-medium">{{ order.user?.name || 'Client inconnu' }}</p>
+                  <p class="text-gray-400 text-sm">{{ order.user?.email || order.user?.id || 'N/A' }}</p>
+                </div>
               </div>
             </div>
 
-            <!-- Informations de commande -->
-            <div class="border-t border-gray-600 pt-4">
-              <div class="flex justify-between items-center">
-                <div>
-                  <label class="text-gray-400 text-xs uppercase tracking-wide">Quantité commandée</label>
-                  <p class="text-white font-semibold text-lg">{{ product.pivot.quantity }}</p>
-                </div>
-                <div class="text-right">
-                  <label class="text-gray-400 text-xs uppercase tracking-wide">Total produit</label>
-                  <p class="text-green-400 font-bold text-lg">{{ formatCurrency(product.pivot.quantity * product.pivot.unit_price) }}</p>
-                </div>
-              </div>
+            <!-- Date -->
+            <div class="text-center lg:text-left">
+              <label class="text-sm font-medium text-gray-400 uppercase tracking-wide block mb-2">Créée le</label>
+              <p class="text-white font-medium">{{ formatDate(order.created_at) }}</p>
+              <p class="text-gray-400 text-sm">{{ formatRelativeTime(order.created_at) }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Résumé de la commande -->
-        <div class="mt-8 border-t border-gray-600 pt-6">
-          <div class="bg-gray-700 rounded-lg p-4">
+        <!-- Liste des produits -->
+        <div v-if="order.products && order.products.length > 0" class="space-y-6">
+          <h2 class="text-2xl font-bold text-white mb-6">
+            Produits commandés
+            <span class="text-lg text-gray-400 font-normal ml-2">
+              ({{ order.products.length }} {{ order.products.length > 1 ? 'articles' : 'article' }})
+            </span>
+          </h2>
+
+          <div class="grid gap-6">
+            <div 
+              v-for="product in order.products" 
+              :key="product.id"
+              class="bg-gradient-to-r from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600/50 transition-all duration-300"
+            >
+              <div class="flex items-center space-x-6">
+                <!-- Image du produit -->
+                <div class="relative flex-shrink-0">
+                  <img 
+                    :src="getProductImage(product)" 
+                    :alt="product.name"
+                    class="w-20 h-20 rounded-xl object-cover bg-gray-700 border border-gray-600"
+                    @error="handleImageError"
+                  />
+                  <div class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                    {{ product.pivot.quantity }}
+                  </div>
+                </div>
+
+                <!-- Informations du produit -->
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-xl font-semibold text-white truncate mb-2">{{ product.name }}</h3>
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-1">Prix unitaire</label>
+                      <p class="text-lg font-semibold text-blue-400">{{ formatCurrency(product.pivot.unit_price) }}</p>
+                    </div>
+                    
+                    <div>
+                      <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-1">Quantité</label>
+                      <p class="text-lg font-semibold text-white">{{ product.pivot.quantity }}</p>
+                    </div>
+                    
+                    <div>
+                      <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-1">Sous-total</label>
+                      <p class="text-lg font-bold text-green-400">{{ formatCurrency(product.pivot.quantity * product.pivot.unit_price) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions produit -->
+                <div class="flex-shrink-0">
+                  <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-sm btn-ghost text-gray-400 hover:text-white">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow-xl bg-gray-800 rounded-xl w-48 border border-gray-700">
+                      <li>
+                        <a class="text-gray-400 hover:bg-gray-700/50">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          Voir produit
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Résumé total -->
+          <div class="bg-gradient-to-r from-gray-800/80 to-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 mt-8">
             <div class="flex justify-between items-center">
               <div>
-                <h3 class="text-lg font-semibold text-white">Total de la commande</h3>
-                <p class="text-gray-400 text-sm">{{ order.products.reduce((sum, p) => sum + p.pivot.quantity, 0) }} articles</p>
+                <h3 class="text-xl font-semibold text-white">Total de la commande</h3>
+                <p class="text-gray-400">{{ order.products.reduce((sum, p) => sum + p.pivot.quantity, 0) }} articles</p>
               </div>
               <div class="text-right">
-                <p class="text-green-400 font-bold text-2xl">{{ formatCurrency(order.total) }}</p>
+                <p class="text-3xl font-bold text-green-400">{{ formatCurrency(order.total) }}</p>
+                <p class="text-sm text-gray-400">TTC</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Message si pas de produits -->
-      <div v-else class="bg-gray-800 rounded-lg shadow-lg p-6">
-        <h2 class="text-xl font-semibold text-white mb-4">Produits commandés</h2>
-        <div class="text-center py-8">
-          <svg class="w-16 h-16 text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m0 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m0 0v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4" />
-          </svg>
-          <p class="text-gray-400">Aucun produit associé à cette commande</p>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-        <h2 class="text-xl font-semibold text-white mb-4">Actions</h2>
-        <div class="flex gap-3">
-          <button 
-            v-if="order.status === 'pending'"
-            @click="validateOrder"
-            :disabled="actionLoading"
-            class="btn bg-green-600 hover:bg-green-700 text-white border-none"
-          >
-            <span v-if="actionLoading" class="loading loading-spinner loading-sm mr-2"></span>
-            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        <!-- Message si pas de produits -->
+        <div v-else class="text-center py-16">
+          <div class="w-24 h-24 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8L9 5m0 0v4m0-4l4 4" />
             </svg>
-            Valider la commande
-          </button>
-          
-          <button 
-            v-if="order.status === 'pending'"
-            @click="cancelOrder"
-            :disabled="actionLoading"
-            class="btn bg-red-600 hover:bg-red-700 text-white border-none"
-          >
-            <span v-if="actionLoading" class="loading loading-spinner loading-sm mr-2"></span>
-            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Annuler la commande
-          </button>
-
-          <div v-if="order.status !== 'pending'" class="text-gray-400 italic">
-            Aucune action disponible pour une commande {{ getStatusLabel(order.status).toLowerCase() }}
           </div>
+          <h3 class="text-xl font-medium text-gray-300 mb-2">Aucun produit</h3>
+          <p class="text-gray-500">Aucun produit n'est associé à cette commande.</p>
         </div>
       </div>
     </div>
+
+    <!-- Modal d'aperçu de facture -->
+    <InvoicePreviewModal 
+      :is-open="showInvoicePreview"
+      :order="order"
+      @close="showInvoicePreview = false"
+      @download="handleInvoiceDownload"
+    />
   </div>
 </template>
 
@@ -215,43 +325,44 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '../stores/orderStore'
+import { orderService } from '../services/orderService'
+import InvoicePreviewModal from '../components/InvoicePreviewModal.vue'
 import type { Order, OrderStatus } from '../types'
+import { 
+  formatCurrency, 
+  formatDate, 
+  getStatusLabel, 
+  getStatusBadgeClass,
+  getProductImage,
+  handleImageError
+} from '../utils/formatters'
 
-// Router
+// Composables
 const route = useRoute()
 const router = useRouter()
-
-// Store
 const orderStore = useOrderStore()
 
 // État local
 const order = ref<Order | null>(null)
 const loading = ref(false)
 const actionLoading = ref(false)
+const invoiceLoading = ref(false)
+const showInvoicePreview = ref(false)
 const error = ref<string | null>(null)
-
-// ID de la commande depuis la route
-const orderId = route.params.id as string
-
-// Charger la commande au montage
-onMounted(async () => {
-  await refreshOrder()
-})
 
 // Actions
 async function refreshOrder() {
-  if (!orderId) {
-    error.value = 'ID de commande manquant'
-    return
-  }
+  const orderId = route.params.id as string
+  if (!orderId) return
 
   loading.value = true
   error.value = null
   
   try {
-    order.value = await orderStore.fetchOrderById(orderId)
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Erreur lors du chargement de la commande'
+    const fetchedOrder = await orderStore.fetchOrderById(orderId)
+    order.value = fetchedOrder
+  } catch (err: any) {
+    error.value = err.message || 'Erreur lors du chargement de la commande'
     console.error('Erreur refreshOrder:', err)
   } finally {
     loading.value = false
@@ -260,14 +371,15 @@ async function refreshOrder() {
 
 async function validateOrder() {
   if (!order.value) return
-  
+
   actionLoading.value = true
+  
   try {
     await orderStore.validateOrder(order.value.id)
-    // Rafraîchir toutes les données pour s'assurer que l'affichage est correct
+    // Rafraîchir la commande pour mettre à jour le statut
     await refreshOrder()
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Erreur lors de la validation'
+  } catch (err: any) {
+    error.value = err.message || 'Erreur lors de la validation'
     console.error('Erreur validateOrder:', err)
   } finally {
     actionLoading.value = false
@@ -276,14 +388,15 @@ async function validateOrder() {
 
 async function cancelOrder() {
   if (!order.value) return
-  
+
   actionLoading.value = true
+  
   try {
     await orderStore.cancelOrder(order.value.id)
-    // Rafraîchir toutes les données pour s'assurer que l'affichage est correct
+    // Rafraîchir la commande pour mettre à jour le statut
     await refreshOrder()
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Erreur lors de l\'annulation'
+  } catch (err: any) {
+    error.value = err.message || 'Erreur lors de l\'annulation'
     console.error('Erreur cancelOrder:', err)
   } finally {
     actionLoading.value = false
@@ -291,48 +404,89 @@ async function cancelOrder() {
 }
 
 function goBack() {
-  router.push('/orders')
+  router.back()
 }
 
-// Gestion des erreurs d'images
-function handleImageError(event: Event) {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
+async function generateInvoice() {
+  if (!order.value) return
+  // Ouvrir le modal d'aperçu de facture
+  showInvoicePreview.value = true
 }
 
-// Utilitaires d'affichage
-function getStatusLabel(status: OrderStatus): string {
-  const labels = {
-    pending: 'En attente',
-    validated: 'Validée',
-    cancelled: 'Annulée'
+async function handleInvoiceDownload(orderId: string) {
+  invoiceLoading.value = true
+  error.value = null
+  
+  try {
+    const result = await orderService.generateInvoice(orderId)
+    
+    // Utiliser l'URL du PDF réel généré par le service
+    const link = document.createElement('a')
+    link.href = result.url
+    link.download = result.filename
+    link.style.display = 'none'
+    
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    // Nettoyer l'URL après téléchargement (pour les blobs)
+    setTimeout(() => {
+      URL.revokeObjectURL(result.url)
+    }, 1000)
+    
+    // Message de succès temporaire
+    showSuccessMessage('Facture téléchargée avec succès !')
+    
+  } catch (err: any) {
+    error.value = err.message || 'Erreur lors de la génération de la facture'
+    console.error('Erreur generateInvoice:', err)
+  } finally {
+    invoiceLoading.value = false
   }
-  return labels[status] || status
 }
 
-function getStatusBadgeClass(status: OrderStatus): string {
+// État pour les messages de succès
+const successMessage = ref<string | null>(null)
+
+function showSuccessMessage(message: string) {
+  successMessage.value = message
+  // Effacer le message après 3 secondes
+  setTimeout(() => {
+    successMessage.value = null
+  }, 3000)
+}
+
+function getStatusDotClass(status: OrderStatus): string {
   const classes = {
-    pending: 'badge-warning',
-    validated: 'badge-success',
-    cancelled: 'badge-error'
+    pending: 'bg-yellow-400',
+    validated: 'bg-green-400',
+    cancelled: 'bg-red-400'
   }
-  return classes[status] || 'badge-neutral'
+  return classes[status] || 'bg-gray-500'
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount)
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+  
+  if (diffInSeconds < 60) {
+    return 'Il y a quelques secondes'
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60)
+    return `Il y a ${minutes} minute${minutes > 1 ? 's' : ''}`
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600)
+    return `Il y a ${hours} heure${hours > 1 ? 's' : ''}`
+  } else {
+    const days = Math.floor(diffInSeconds / 86400)
+    return `Il y a ${days} jour${days > 1 ? 's' : ''}`
+  }
 }
 
-function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(dateString))
-}
+// Charger la commande au montage du composant
+onMounted(() => {
+  refreshOrder()
+})
 </script>

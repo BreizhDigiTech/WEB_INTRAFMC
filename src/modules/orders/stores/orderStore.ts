@@ -47,17 +47,39 @@ export const useOrderStore = defineStore('orders', () => {
     )
 
     // Actions
-    async function fetchOrders(page = 1, limit = 20) {
+    async function fetchOrders(page = 1, limit?: number, filters: any = {}) {
         loading.value = true
         error.value = null
         try {
-            const result = await orderService.getOrders({}, page, limit)
-            orders.value = result.data
-            currentPage.value = result.pagination.current_page
-            totalPages.value = result.pagination.last_page
-            totalOrders.value = result.pagination.total
-            perPage.value = result.pagination.per_page
-            return result
+            // L'API GraphQL limite à 50 éléments maximum
+            const actualLimit = Math.min(limit || perPage.value, 50)
+
+            // Si des filtres sont appliqués, on doit charger toutes les données pour filtrer correctement
+            const hasFilters = Object.keys(filters).length > 0
+
+            if (hasFilters) {
+                // Pour les filtres, on charge tout et on filtre côté client
+                const result = await orderService.getOrdersWithFilters(filters, page, actualLimit)
+                orders.value = result.data
+                currentPage.value = result.pagination.current_page
+                totalPages.value = result.pagination.last_page
+                totalOrders.value = result.pagination.total
+                if (!limit) {
+                    perPage.value = Math.min(result.pagination.per_page, 50)
+                }
+                return result
+            } else {
+                // Sans filtres, pagination normale
+                const result = await orderService.getOrders({}, page, actualLimit)
+                orders.value = result.data
+                currentPage.value = result.pagination.current_page
+                totalPages.value = result.pagination.last_page
+                totalOrders.value = result.pagination.total
+                if (!limit) {
+                    perPage.value = Math.min(result.pagination.per_page, 50)
+                }
+                return result
+            }
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'Erreur lors du chargement des commandes'
             console.error('Erreur fetchOrders:', err)
@@ -65,6 +87,14 @@ export const useOrderStore = defineStore('orders', () => {
         } finally {
             loading.value = false
         }
+    }
+
+    async function updatePerPage(newPerPage: number) {
+        // Limiter à 50 maximum
+        const limitedPerPage = Math.min(newPerPage, 50)
+        perPage.value = limitedPerPage
+        currentPage.value = 1 // Reset à la page 1
+        await fetchOrders(1, limitedPerPage)
     }
 
     async function fetchOrderById(id: string) {
@@ -172,6 +202,21 @@ export const useOrderStore = defineStore('orders', () => {
         }
     }
 
+    async function generateInvoice(orderId: string) {
+        loading.value = true
+        error.value = null
+        try {
+            const result = await orderService.generateInvoice(orderId)
+            return result
+        } catch (err) {
+            error.value = err instanceof Error ? err.message : 'Erreur lors de la génération de la facture'
+            console.error('Erreur generateInvoice:', err)
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         // State
         orders,
@@ -198,6 +243,8 @@ export const useOrderStore = defineStore('orders', () => {
         fetchOrderById,
         fetchGlobalStats,
         validateOrder,
-        cancelOrder
+        cancelOrder,
+        updatePerPage,
+        generateInvoice
     }
 })
