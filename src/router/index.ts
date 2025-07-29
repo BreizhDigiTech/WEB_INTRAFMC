@@ -99,6 +99,16 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: 'Détail commande - WEB IntraFMC'
                 }
+            },
+
+            // Gestion des arrivages
+            {
+                path: '/arrivals',
+                name: 'Arrivals',
+                component: () => import('@/modules/arrivals/views/ArrivalsListView.vue'),
+                meta: {
+                    title: 'Arrivages - WEB IntraFMC'
+                }
             }
         ]
     },

@@ -211,6 +211,31 @@
                   </svg>
                 </router-link>
               </li>
+
+              <!-- Arrivages -->
+              <li>
+                <router-link
+                  to="/arrivals"
+                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-600/20 transition-all duration-200 group"
+                  :class="{ 'bg-gradient-to-r from-purple-500/20 to-pink-600/20 text-purple-400 shadow-lg': $route.path.startsWith('/arrivals') }"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors duration-200"
+                       :class="{ 'bg-purple-500/30': $route.path.startsWith('/arrivals') }">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 9h6m-6 2h6m-6 2h6m-6 2h6" />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-semibold">Arrivages</span>
+                    <div class="text-xs text-gray-500">Gestion des livraisons</div>
+                  </div>
+                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" 
+                       :class="{ 'opacity-100': $route.path.startsWith('/arrivals') }"
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </router-link>
+              </li>
             </ul>
             
             <!-- Section info -->

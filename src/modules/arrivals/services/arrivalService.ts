@@ -1,0 +1,175 @@
+// Service GraphQL pour la gestion des arrivages
+import { GraphQLService } from '@/shared/services/graphql'
+import type {
+    Arrival,
+    ArrivalsResponse,
+    CreateArrivalInput,
+    UpdateArrivalInput
+} from '../types'
+
+export class ArrivalService extends GraphQLService {
+    /**
+     * Récupère la liste des arrivages avec pagination
+     */
+    async getArrivals(first = 15, page = 1): Promise<ArrivalsResponse> {
+        const query = `
+            query GetArrivals($first: Int, $page: Int) {
+                arrivals(first: $first, page: $page) {
+                    paginatorInfo {
+                        currentPage
+                        hasMorePages
+                        total
+                        perPage
+                    }
+                    data {
+                        id
+                        amount
+                        status
+                        created_at
+                        products {
+                            id
+                            quantity
+                            unit_price
+                            product {
+                                id
+                                name
+                                image_url
+                            }
+                        }
+                    }
+                }
+            }
+        `
+
+        const variables = { first, page }
+
+        return this.request(query, variables)
+            .then((response: any) => {
+                const arrivals = response.arrivals
+                return {
+                    data: arrivals.data,
+                    paginatorInfo: arrivals.paginatorInfo
+                }
+            })
+    }
+
+    /**
+     * Valide un arrivage (change son statut)
+     */
+    async validateArrival(arrivalId: string): Promise<Arrival> {
+        const query = `
+            mutation ValidateArrival($id: ID!) {
+                validateArrival(id: $id) {
+                    id
+                    status
+                    amount
+                    updated_at
+                    products {
+                        id
+                        arrival_id
+                        product_id
+                        quantity
+                        unit_price
+                        product {
+                            id
+                            name
+                            image_url
+                        }
+                    }
+                }
+            }
+        `
+
+        const variables = { id: arrivalId }
+
+        return this.request(query, variables)
+            .then((response: any) => response.validateArrival)
+    }
+
+    /**
+    /**
+     * Crée un nouvel arrivage
+     */
+    async createArrival(input: CreateArrivalInput): Promise<Arrival> {
+        const query = `
+            mutation CreateArrival($input: CreateArrivalInput!) {
+                createArrival(input: $input) {
+                    id
+                    amount
+                    status
+                    created_at
+                    updated_at
+                    products {
+                        id
+                        arrival_id
+                        product_id
+                        quantity
+                        unit_price
+                        product {
+                            id
+                            name
+                            image_url
+                        }
+                    }
+                }
+            }
+        `
+
+        const variables = { input }
+
+        return this.request(query, variables)
+            .then((response: any) => response.createArrival)
+    }
+
+    /**
+     * Met à jour un arrivage existant
+     */
+    async updateArrival(id: string, input: UpdateArrivalInput): Promise<Arrival> {
+        const query = `
+            mutation UpdateArrival($id: ID!, $input: UpdateArrivalInput!) {
+                updateArrival(id: $id, input: $input) {
+                    id
+                    amount
+                    status
+                    updated_at
+                    products {
+                        id
+                        arrival_id
+                        product_id
+                        quantity
+                        unit_price
+                        product {
+                            id
+                            name
+                            image_url
+                        }
+                    }
+                }
+            }
+        `
+
+        const variables = { id, input }
+
+        return this.request(query, variables)
+            .then((response: any) => response.updateArrival)
+    }
+
+    /**
+     * Supprime un arrivage
+     */
+    async deleteArrival(id: string): Promise<boolean> {
+        const query = `
+            mutation DeleteArrival($id: ID!) {
+                deleteArrival(id: $id)
+            }
+        `
+
+        const variables = { id }
+
+        return this.request(query, variables)
+            .then((response: any) => response.deleteArrival)
+    }
+}
+
+// Instance unique du service
+export const arrivalService = new ArrivalService()
