@@ -11,18 +11,33 @@ export interface Arrival {
 
 export interface ArrivalProduct {
     id: string
-    arrival_id: string
-    product_id: string
     quantity: number         // Quantité du produit dans l'arrivage
-    unit_price: number       // Prix unitaire
-    product?: ProductCBD     // Référence au produit (optionnel si chargé)
+    unit_price?: number      // Prix unitaire du produit dans l'arrivage
+    product?: ProductDetail  // Référence au produit avec détails complets
 }
 
+export interface ProductDetail {
+    id: string
+    name: string
+    description?: string
+    price: number
+    stock: number
+    category?: {
+        id: string
+        name: string
+    }
+    suppliers?: {
+        id: string
+        name: string
+    }[]
+}
+
+// Interface pour compatibilité avec les autres modules
 export interface ProductCBD {
     id: string
     name: string
+    images?: string[]       // Images du produit (nouvelle API)
     stock?: number          // Stock actuel du produit
-    // Autres propriétés du produit selon le schéma backend
 }
 
 export type ArrivalStatus =

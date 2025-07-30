@@ -1,14 +1,13 @@
 // Service GraphQL pour la gestion des arrivages
-import { graphqlService } from '../../../shared/services/graphql'
+import { GraphQLService } from '@/shared/services/graphql'
 import type {
     Arrival,
     ArrivalsResponse,
     CreateArrivalInput,
-    UpdateArrivalInput,
-    ArrivalFilters
+    UpdateArrivalInput
 } from '../types'
 
-export const arrivalService = {
+export class ArrivalService extends GraphQLService {
     /**
      * Récupère la liste des arrivages avec pagination
      */
@@ -42,62 +41,67 @@ export const arrivalService = {
             }
         `
 
-        const response = await graphqlService.request(query, { first, page })
-        return response.arrivals
-    },
+        const variables = { first, page }
+
+        return this.request(query, variables)
+            .then((response: any) => {
+                const arrivals = response.arrivals
+                return {
+                    data: arrivals.data,
+                    paginatorInfo: arrivals.paginatorInfo
+                }
+            })
+    }
 
     /**
-     * Récupère un arrivage spécifique
+     * Valide un arrivage (change son statut)
      */
-    async getArrival(arrivalId: string): Promise<Arrival> {
+    async validateArrival(arrivalId: string): Promise<Arrival> {
         const query = `
-            query GetArrivalDetail($arrivalId: ID!) {
-                arrival(arrival_id: $arrivalId) {
+            mutation ValidateArrival($id: ID!) {
+                validateArrival(id: $id) {
                     id
-                    amount
                     status
-                    created_at
+                    amount
                     updated_at
                     products {
                         id
+                        arrival_id
+                        product_id
                         quantity
+                        unit_price
                         product {
                             id
                             name
-                            description
-                            price
-                            stock
-                            category {
-                                id
-                                name
-                            }
-                            suppliers {
-                                id
-                                name
-                            }
+                            images
                         }
                     }
                 }
             }
         `
 
-        const response = await graphqlService.request(query, { arrivalId })
-        return response.arrival
-    },
+        const variables = { id: arrivalId }
 
+        return this.request(query, variables)
+            .then((response: any) => response.validateArrival)
+    }
+
+    /**
     /**
      * Crée un nouvel arrivage
      */
     async createArrival(input: CreateArrivalInput): Promise<Arrival> {
-        const mutation = `
+        const query = `
             mutation CreateArrival($input: CreateArrivalInput!) {
                 createArrival(input: $input) {
                     id
                     amount
                     status
                     created_at
+                    updated_at
                     products {
                         id
+                        arrival_id
                         product_id
                         quantity
                         unit_price
@@ -111,23 +115,26 @@ export const arrivalService = {
             }
         `
 
-        const response = await graphqlService.request(mutation, { input })
-        return response.createArrival
-    },
+        const variables = { input }
+
+        return this.request(query, variables)
+            .then((response: any) => response.createArrival)
+    }
 
     /**
-     * Met à jour un arrivage
+     * Met à jour un arrivage existant
      */
     async updateArrival(id: string, input: UpdateArrivalInput): Promise<Arrival> {
-        const mutation = `
+        const query = `
             mutation UpdateArrival($id: ID!, $input: UpdateArrivalInput!) {
                 updateArrival(id: $id, input: $input) {
                     id
                     amount
                     status
-                    created_at
+                    updated_at
                     products {
                         id
+                        arrival_id
                         product_id
                         quantity
                         unit_price
@@ -141,53 +148,28 @@ export const arrivalService = {
             }
         `
 
-        const response = await graphqlService.request(mutation, { id, input })
-        return response.updateArrival
-    },
+        const variables = { id, input }
+
+        return this.request(query, variables)
+            .then((response: any) => response.updateArrival)
+    }
 
     /**
      * Supprime un arrivage
      */
-    async deleteArrival(id: string): Promise<void> {
-        const mutation = `
+    async deleteArrival(id: string): Promise<boolean> {
+        const query = `
             mutation DeleteArrival($id: ID!) {
-                deleteArrival(id: $id) {
-                    success
-                    message
-                }
+                deleteArrival(id: $id)
             }
         `
 
-        await graphqlService.request(mutation, { id })
-    },
+        const variables = { id }
 
-    /**
-     * Valide un arrivage
-     */
-    async validateArrival(id: string): Promise<Arrival> {
-        const mutation = `
-            mutation ValidateArrival($arrivalId: ID!) {
-                validateArrival(arrival_id: $arrivalId) {
-                    id
-                    amount
-                    status
-                    created_at
-                    updated_at
-                    products {
-                        id
-                        quantity
-                        unit_price
-                        product {
-                            id
-                            name
-                            stock
-                        }
-                    }
-                }
-            }
-        `
-
-        const response = await graphqlService.request(mutation, { arrivalId: id })
-        return response.validateArrival
+        return this.request(query, variables)
+            .then((response: any) => response.deleteArrival)
     }
 }
+
+// Instance unique du service
+export const arrivalService = new ArrivalService()

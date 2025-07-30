@@ -71,8 +71,8 @@ export function handleImageError(event: Event): void {
  * Retourne l'URL de l'image d'un produit avec fallback
  */
 export function getProductImage(product: any): string {
-    if (product.image_url) {
-        return product.image_url
+    if (product.images && product.images.length > 0) {
+        return product.images[0]
     }
 
     if (product.image) {

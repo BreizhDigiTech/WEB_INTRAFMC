@@ -1,0 +1,535 @@
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-6">
+    <!-- Header avec stats et actions -->
+    <div class="max-w-7xl mx-auto mb-8">
+      <!-- Titre et actions principales -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-4xl font-bold text-white mb-2">Produits</h1>
+          <p class="text-gray-300">Gérez votre catalogue de produits</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <button
+            @click="showCreateModal = true"
+            class="btn btn-primary btn-lg gap-2 hover:scale-105 transition-transform"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nouveau produit
+          </button>
+          <button
+            @click="refreshProducts"
+            class="btn btn-ghost btn-lg"
+            :class="{ 'loading': productStore.loading }"
+          >
+            <svg v-if="!productStore.loading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cartes de statistiques -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total produits -->
+        <div class="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-6 hover:border-blue-500/40 transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-blue-500/20 rounded-xl">
+              <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <div v-if="productStore.loading" class="loading loading-spinner loading-md text-blue-400"></div>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Total produits</h3>
+            <p class="text-3xl font-bold text-blue-400">{{ formatNumber(displayStats.total) }}</p>
+            <p class="text-sm text-gray-500">{{ displayStats.active }} actifs</p>
+          </div>
+        </div>
+
+        <!-- Stock faible -->
+        <div class="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 backdrop-blur-sm border border-yellow-500/20 rounded-2xl p-6 hover:border-yellow-500/40 transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-yellow-500/20 rounded-xl">
+              <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div v-if="productStore.loading" class="loading loading-spinner loading-md text-yellow-400"></div>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Stock faible</h3>
+            <p class="text-3xl font-bold text-yellow-400">{{ formatNumber(displayStats.low_stock) }}</p>
+            <p class="text-sm text-gray-500">Attention requise</p>
+          </div>
+        </div>
+
+        <!-- Rupture de stock -->
+        <div class="bg-gradient-to-br from-red-500/10 to-rose-500/10 backdrop-blur-sm border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-red-500/20 rounded-xl">
+              <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div v-if="productStore.loading" class="loading loading-spinner loading-md text-red-400"></div>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Rupture stock</h3>
+            <p class="text-3xl font-bold text-red-400">{{ formatNumber(displayStats.out_of_stock) }}</p>
+            <p class="text-sm text-gray-500">Action immédiate</p>
+          </div>
+        </div>
+
+        <!-- Valeur totale -->
+        <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-green-500/20 rounded-xl">
+              <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <div v-if="productStore.loading" class="loading loading-spinner loading-md text-green-400"></div>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Valeur stock</h3>
+            <p class="text-3xl font-bold text-green-400">{{ formatPrice(displayStats.total_value) }}</p>
+            <p class="text-sm text-gray-500">Inventaire total</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barre de recherche et filtres -->
+      <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 mb-8">
+        <div class="flex flex-col lg:flex-row gap-4">
+          <!-- Recherche -->
+          <div class="flex-1">
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Rechercher un produit..."
+                class="input input-lg w-full bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 pr-12"
+              >
+              <button
+                v-if="searchQuery"
+                @click="clearSearch"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mode d'affichage -->
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-400">Affichage:</span>
+            <div class="btn-group">
+              <button
+                v-for="mode in viewModes"
+                :key="mode.value"
+                @click="productStore.setViewMode(mode.value)"
+                class="btn btn-sm"
+                :class="productStore.viewMode === mode.value ? 'btn-primary' : 'btn-ghost'"
+              >
+                <component :is="getViewModeIcon(mode.value)" class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Bouton filtres avancés -->
+          <button
+            @click="showFilters = !showFilters"
+            class="btn btn-lg gap-2"
+            :class="hasActiveFilters ? 'btn-primary' : 'btn-ghost'"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+            </svg>
+            Filtres
+            <div v-if="activeFiltersCount > 0" class="badge badge-primary badge-sm">{{ activeFiltersCount }}</div>
+          </button>
+        </div>
+
+        <!-- Panneau de filtres avancés -->
+        <div v-if="showFilters" class="mt-6 pt-6 border-t border-gray-700/50">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Filtre par catégorie -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text text-gray-300">Catégorie</span>
+              </label>
+              <select
+                v-model="filters.category_id"
+                class="select select-bordered bg-gray-700 border-gray-600 text-white"
+              >
+                <option value="">Toutes les catégories</option>
+                <option
+                  v-for="category in categoryStore.categories"
+                  :key="category.id"
+                  :value="category.id"
+                >
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Filtre par fournisseur -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text text-gray-300">Fournisseur</span>
+              </label>
+              <select
+                v-model="filters.supplier_id"
+                class="select select-bordered bg-gray-700 border-gray-600 text-white"
+              >
+                <option value="">Tous les fournisseurs</option>
+                <option
+                  v-for="supplier in productStore.suppliers"
+                  :key="supplier.id"
+                  :value="supplier.id"
+                >
+                  {{ supplier.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Filtre par prix -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text text-gray-300">Prix (€)</span>
+              </label>
+              <div class="flex gap-2">
+                <input
+                  v-model.number="filters.min_price"
+                  type="number"
+                  placeholder="Min"
+                  class="input input-bordered flex-1 bg-gray-700 border-gray-600 text-white"
+                >
+                <input
+                  v-model.number="filters.max_price"
+                  type="number"
+                  placeholder="Max"
+                  class="input input-bordered flex-1 bg-gray-700 border-gray-600 text-white"
+                >
+              </div>
+            </div>
+
+            <!-- Filtre par stock -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text text-gray-300">Stock</span>
+              </label>
+              <div class="flex gap-2">
+                <input
+                  v-model.number="filters.min_stock"
+                  type="number"
+                  placeholder="Min"
+                  class="input input-bordered flex-1 bg-gray-700 border-gray-600 text-white"
+                >
+                <input
+                  v-model.number="filters.max_stock"
+                  type="number"
+                  placeholder="Max"
+                  class="input input-bordered flex-1 bg-gray-700 border-gray-600 text-white"
+                >
+              </div>
+            </div>
+
+            <!-- Statut -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text text-gray-300">Statut</span>
+              </label>
+              <div class="flex gap-2">
+                <label class="label cursor-pointer">
+                  <input
+                    v-model="filters.is_active"
+                    :value="true"
+                    type="checkbox"
+                    class="checkbox checkbox-primary"
+                  >
+                  <span class="label-text ml-2 text-gray-300">Actifs uniquement</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Stock faible -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text text-gray-300">Alertes</span>
+              </label>
+              <div class="flex gap-2">
+                <label class="label cursor-pointer">
+                  <input
+                    v-model="filters.low_stock"
+                    type="checkbox"
+                    class="checkbox checkbox-warning"
+                  >
+                  <span class="label-text ml-2 text-gray-300">Stock faible</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Actions filtres -->
+            <div class="form-control justify-end">
+              <div class="flex gap-2">
+                <button @click="applyFilters" class="btn btn-primary flex-1">
+                  Appliquer
+                </button>
+                <button @click="clearFilters" class="btn btn-ghost">
+                  Effacer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="max-w-7xl mx-auto">
+      <!-- Grille de produits -->
+      <div v-if="productStore.viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <ProductCard
+          v-for="product in productStore.filteredProducts"
+          :key="product.id"
+          :product="product"
+          @edit="editProduct"
+          @delete="deleteProduct"
+          @update-stock="updateStock"
+        />
+      </div>
+
+      <!-- Liste de produits -->
+      <div v-else-if="productStore.viewMode === 'list'" class="space-y-4">
+        <ProductListItem
+          v-for="product in productStore.filteredProducts"
+          :key="product.id"
+          :product="product"
+          @edit="editProduct"
+          @delete="deleteProduct"
+          @update-stock="updateStock"
+        />
+      </div>
+
+      <!-- Tableau de produits -->
+      <div v-else class="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
+        <ProductTable
+          :products="productStore.filteredProducts"
+          @edit="editProduct"
+          @delete="deleteProduct"
+          @update-stock="updateStock"
+        />
+      </div>
+
+      <!-- État vide -->
+      <div v-if="!productStore.hasProducts && !productStore.loading" class="text-center py-16">
+        <div class="mb-6">
+          <svg class="w-24 h-24 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <h3 class="text-2xl font-semibold text-white mb-2">Aucun produit trouvé</h3>
+        <p class="text-gray-400 mb-6">Commencez par ajouter votre premier produit</p>
+        <button
+          @click="showCreateModal = true"
+          class="btn btn-primary btn-lg gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Créer un produit
+        </button>
+      </div>
+
+      <!-- Pagination améliorée -->
+      <ProductPagination
+        v-if="productStore.hasProducts"
+        :current-page="productStore.currentPage"
+        :total-pages="productStore.totalPages"
+        :total="productStore.totalProducts"
+        :per-page="productStore.perPage"
+        :from="((productStore.currentPage - 1) * productStore.perPage) + 1"
+        :to="Math.min(productStore.currentPage * productStore.perPage, productStore.totalProducts)"
+        @go-to-page="productStore.goToPage"
+        @next="productStore.nextPage"
+        @prev="productStore.prevPage"
+        @per-page-change="productStore.updatePerPage"
+      />
+    </div>
+
+    <!-- Modals -->
+    <CreateProductModal
+      v-if="showCreateModal"
+      @close="showCreateModal = false"
+      @created="handleProductCreated"
+    />
+
+    <EditProductModal
+      v-if="showEditModal && selectedProduct"
+      :product="selectedProduct"
+      @close="showEditModal = false"
+      @updated="handleProductUpdated"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { useProductStore } from '../stores/productStore'
+import { useCategoryStore } from '../../categories/stores/categoryStore'
+import type { Product, ProductFilters } from '../types'
+import ProductPagination from '../components/ProductPagination.vue'
+import { formatPrice, formatNumber } from '../utils/formatters'
+import { VIEW_MODES } from '../constants'
+
+// Composants (à créer)
+import ProductCard from '../components/ProductCard.vue'
+import ProductListItem from '../components/ProductListItem.vue'
+import ProductTable from '../components/ProductTable.vue'
+import CreateProductModal from '../components/CreateProductModalNew.vue'
+import EditProductModal from '../components/EditProductModal.vue'
+
+// Stores
+const productStore = useProductStore()
+const categoryStore = useCategoryStore()
+
+// États locaux
+const showFilters = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const selectedProduct = ref<Product | null>(null)
+const searchQuery = ref('')
+const filters = ref<ProductFilters>({})
+
+// Options d'affichage
+const viewModes = VIEW_MODES
+
+// Computed
+const displayStats = computed(() => {
+  return productStore.globalStats
+})
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filters.value.category_id) count++
+  if (filters.value.supplier_id) count++
+  if (filters.value.min_price !== undefined) count++
+  if (filters.value.max_price !== undefined) count++
+  if (filters.value.min_stock !== undefined) count++
+  if (filters.value.max_stock !== undefined) count++
+  if (filters.value.is_active !== undefined) count++
+  if (filters.value.low_stock) count++
+  return count
+})
+
+const hasActiveFilters = computed(() => {
+  return activeFiltersCount.value > 0 || searchQuery.value.trim().length > 0
+})
+
+// Watchers
+let searchTimeout: number
+watch(searchQuery, (newQuery) => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    productStore.applySearch(newQuery)
+    applyFilters()
+  }, 300)
+})
+
+// Actions
+function getViewModeIcon(mode: string) {
+  const icons = {
+    grid: 'svg',
+    list: 'svg', 
+    table: 'svg'
+  }
+  return icons[mode as keyof typeof icons] || 'svg'
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  productStore.applySearch('')
+  applyFilters()
+}
+
+function applyFilters() {
+  productStore.setFilters(filters.value)
+  productStore.fetchProducts(1, productStore.perPage, {
+    ...filters.value,
+    search: searchQuery.value.trim() || undefined
+  })
+}
+
+function clearFilters() {
+  filters.value = {}
+  searchQuery.value = ''
+  productStore.clearFilters()
+  productStore.fetchProducts()
+}
+
+async function refreshProducts() {
+  await Promise.all([
+    productStore.fetchProducts(productStore.currentPage, productStore.perPage, filters.value),
+    productStore.fetchGlobalStats(),
+    categoryStore.fetchCategories(),
+    productStore.fetchSuppliers()
+  ])
+}
+
+function editProduct(product: Product) {
+  selectedProduct.value = product
+  showEditModal.value = true
+}
+
+async function deleteProduct(product: Product) {
+  if (confirm(`Êtes-vous sûr de vouloir supprimer "${product.name}" ?`)) {
+    try {
+      await productStore.deleteProduct(product.id)
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
+    }
+  }
+}
+
+async function updateStock(product: Product, newStock: number) {
+  try {
+    await productStore.updateStock(product.id, newStock)
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du stock:', error)
+  }
+}
+
+function nextPage() {
+  if (productStore.hasNextPage) {
+    productStore.fetchProducts(productStore.currentPage + 1, productStore.perPage, filters.value)
+  }
+}
+
+function previousPage() {
+  if (productStore.hasPrevPage) {
+    productStore.fetchProducts(productStore.currentPage - 1, productStore.perPage, filters.value)
+  }
+}
+
+function handleProductCreated() {
+  showCreateModal.value = false
+  refreshProducts()
+}
+
+function handleProductUpdated() {
+  showEditModal.value = false
+  selectedProduct.value = null
+  refreshProducts()
+}
+
+// Cycle de vie
+onMounted(async () => {
+  await refreshProducts()
+})
+</script>

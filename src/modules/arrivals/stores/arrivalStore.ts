@@ -83,7 +83,24 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    async function validateArrival(arrivalId: string): Promise<void> {
+    // Récupération d'un arrivage spécifique
+    async function getArrival(arrivalId: string): Promise<Arrival> {
+        loading.value = true
+        error.value = null
+
+        try {
+            const arrival = await arrivalService.getArrival(arrivalId)
+            currentArrival.value = arrival
+            return arrival
+        } catch (err: any) {
+            error.value = err.message || 'Erreur lors du chargement de l\'arrivage'
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    async function validateArrival(arrivalId: string): Promise<Arrival> {
         actionLoading.value = true
         error.value = null
 
@@ -103,6 +120,8 @@ export const useArrivalStore = defineStore('arrivals', () => {
 
             // Recalculer les statistiques
             calculateStats()
+
+            return updatedArrival
         } catch (err: any) {
             error.value = err.message || 'Erreur lors de la validation de l\'arrivage'
             throw err
@@ -268,6 +287,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
 
         // Actions
         fetchArrivals,
+        getArrival,
         createArrival,
         validateArrival,
         updateArrival,

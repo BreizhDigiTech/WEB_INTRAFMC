@@ -236,6 +236,81 @@
                   </svg>
                 </router-link>
               </li>
+
+              <!-- Produits -->
+              <li>
+                <router-link
+                  to="/products"
+                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-red-600/20 transition-all duration-200 group"
+                  :class="{ 'bg-gradient-to-r from-orange-500/20 to-red-600/20 text-orange-400 shadow-lg': $route.path.startsWith('/products') }"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors duration-200"
+                       :class="{ 'bg-orange-500/30': $route.path.startsWith('/products') }">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 9h6" />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-semibold">Produits</span>
+                    <div class="text-xs text-gray-500">Catalogue produits</div>
+                  </div>
+                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" 
+                       :class="{ 'opacity-100': $route.path.startsWith('/products') }"
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </router-link>
+              </li>
+
+              <!-- Catégories -->
+              <li>
+                <router-link
+                  to="/categories"
+                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-600/20 transition-all duration-200 group"
+                  :class="{ 'bg-gradient-to-r from-purple-500/20 to-pink-600/20 text-purple-400 shadow-lg': $route.path.startsWith('/categories') }"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors duration-200"
+                       :class="{ 'bg-purple-500/30': $route.path.startsWith('/categories') }">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-semibold">Catégories</span>
+                    <div class="text-xs text-gray-500">Gestion des catégories</div>
+                  </div>
+                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" 
+                       :class="{ 'opacity-100': $route.path.startsWith('/categories') }"
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </router-link>
+              </li>
+
+              <!-- Fournisseurs -->
+              <li>
+                <router-link
+                  to="/suppliers"
+                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-600/20 transition-all duration-200 group"
+                  :class="{ 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 text-cyan-400 shadow-lg': $route.path.startsWith('/suppliers') }"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors duration-200"
+                       :class="{ 'bg-cyan-500/30': $route.path.startsWith('/suppliers') }">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m4 0v-4a1 1 0 011-1h1a1 1 0 011 1v4M7 7h10M7 11h4" />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-semibold">Fournisseurs</span>
+                    <div class="text-xs text-gray-500">Gestion des fournisseurs</div>
+                  </div>
+                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" 
+                       :class="{ 'opacity-100': $route.path.startsWith('/suppliers') }"
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </router-link>
+              </li>
             </ul>
             
             <!-- Section info -->

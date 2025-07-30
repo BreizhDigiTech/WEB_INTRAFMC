@@ -109,6 +109,44 @@ const routes: RouteRecordRaw[] = [
                 meta: {
                     title: 'Arrivages - WEB IntraFMC'
                 }
+            },
+            {
+                path: '/arrivals/:id',
+                name: 'ArrivalDetail',
+                component: () => import('@/modules/arrivals/views/ArrivalDetailView.vue'),
+                meta: {
+                    title: 'Détail arrivage - WEB IntraFMC'
+                }
+            },
+
+            // Gestion des produits
+            {
+                path: '/products',
+                name: 'Products',
+                component: () => import('@/modules/products/views/ProductsView.vue'),
+                meta: {
+                    title: 'Produits - WEB IntraFMC'
+                }
+            },
+
+            // Gestion des catégories
+            {
+                path: '/categories',
+                name: 'Categories',
+                component: () => import('@/modules/categories/views/CategoriesView.vue'),
+                meta: {
+                    title: 'Catégories - WEB IntraFMC'
+                }
+            },
+
+            // Gestion des fournisseurs
+            {
+                path: '/suppliers',
+                name: 'Suppliers',
+                component: () => import('@/modules/suppliers/views/SuppliersView.vue'),
+                meta: {
+                    title: 'Fournisseurs - WEB IntraFMC'
+                }
             }
         ]
     },
