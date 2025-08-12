@@ -1,6 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import type { RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
 // Guards d'authentification
 const requireAuth = async (to: any, from: any, next: any) => {
@@ -111,6 +111,14 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
+                path: '/arrivals/create',
+                name: 'CreateArrival',
+                component: () => import('@/modules/arrivals/views/CreateArrivalView.vue'),
+                meta: {
+                    title: 'Créer un arrivage - WEB IntraFMC'
+                }
+            },
+            {
                 path: '/arrivals/:id',
                 name: 'ArrivalDetail',
                 component: () => import('@/modules/arrivals/views/ArrivalDetailView.vue'),
@@ -136,16 +144,6 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/modules/categories/views/CategoriesView.vue'),
                 meta: {
                     title: 'Catégories - WEB IntraFMC'
-                }
-            },
-
-            // Gestion des fournisseurs
-            {
-                path: '/suppliers',
-                name: 'Suppliers',
-                component: () => import('@/modules/suppliers/views/SuppliersView.vue'),
-                meta: {
-                    title: 'Fournisseurs - WEB IntraFMC'
                 }
             }
         ]

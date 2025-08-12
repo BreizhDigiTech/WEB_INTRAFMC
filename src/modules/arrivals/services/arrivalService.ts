@@ -1,18 +1,22 @@
 // Service GraphQL pour la gestion des arrivages
 import { graphqlService } from '../../../shared/services/graphql'
 import type {
-    Arrival,
+    ArrivalDetailQueryVariables,
+    ArrivalsQueryVariables,
     ArrivalsResponse,
+    CbdArrival,
     CreateArrivalInput,
     UpdateArrivalInput,
-    ArrivalFilters
+    ValidateArrivalVariables
 } from '../types'
 
 export const arrivalService = {
     /**
      * Récupère la liste des arrivages avec pagination
      */
-    async getArrivals(first = 15, page = 1): Promise<ArrivalsResponse> {
+    async getArrivals(variables: ArrivalsQueryVariables = {}): Promise<ArrivalsResponse> {
+        const { first = 15, page = 1, filters } = variables
+        
         const query = `
             query GetArrivals($first: Int, $page: Int) {
                 arrivals(first: $first, page: $page) {
@@ -27,14 +31,23 @@ export const arrivalService = {
                         amount
                         status
                         created_at
+                        updated_at
                         products {
                             id
+                            product_id
                             quantity
                             unit_price
                             product {
                                 id
                                 name
+                                price
+                                stock
                                 images
+                                description
+                                category {
+                                    id
+                                    name
+                                }
                             }
                         }
                     }
@@ -49,7 +62,7 @@ export const arrivalService = {
     /**
      * Récupère un arrivage spécifique
      */
-    async getArrival(arrivalId: string): Promise<Arrival> {
+    async getArrival(variables: ArrivalDetailQueryVariables): Promise<CbdArrival> {
         const query = `
             query GetArrivalDetail($arrivalId: ID!) {
                 arrival(arrival_id: $arrivalId) {
@@ -60,35 +73,28 @@ export const arrivalService = {
                     updated_at
                     products {
                         id
+                        product_id
                         quantity
+                        unit_price
                         product {
                             id
                             name
-                            description
                             price
                             stock
-                            category {
-                                id
-                                name
-                            }
-                            suppliers {
-                                id
-                                name
-                            }
                         }
                     }
                 }
             }
         `
 
-        const response = await graphqlService.request(query, { arrivalId })
+        const response = await graphqlService.request(query, { arrivalId: variables.id })
         return response.arrival
     },
 
     /**
      * Crée un nouvel arrivage
      */
-    async createArrival(input: CreateArrivalInput): Promise<Arrival> {
+    async createArrival(input: CreateArrivalInput): Promise<CbdArrival> {
         const mutation = `
             mutation CreateArrival($input: CreateArrivalInput!) {
                 createArrival(input: $input) {
@@ -96,6 +102,7 @@ export const arrivalService = {
                     amount
                     status
                     created_at
+                    updated_at
                     products {
                         id
                         product_id
@@ -104,6 +111,8 @@ export const arrivalService = {
                         product {
                             id
                             name
+                            price
+                            stock
                             images
                         }
                     }
@@ -118,7 +127,7 @@ export const arrivalService = {
     /**
      * Met à jour un arrivage
      */
-    async updateArrival(id: string, input: UpdateArrivalInput): Promise<Arrival> {
+    async updateArrival(id: string, input: UpdateArrivalInput): Promise<CbdArrival> {
         const mutation = `
             mutation UpdateArrival($id: ID!, $input: UpdateArrivalInput!) {
                 updateArrival(id: $id, input: $input) {
@@ -126,6 +135,7 @@ export const arrivalService = {
                     amount
                     status
                     created_at
+                    updated_at
                     products {
                         id
                         product_id
@@ -134,6 +144,8 @@ export const arrivalService = {
                         product {
                             id
                             name
+                            price
+                            stock
                             images
                         }
                     }
@@ -162,9 +174,9 @@ export const arrivalService = {
     },
 
     /**
-     * Valide un arrivage
+     * Valide un arrivage (met à jour automatiquement les stocks)
      */
-    async validateArrival(id: string): Promise<Arrival> {
+    async validateArrival(variables: ValidateArrivalVariables): Promise<CbdArrival> {
         const mutation = `
             mutation ValidateArrival($arrivalId: ID!) {
                 validateArrival(arrival_id: $arrivalId) {
@@ -175,11 +187,13 @@ export const arrivalService = {
                     updated_at
                     products {
                         id
+                        product_id
                         quantity
                         unit_price
                         product {
                             id
                             name
+                            price
                             stock
                         }
                     }
@@ -187,7 +201,53 @@ export const arrivalService = {
             }
         `
 
-        const response = await graphqlService.request(mutation, { arrivalId: id })
+        const response = await graphqlService.request(mutation, { arrivalId: variables.id })
         return response.validateArrival
+    },
+
+    /**
+     * Récupère la liste des produits pour la sélection
+     */
+    async getProducts(first = 50, page = 1) {
+        const query = `
+            query GetProducts($first: Int, $page: Int) {
+                products(first: $first, page: $page) {
+                    data {
+                        id
+                        name
+                        description
+                        price
+                        stock
+                        categories {
+                            id
+                            name
+                        }
+                    }
+                }
+            }
+        `
+
+        const response = await graphqlService.request(query, { first, page })
+        return response.products.data
+    },
+
+    /**
+     * Récupère la liste des fournisseurs
+     */
+    async getSuppliers() {
+        const query = `
+            query GetSuppliers {
+                suppliers {
+                    id
+                    name
+                    contact_email
+                    phone
+                    address
+                }
+            }
+        `
+
+        const response = await graphqlService.request(query)
+        return response.suppliers
     }
 }

@@ -1,18 +1,19 @@
-import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import { arrivalService } from '../services/arrivalService'
 import type {
-    Arrival,
+    ArrivalFilters,
+    ArrivalsQueryVariables,
     ArrivalsResponse,
+    CbdArrival,
     CreateArrivalInput,
-    UpdateArrivalInput,
-    ArrivalFilters
+    UpdateArrivalInput
 } from '../types'
 
 export const useArrivalStore = defineStore('arrivals', () => {
     // État
-    const arrivals = ref<Arrival[]>([])
-    const currentArrival = ref<Arrival | null>(null)
+    const arrivals = ref<CbdArrival[]>([])
+    const currentArrival = ref<CbdArrival | null>(null)
     const loading = ref(false)
     const actionLoading = ref(false)
     const error = ref<string | null>(null)
@@ -37,12 +38,12 @@ export const useArrivalStore = defineStore('arrivals', () => {
     const hasNextPage = computed(() => hasMorePages.value)
 
     // Actions
-    async function fetchArrivals(page = 1, limit = 15) {
+    async function fetchArrivals(variables: ArrivalsQueryVariables = {}) {
         loading.value = true
         error.value = null
 
         try {
-            const response: ArrivalsResponse = await arrivalService.getArrivals(limit, page)
+            const response: ArrivalsResponse = await arrivalService.getArrivals(variables)
 
             arrivals.value = response.data
             currentPage.value = response.paginatorInfo.currentPage
@@ -60,7 +61,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    async function createArrival(arrivalData: CreateArrivalInput): Promise<Arrival> {
+    async function createArrival(arrivalData: CreateArrivalInput): Promise<CbdArrival> {
         actionLoading.value = true
         error.value = null
 
@@ -84,12 +85,12 @@ export const useArrivalStore = defineStore('arrivals', () => {
     }
 
     // Récupération d'un arrivage spécifique
-    async function getArrival(arrivalId: string): Promise<Arrival> {
+    async function getArrival(arrivalId: string): Promise<CbdArrival> {
         loading.value = true
         error.value = null
 
         try {
-            const arrival = await arrivalService.getArrival(arrivalId)
+            const arrival = await arrivalService.getArrival({ id: arrivalId })
             currentArrival.value = arrival
             return arrival
         } catch (err: any) {
@@ -100,12 +101,12 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    async function validateArrival(arrivalId: string): Promise<Arrival> {
+    async function validateArrival(arrivalId: string): Promise<CbdArrival> {
         actionLoading.value = true
         error.value = null
 
         try {
-            const updatedArrival = await arrivalService.validateArrival(arrivalId)
+            const updatedArrival = await arrivalService.validateArrival({ id: arrivalId })
 
             // Mettre à jour l'arrivage dans la liste
             const index = arrivals.value.findIndex(a => a.id === arrivalId)
@@ -184,7 +185,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    function setCurrentArrival(arrival: Arrival | null) {
+    function setCurrentArrival(arrival: CbdArrival | null) {
         currentArrival.value = arrival
     }
 
@@ -236,19 +237,19 @@ export const useArrivalStore = defineStore('arrivals', () => {
 
     async function nextPage() {
         if (hasNextPage.value) {
-            await fetchArrivals(currentPage.value + 1, perPage.value)
+            await fetchArrivals({ first: perPage.value, page: currentPage.value + 1 })
         }
     }
 
     async function prevPage() {
         if (hasPrevPage.value) {
-            await fetchArrivals(currentPage.value - 1, perPage.value)
+            await fetchArrivals({ first: perPage.value, page: currentPage.value - 1 })
         }
     }
 
     async function goToPage(page: number) {
         if (page >= 1) {
-            await fetchArrivals(page, perPage.value)
+            await fetchArrivals({ first: perPage.value, page })
         }
     }
 

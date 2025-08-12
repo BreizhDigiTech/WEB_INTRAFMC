@@ -45,9 +45,24 @@ Thumbs.db
 # Cache
 .cache
 .parcel-cache
+.vite
 
 # TypeScript
 *.tsbuildinfo
+
+# Testing
+coverage
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Lock files (keep only one)
+# yarn.lock
+# pnpm-lock.yaml
 
 # Coverage directory used by tools like istanbul
 coverage

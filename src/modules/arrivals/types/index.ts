@@ -1,20 +1,45 @@
 // Types pour le module de gestion des arrivages (basé sur les schémas GraphQL backend)
 
-export interface Arrival {
+// Type principal CbdArrival selon la spécification
+export interface CbdArrival {
     id: string
     amount: number           // Montant total de l'arrivage
-    status: string          // Statut de l'arrivage
-    created_at?: string
-    updated_at?: string
-    products?: ArrivalProduct[]
+    status: 'pending' | 'validated'  // Statut de l'arrivage
+    created_at: string
+    updated_at: string
+    products: ArrivalProductCbd[]
 }
 
-export interface ArrivalProduct {
+// Alias pour compatibilité
+export interface Arrival extends CbdArrival {}
+
+// Type ArrivalProductCbd selon la spécification
+export interface ArrivalProductCbd {
     id: string
+    product_id: string
     quantity: number         // Quantité du produit dans l'arrivage
-    unit_price?: number      // Prix unitaire du produit dans l'arrivage
-    product?: ProductDetail  // Référence au produit avec détails complets
+    unit_price: number      // Prix unitaire du produit dans l'arrivage
+    product: {              // Référence au produit avec détails complets
+        id: string
+        name: string
+        price: number
+        stock: number
+        // Autres propriétés du produit disponibles
+        description?: string
+        images?: string[]
+        category?: {
+            id: string
+            name: string
+        }
+        suppliers?: {
+            id: string
+            name: string
+        }[]
+    }
 }
+
+// Alias pour compatibilité
+export interface ArrivalProduct extends ArrivalProductCbd {}
 
 export interface ProductDetail {
     id: string
@@ -40,11 +65,9 @@ export interface ProductCBD {
     stock?: number          // Stock actuel du produit
 }
 
-export type ArrivalStatus =
-    | 'pending'     // En attente de validation
-    | 'validated'   // Validé
+export type ArrivalStatus = 'pending' | 'validated'
 
-// Interface pour la pagination (basée sur l'API fournie)
+// Interface pour la pagination Lighthouse
 export interface PaginatorInfo {
     currentPage: number
     hasMorePages: boolean
@@ -54,22 +77,22 @@ export interface PaginatorInfo {
 
 export interface ArrivalsResponse {
     paginatorInfo: PaginatorInfo
-    data: Arrival[]
+    data: CbdArrival[]
 }
 
 // Interface pour les filtres
 export interface ArrivalFilters {
-    status?: string[]
+    status?: ArrivalStatus[]
     date_from?: string
     date_to?: string
     min_amount?: number
     max_amount?: number
 }
 
-// Interfaces pour créer un arrivage (basées sur CreateArrivalInput)
+// Interfaces pour créer un arrivage (selon GraphQL mutations)
 export interface CreateArrivalInput {
-    amount: number
-    status: string
+    amount: number           // Obligatoire selon l'API GraphQL
+    status: ArrivalStatus    // Obligatoire selon l'API GraphQL
     products: CreateArrivalProductInput[]
 }
 
@@ -79,10 +102,10 @@ export interface CreateArrivalProductInput {
     unit_price: number
 }
 
-// Interfaces pour mettre à jour un arrivage (basées sur UpdateArrivalInput)
+// Interfaces pour mettre à jour un arrivage
 export interface UpdateArrivalInput {
     amount?: number
-    status?: string
+    status?: ArrivalStatus
     products?: UpdateArrivalProductInput[]
 }
 
@@ -90,4 +113,40 @@ export interface UpdateArrivalProductInput {
     product_id?: string
     quantity?: number
     unit_price?: number
+}
+
+// Variables pour les queries GraphQL
+export interface ArrivalsQueryVariables {
+    first?: number
+    page?: number
+    filters?: ArrivalFilters
+}
+
+export interface ArrivalDetailQueryVariables {
+    id: string
+}
+
+export interface ValidateArrivalVariables {
+    id: string
+}
+
+// Interfaces pour le modal de création (formulaire)
+export interface CreateArrivalData {
+    supplier_id: string
+    reference: string
+    expected_date: string
+    notes?: string
+    products: CreateArrivalProductData[]
+}
+
+export interface CreateArrivalProductData {
+    product_id: string
+    quantity: number
+    unit_price: number
+    product?: {
+        id: string
+        name: string
+        price: number
+        stock: number
+    }
 }
