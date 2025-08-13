@@ -45,6 +45,11 @@ export class OrderService extends GraphQLService {
                         total
                         status
                         created_at
+                        user {
+                            id
+                            name
+                            email
+                        }
                     }
                 }
             }
@@ -67,6 +72,11 @@ export class OrderService extends GraphQLService {
                         status
                         created_at
                         updated_at
+                        user {
+                            id
+                            name
+                            email
+                        }
                     }
                 }
             }
@@ -118,15 +128,6 @@ export class OrderService extends GraphQLService {
                         total
                         status
                         created_at
-                        updated_at
-                        products {
-                            id
-                            name
-                            pivot {
-                                quantity
-                                unit_price
-                            }
-                        }
                         user {
                             id
                             name
@@ -151,17 +152,10 @@ export class OrderService extends GraphQLService {
                         status
                         created_at
                         updated_at
-                        products {
+                        user {
                             id
                             name
-                            pivot {
-                                quantity
-                                unit_price
-                            }
-                        }
-                    }
-                }
-            }
+                            email
                         }
                     }
                 }
