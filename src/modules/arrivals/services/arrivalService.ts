@@ -1,10 +1,10 @@
 // Service GraphQL pour la gestion des arrivages
 import { graphqlService } from '../../../shared/services/graphql'
 import type {
+    Arrival,
     ArrivalDetailQueryVariables,
     ArrivalsQueryVariables,
     ArrivalsResponse,
-    CbdArrival,
     CreateArrivalInput,
     UpdateArrivalInput,
     ValidateArrivalVariables
@@ -62,7 +62,7 @@ export const arrivalService = {
     /**
      * Récupère un arrivage spécifique
      */
-    async getArrival(variables: ArrivalDetailQueryVariables): Promise<CbdArrival> {
+    async getArrival(variables: ArrivalDetailQueryVariables): Promise<Arrival> {
         const query = `
             query GetArrivalDetail($arrivalId: ID!) {
                 arrival(arrival_id: $arrivalId) {
@@ -94,7 +94,7 @@ export const arrivalService = {
     /**
      * Crée un nouvel arrivage
      */
-    async createArrival(input: CreateArrivalInput): Promise<CbdArrival> {
+    async createArrival(input: CreateArrivalInput): Promise<Arrival> {
         const mutation = `
             mutation CreateArrival($input: CreateArrivalInput!) {
                 createArrival(input: $input) {
@@ -127,7 +127,7 @@ export const arrivalService = {
     /**
      * Met à jour un arrivage
      */
-    async updateArrival(id: string, input: UpdateArrivalInput): Promise<CbdArrival> {
+    async updateArrival(id: string, input: UpdateArrivalInput): Promise<Arrival> {
         const mutation = `
             mutation UpdateArrival($id: ID!, $input: UpdateArrivalInput!) {
                 updateArrival(id: $id, input: $input) {
@@ -176,7 +176,7 @@ export const arrivalService = {
     /**
      * Valide un arrivage (met à jour automatiquement les stocks)
      */
-    async validateArrival(variables: ValidateArrivalVariables): Promise<CbdArrival> {
+    async validateArrival(variables: ValidateArrivalVariables): Promise<Arrival> {
         const mutation = `
             mutation ValidateArrival($arrivalId: ID!) {
                 validateArrival(arrival_id: $arrivalId) {
@@ -229,25 +229,7 @@ export const arrivalService = {
 
         const response = await graphqlService.request(query, { first, page })
         return response.products.data
-    },
-
-    /**
-     * Récupère la liste des fournisseurs
-     */
-    async getSuppliers() {
-        const query = `
-            query GetSuppliers {
-                suppliers {
-                    id
-                    name
-                    contact_email
-                    phone
-                    address
-                }
-            }
-        `
-
-        const response = await graphqlService.request(query)
-        return response.suppliers
     }
+
+    // Suppression de getSuppliers() selon consigne d'ignorer les suppliers
 }

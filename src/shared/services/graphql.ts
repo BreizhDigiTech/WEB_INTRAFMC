@@ -1,9 +1,8 @@
 // Service GraphQL centralisé pour WEB_INTRAFMC
 
-import type { ApiError } from '@/shared/types'
 
 export class GraphQLService {
-  private endpoint = 'http://localhost:8000/graphql'
+  private endpoint = ((import.meta as any).env?.VITE_GRAPHQL_ENDPOINT as string) || 'http://localhost:8000/graphql'
   private token: string | null = null
 
   setToken(token: string | null) {
@@ -15,6 +14,57 @@ export class GraphQLService {
     }
   }
 
+  // Upload d'un fichier via une mutation GraphQL dédiée (ex: testUpload(file: Upload!): String)
+  async uploadGraphqlSingle(file: File, mutationName: string = 'testUpload'): Promise<string> {
+    const query = `mutation($file: Upload!) { ${mutationName}(file: $file) }`
+    const variables = { file: null }
+    const filesMap: Record<string, File> = { 'variables.file': file }
+    const data = await this.requestMultipart<{ [key: string]: string }>(query, variables, filesMap)
+    const key = mutationName
+    const value = (data as any)?.[key]
+    if (!value || typeof value !== 'string') {
+      throw new GraphQLError(`Upload mutation "${mutationName}" did not return a string path`)
+    }
+    return value
+  }
+  // Upload de fichier via FormData vers une route REST dédiée
+  // Hypothèse: endpoint REST d'upload disponible à /api/upload (même host que GraphQL)
+  // Configurable via VITE_UPLOAD_PATH (ex: "/api/upload" ou "/upload").
+  async uploadFile(file: File, folder: string = 'products'): Promise<string> {
+    // 1) URL absolue prioritaire
+    const envUploadUrl = (import.meta as any).env?.VITE_UPLOAD_URL as string | undefined
+    // 2) Sinon construit depuis la base de l'endpoint GraphQL + PATH
+    const base = this.endpoint.replace(/\/?graphql$/, '')
+    const uploadPath = (import.meta as any).env?.VITE_UPLOAD_PATH || '/upload'
+    const url = envUploadUrl || (base + uploadPath)
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', folder)
+
+    const headers: Record<string, string> = { 'Accept': 'application/json' }
+    const token = this.getToken()
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData
+    })
+
+    if (!resp.ok) {
+      throw new GraphQLError(`Upload failed: ${resp.status} ${resp.statusText}`)
+    }
+
+  const data = await resp.json().catch(() => ({}))
+
+  // Tente plusieurs clés possibles renvoyées par l'API
+  const value = data?.url || data?.path || data?.filename || data?.file || data?.data?.url || data?.data?.path || ''
+    if (!value) {
+      throw new GraphQLError('Upload succeeded but no file path/url returned')
+    }
+    return value as string
+  }
   getToken(): string | null {
     if (!this.token) {
       this.token = localStorage.getItem('auth_token')
@@ -69,6 +119,62 @@ export class GraphQLService {
     }
   }
 
+  // Requête GraphQL en multipart/form-data (spec GraphQL multipart request)
+  async requestMultipart<T = any>(
+    query: string,
+    variables: any,
+    filesMap: Record<string, File>
+  ): Promise<T> {
+    try {
+      const form = new FormData()
+
+      // operations
+      form.append('operations', JSON.stringify({ query, variables }))
+
+      // map: { "0": ["variables.input.images.0"], ... }
+      const map: Record<string, string[]> = {}
+      const entries = Object.entries(filesMap)
+      entries.forEach(([path], idx) => {
+        map[String(idx)] = [path]
+      })
+      form.append('map', JSON.stringify(map))
+
+      // fichiers indexés
+      entries.forEach(([, file], idx) => {
+        form.append(String(idx), file)
+      })
+
+      const headers: Record<string, string> = { 'Accept': 'application/json' }
+      const token = this.getToken()
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers, // ne pas définir Content-Type pour laisser le boundary
+        body: form
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      if (result.errors) {
+        const error = result.errors[0]
+        throw new GraphQLError(error.message, error.extensions)
+      }
+
+      return result.data
+    } catch (error) {
+      if (error instanceof GraphQLError) {
+        throw error
+      }
+      throw new GraphQLError(
+        error instanceof Error ? error.message : 'Une erreur inconnue est survenue'
+      )
+    }
+  }
   // Méthodes pour l'authentification
   async login(email: string, password: string) {
     const query = `
@@ -177,12 +283,7 @@ export class GraphQLService {
             name
             description
           }
-          suppliers {
-            id
-            name
-            email
-            phone
-          }
+          // suppliers supprimés selon consigne
         }
       }
     `

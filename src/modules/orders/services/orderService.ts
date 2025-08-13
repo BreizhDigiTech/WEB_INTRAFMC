@@ -1,13 +1,13 @@
 // Service GraphQL pour la gestion des commandes
 import { GraphQLService } from '@/shared/services/graphql'
+import type { PaginatedResponse } from '@/shared/types'
+import { useAuthStore } from '@/stores/auth'
+import jsPDF from 'jspdf'
 import type {
     Order,
     OrderFilters,
     UpdateOrderData
 } from '../types'
-import type { PaginatedResponse } from '@/shared/types'
-import { useAuthStore } from '@/stores/auth'
-import jsPDF from 'jspdf'
 
 export class OrderService extends GraphQLService {
     /**
@@ -16,7 +16,7 @@ export class OrderService extends GraphQLService {
      * Utilise la query admin si l'utilisateur est admin (avec détails des produits)
      * Applique les filtres côté client si l'API GraphQL ne les supporte pas
      */
-    async getOrders(filters: OrderFilters = {}, page = 1, limit = 20): Promise<PaginatedResponse<Order>> {
+    async getOrders(filters: OrderFilters = {}, page = 1, limit = 20, forceUserRole?: boolean): Promise<PaginatedResponse<Order>> {
         // Vérifier la limite maximale autorisée par l'API GraphQL
         if (limit > 50) {
             console.warn(`Limite de ${limit} éléments réduite à 50 (limite maximale de l'API GraphQL)`)
@@ -29,7 +29,7 @@ export class OrderService extends GraphQLService {
         // Variables GraphQL
         const variables: any = { first: limit, page }
 
-        // Query pour les administrateurs avec détails des produits
+        // Query pour les administrateurs avec détails des produits (tous les commandes)
         const adminQuery = `
             query GetAllOrders($first: Int, $page: Int) {
                 orders(first: $first, page: $page) {
@@ -45,30 +45,15 @@ export class OrderService extends GraphQLService {
                         total
                         status
                         created_at
-                        updated_at
-                        products {
-                            id
-                            name
-                            price
-                            pivot {
-                                quantity
-                                unit_price
-                            }
-                        }
-                        user {
-                            id
-                            name
-                            email
-                        }
                     }
                 }
             }
         `
 
-        // Query pour les utilisateurs normaux (sans détails des produits)
+        // Query pour les utilisateurs normaux (leurs commandes uniquement)
         const userQuery = `
-            query GetOrders($first: Int, $page: Int) {
-                orders(first: $first, page: $page) {
+            query GetMyOrders($first: Int, $page: Int) {
+                myOrders(first: $first, page: $page) {
                     paginatorInfo {
                         currentPage
                         hasMorePages
@@ -82,11 +67,6 @@ export class OrderService extends GraphQLService {
                         status
                         created_at
                         updated_at
-                        user {
-                            id
-                            name
-                            email
-                        }
                     }
                 }
             }
@@ -96,16 +76,17 @@ export class OrderService extends GraphQLService {
 
         return this.request(query, variables)
             .then((response: any) => {
-                const orders = response.orders
+                // Adapter selon la query utilisée (orders pour admin, myOrders pour user)
+                const ordersData = isAdmin ? response.orders : response.myOrders
                 return {
-                    data: orders.data,
+                    data: ordersData.data,
                     pagination: {
-                        total: orders.paginatorInfo.total,
-                        per_page: orders.paginatorInfo.perPage,
-                        current_page: orders.paginatorInfo.currentPage,
-                        last_page: orders.paginatorInfo.lastPage,
-                        from: ((orders.paginatorInfo.currentPage - 1) * orders.paginatorInfo.perPage) + 1,
-                        to: Math.min(orders.paginatorInfo.currentPage * orders.paginatorInfo.perPage, orders.paginatorInfo.total)
+                        total: ordersData.paginatorInfo.total,
+                        per_page: ordersData.paginatorInfo.perPage,
+                        current_page: ordersData.paginatorInfo.currentPage,
+                        last_page: ordersData.paginatorInfo.lastPage,
+                        from: ((ordersData.paginatorInfo.currentPage - 1) * ordersData.paginatorInfo.perPage) + 1,
+                        to: Math.min(ordersData.paginatorInfo.currentPage * ordersData.paginatorInfo.perPage, ordersData.paginatorInfo.total)
                     }
                 }
             })
@@ -114,7 +95,7 @@ export class OrderService extends GraphQLService {
     /**
      * Récupère les commandes avec filtres - charge toutes les pages nécessaires pour filtrer correctement
      */
-    async getOrdersWithFilters(filters: OrderFilters, targetPage = 1, targetLimit = 20): Promise<PaginatedResponse<Order>> {
+    async getOrdersWithFilters(filters: OrderFilters, targetPage = 1, targetLimit = 20, forceUserRole?: boolean): Promise<PaginatedResponse<Order>> {
         const authStore = useAuthStore()
         const isAdmin = authStore.isAdmin
 
@@ -141,7 +122,6 @@ export class OrderService extends GraphQLService {
                         products {
                             id
                             name
-                            price
                             pivot {
                                 quantity
                                 unit_price
@@ -156,8 +136,8 @@ export class OrderService extends GraphQLService {
                 }
             }
         ` : `
-            query GetOrders($first: Int, $page: Int) {
-                orders(first: $first, page: $page) {
+            query GetMyOrders($first: Int, $page: Int) {
+                myOrders(first: $first, page: $page) {
                     paginatorInfo {
                         currentPage
                         hasMorePages
@@ -171,10 +151,17 @@ export class OrderService extends GraphQLService {
                         status
                         created_at
                         updated_at
-                        user {
+                        products {
                             id
                             name
-                            email
+                            pivot {
+                                quantity
+                                unit_price
+                            }
+                        }
+                    }
+                }
+            }
                         }
                     }
                 }
@@ -188,7 +175,7 @@ export class OrderService extends GraphQLService {
 
         while (hasMorePages && currentPage <= 20) { // Limite de sécurité à 20 pages (1000 commandes)
             const response: any = await this.request(query, { first: maxPerRequest, page: currentPage })
-            const orders = response.orders
+            const orders = isAdmin ? response.orders : response.myOrders
 
             allOrders.push(...orders.data)
             hasMorePages = orders.paginatorInfo.hasMorePages

@@ -208,10 +208,7 @@
                           <span v-if="arrivalProduct.product?.category" class="ml-2">
                             • {{ arrivalProduct.product.category.name }}
                           </span>
-                          <span v-if="arrivalProduct.product?.suppliers && arrivalProduct.product.suppliers.length > 0"
-                            class="ml-2">
-                            • {{ arrivalProduct.product.suppliers[0].name }}
-                          </span>
+                          <!-- suppliers supprimés (voir consigne) -->
                         </p>
                       </div>
                     </div>
@@ -249,12 +246,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { arrivalService } from '../services/arrivalService'
-import type { CbdArrival } from '../types'
+import type { Arrival } from '../types'
 
 const route = useRoute()
 const router = useRouter()
 
-const arrival = ref<CbdArrival | null>(null)
+const arrival = ref<Arrival | null>(null)
 const isLoading = ref(true)
 const loading = ref(false)
 const actionLoading = ref(false)

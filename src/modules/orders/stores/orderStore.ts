@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { Order, OrderStatus } from '../types'
-import type { PaginatedResponse } from '@/shared/types'
+import { computed, ref } from 'vue'
 import { orderService } from '../services/orderService'
+import type { Order } from '../types'
 
 interface OrderStats {
     total: number

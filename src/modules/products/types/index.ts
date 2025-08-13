@@ -15,7 +15,6 @@ export interface Product {
 
     // Relations de l'API
     categories?: ProductCategory[]
-    suppliers?: Supplier[]
 }
 
 export interface ProductCategory {
@@ -23,13 +22,6 @@ export interface ProductCategory {
     name: string
     description?: string
     created_at?: string
-}
-
-export interface Supplier {
-    id: string
-    name: string
-    email?: string
-    phone?: string
 }
 
 // Types pour la pagination automatique de l'API

@@ -136,6 +136,22 @@ const routes: RouteRecordRaw[] = [
                     title: 'Produits - WEB IntraFMC'
                 }
             },
+            {
+                path: '/products/create',
+                name: 'CreateProduct',
+                component: () => import('@/modules/products/views/CreateProductView.vue'),
+                meta: {
+                    title: 'Nouveau Produit - WEB IntraFMC'
+                }
+            },
+            {
+                path: '/products/:id',
+                name: 'ProductDetail',
+                component: () => import('@/modules/products/views/ProductDetailView.vue'),
+                meta: {
+                    title: 'Détail Produit - WEB IntraFMC'
+                }
+            },
 
             // Gestion des catégories
             {

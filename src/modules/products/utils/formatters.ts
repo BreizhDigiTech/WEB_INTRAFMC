@@ -1,7 +1,6 @@
 // Utilitaires de formatage pour le module produits
 
 import type { Product, ProductStatus } from '../types'
-import { LOW_STOCK_THRESHOLD } from '../constants'
 
 /**
  * Formate un prix en devise avec mise en cache
@@ -58,16 +57,12 @@ export function formatShortDate(dateString: string): string {
  * Détermine le statut d'un produit avec optimisation
  */
 export function getProductStatus(product: Product): ProductStatus {
-    // Si le champ is_active n'existe pas, on considère le produit comme actif
-    if (product.is_active === false) {
-        return 'inactive'
-    }
-
+    // Suppression des propriétés non existantes dans le type Product
     if (product.stock === 0) {
         return 'out_of_stock'
     }
 
-    const threshold = product.low_stock_threshold || LOW_STOCK_THRESHOLD
+    const threshold = 10 // LOW_STOCK_THRESHOLD par défaut
     if (product.stock <= threshold) {
         return 'low_stock'
     }
@@ -260,15 +255,15 @@ export function getProductImages(product: Product): string[] {
  * Détermine si un produit est en promotion (prix réduit)
  */
 export function isOnSale(product: Product): boolean {
-    return product.tags?.includes('Promotion') || false
+    // Suppression des tags non existants dans le type Product
+    return false
 }
 
 /**
  * Détermine si un produit est nouveau
  */
 export function isNewProduct(product: Product): boolean {
-    if (product.tags?.includes('Nouveauté')) return true
-
+    // Suppression des tags non existants dans le type Product
     const createdAt = new Date(product.created_at || '')
     const now = new Date()
     const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
@@ -294,23 +289,20 @@ export function formatFileSize(bytes: number | undefined | null): string {
  * Détermine si un produit a un fichier d'analyse
  */
 export function hasAnalysisFile(product: Product): boolean {
-    return !!(product.analysis_file && product.analysis_file_original_name)
+    return !!(product.analysis_file || product.analysis_file_url)
 }
 
 /**
  * Récupère le nom d'affichage du fichier d'analyse
  */
 export function getAnalysisFileName(product: Product): string {
-    return product.analysis_file_original_name || 'Fichier d\'analyse'
+    return 'Fichier d\'analyse'
 }
 
 /**
  * Récupère les métadonnées d'image formatées
  */
 export function getImageMetadata(product: Product): any {
-    try {
-        return product.image_metadata ? JSON.parse(product.image_metadata as string) : null
-    } catch {
-        return null
-    }
+    // Suppression des métadonnées image non existantes dans le type Product
+    return null
 }

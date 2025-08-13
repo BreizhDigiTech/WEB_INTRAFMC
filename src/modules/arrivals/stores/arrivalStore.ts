@@ -2,18 +2,18 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { arrivalService } from '../services/arrivalService'
 import type {
+    Arrival,
     ArrivalFilters,
     ArrivalsQueryVariables,
     ArrivalsResponse,
-    CbdArrival,
     CreateArrivalInput,
     UpdateArrivalInput
 } from '../types'
 
 export const useArrivalStore = defineStore('arrivals', () => {
     // État
-    const arrivals = ref<CbdArrival[]>([])
-    const currentArrival = ref<CbdArrival | null>(null)
+    const arrivals = ref<Arrival[]>([])
+    const currentArrival = ref<Arrival | null>(null)
     const loading = ref(false)
     const actionLoading = ref(false)
     const error = ref<string | null>(null)
@@ -61,7 +61,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    async function createArrival(arrivalData: CreateArrivalInput): Promise<CbdArrival> {
+    async function createArrival(arrivalData: CreateArrivalInput): Promise<Arrival> {
         actionLoading.value = true
         error.value = null
 
@@ -85,7 +85,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
     }
 
     // Récupération d'un arrivage spécifique
-    async function getArrival(arrivalId: string): Promise<CbdArrival> {
+    async function getArrival(arrivalId: string): Promise<Arrival> {
         loading.value = true
         error.value = null
 
@@ -101,7 +101,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    async function validateArrival(arrivalId: string): Promise<CbdArrival> {
+    async function validateArrival(arrivalId: string): Promise<Arrival> {
         actionLoading.value = true
         error.value = null
 
@@ -185,7 +185,7 @@ export const useArrivalStore = defineStore('arrivals', () => {
         }
     }
 
-    function setCurrentArrival(arrival: CbdArrival | null) {
+    function setCurrentArrival(arrival: Arrival | null) {
         currentArrival.value = arrival
     }
 

@@ -1,11 +1,72 @@
 import { graphqlService } from '../../../shared/services/graphql'
-import type { Product, CreateProductInput, UpdateProductInput, ProductsResponse, PaginatorInfo } from '../types'
+import type { CreateProductInput, Product, ProductsResponse, UpdateProductInput } from '../types'
 
 export const productService = {
+    async uploadProductImage(file: File): Promise<string> {
+        return graphqlService.uploadFile(file, 'products')
+    },
+    async uploadAnalysisFile(file: File): Promise<string> {
+        return graphqlService.uploadFile(file, 'products/analysis')
+    },
+        async uploadImageViaGraphql(file: File): Promise<string> {
+            return graphqlService.uploadGraphqlSingle(file, (import.meta as any).env?.VITE_GRAPHQL_UPLOAD_MUTATION || 'testUpload')
+        },
+        async uploadPdfViaGraphql(file: File): Promise<string> {
+            return graphqlService.uploadGraphqlSingle(file, (import.meta as any).env?.VITE_GRAPHQL_UPLOAD_MUTATION || 'testUpload')
+        },
+    async createProductWithFiles(input: Omit<CreateProductInput, 'images' | 'analysis_file'> & { images?: File[]; analysis_file?: File | null }): Promise<Product> {
+        const mutation = `
+            mutation CreateProduct($input: CreateProductInput!) {
+                createProduct(input: $input) {
+                    id
+                    name
+                    description
+                    price
+                    images
+                    stock
+                    analysis_file_url
+                    categories { id name }
+                    created_at
+                    updated_at
+                }
+            }
+        `
+
+        // Variables: insérer des nulls aux emplacements des fichiers
+        const variables: any = {
+            input: {
+                name: input.name,
+                description: input.description,
+                price: input.price,
+                stock: input.stock,
+                category_id: input.category_id,
+                images: input.images && input.images.length ? new Array(input.images.length).fill(null) : undefined,
+                analysis_file: input.analysis_file ? null : undefined
+            }
+        }
+
+        // map fichiers -> chemins GraphQL
+        const filesMap: Record<string, File> = {}
+        if (input.images && input.images.length) {
+            input.images.forEach((file, idx) => {
+                filesMap[`variables.input.images.${idx}`] = file
+            })
+        }
+        if (input.analysis_file) {
+            filesMap['variables.input.analysis_file'] = input.analysis_file
+        }
+
+        const data = await graphqlService.requestMultipart<{ createProduct: Product }>(
+            mutation,
+            variables,
+            filesMap
+        )
+        return (data as any).createProduct
+    },
   async getProducts(first: number = 10, page: number = 1): Promise<ProductsResponse> {
     const query = `
             query GetProducts($first: Int, $page: Int) {
-                products(first: $first, page: $page) {
+                productsCBD(first: $first, page: $page) {
                     paginatorInfo {
                         currentPage
                         hasMorePages
@@ -20,19 +81,11 @@ export const productService = {
                         price
                         images
                         stock
-                        analysis_file
                         analysis_file_url
                         category_id
                         categories {
                             id
                             name
-                            description
-                        }
-                        suppliers {
-                            id
-                            name
-                            email
-                            phone
                         }
                         created_at
                         updated_at
@@ -42,32 +95,24 @@ export const productService = {
         `
 
     const response = await graphqlService.request(query, { first, page })
-    return response.products
+    return response.productsCBD
   },
 
   async getProductById(id: string): Promise<Product> {
     const query = `
             query GetProduct($id: ID!) {
-                product(id: $id) {
+                productCBD(id: $id) {
                     id
                     name
                     description
                     price
                     images
                     stock
-                    analysis_file
                     analysis_file_url
-                    category_id
                     categories {
                         id
                         name
                         description
-                    }
-                    suppliers {
-                        id
-                        name
-                        email
-                        phone
                     }
                     created_at
                     updated_at
@@ -76,7 +121,7 @@ export const productService = {
         `
 
     const response = await graphqlService.request(query, { id })
-    return response.product
+    return response.productCBD
   },
 
   async createProduct(input: CreateProductInput): Promise<Product> {
@@ -89,17 +134,10 @@ export const productService = {
                     price
                     images
                     stock
-                    analysis_file
                     analysis_file_url
-                    category_id
                     categories {
                         id
                         name
-                    }
-                    suppliers {
-                        id
-                        name
-                        email
                     }
                     created_at
                     updated_at
@@ -121,17 +159,10 @@ export const productService = {
                     price
                     images
                     stock
-                    analysis_file
                     analysis_file_url
-                    category_id
                     categories {
                         id
                         name
-                    }
-                    suppliers {
-                        id
-                        name
-                        email
                     }
                     created_at
                     updated_at

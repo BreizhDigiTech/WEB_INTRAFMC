@@ -1,45 +1,34 @@
 // Types pour le module de gestion des arrivages (basé sur les schémas GraphQL backend)
 
 // Type principal CbdArrival selon la spécification
-export interface CbdArrival {
+
+export interface Arrival {
     id: string
     amount: number           // Montant total de l'arrivage
     status: 'pending' | 'validated'  // Statut de l'arrivage
     created_at: string
     updated_at: string
-    products: ArrivalProductCbd[]
+    products: ArrivalProduct[]
 }
 
-// Alias pour compatibilité
-export interface Arrival extends CbdArrival {}
-
-// Type ArrivalProductCbd selon la spécification
-export interface ArrivalProductCbd {
+export interface ArrivalProduct {
     id: string
     product_id: string
     quantity: number         // Quantité du produit dans l'arrivage
     unit_price: number      // Prix unitaire du produit dans l'arrivage
-    product: {              // Référence au produit avec détails complets
+    product: {
         id: string
         name: string
         price: number
         stock: number
-        // Autres propriétés du produit disponibles
         description?: string
         images?: string[]
         category?: {
             id: string
             name: string
         }
-        suppliers?: {
-            id: string
-            name: string
-        }[]
     }
 }
-
-// Alias pour compatibilité
-export interface ArrivalProduct extends ArrivalProductCbd {}
 
 export interface ProductDetail {
     id: string
@@ -51,10 +40,7 @@ export interface ProductDetail {
         id: string
         name: string
     }
-    suppliers?: {
-        id: string
-        name: string
-    }[]
+    // Suppression des suppliers selon consigne
 }
 
 // Interface pour compatibilité avec les autres modules
@@ -77,7 +63,7 @@ export interface PaginatorInfo {
 
 export interface ArrivalsResponse {
     paginatorInfo: PaginatorInfo
-    data: CbdArrival[]
+    data: Arrival[]
 }
 
 // Interface pour les filtres

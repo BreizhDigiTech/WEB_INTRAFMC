@@ -40,23 +40,15 @@
               </label>
             </div>
 
-            <!-- Fournisseur -->
-            <div class="form-control">
+            <!-- Fournisseur - Supprimé selon consigne -->
+            <!-- <div class="form-control">
               <label class="label">
                 <span class="label-text text-gray-300">Fournisseur *</span>
               </label>
-              <select v-model="formData.supplier_id"
-                class="select select-bordered bg-gray-700 border-gray-600 text-white focus:border-green-500"
-                :class="{ 'select-error': errors.supplier_id }" required>
-                <option value="">Sélectionner un fournisseur</option>
-                <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
-                  {{ supplier.name }} {{ supplier.contact_email ? `(${supplier.contact_email})` : '' }}
-                </option>
+              <select disabled class="select select-bordered bg-gray-700 border-gray-600 text-white">
+                <option value="">Fournisseurs supprimés</option>
               </select>
-              <label v-if="errors.supplier_id" class="label">
-                <span class="label-text-alt text-error">{{ errors.supplier_id }}</span>
-              </label>
-            </div>
+            </div> -->
 
             <!-- Date d'arrivée prévue -->
             <div class="form-control">
@@ -258,7 +250,7 @@ const arrivalStore = useArrivalStore()
 
 // États locaux
 const loading = ref(false)
-const suppliers = ref<any[]>([])
+// const suppliers = ref<any[]>([]) // Supprimé selon consigne
 const products = ref<any[]>([])
 const globalError = ref<string | null>(null)
 
@@ -436,14 +428,6 @@ async function createArrival() {
   }
 }
 
-async function loadSuppliers() {
-  try {
-    suppliers.value = await arrivalService.getSuppliers()
-  } catch (error) {
-    console.error('Erreur lors du chargement des fournisseurs:', error)
-  }
-}
-
 async function loadProducts() {
   try {
     products.value = await arrivalService.getProducts()
@@ -457,10 +441,7 @@ onMounted(async () => {
   // Générer une référence par défaut
   generateReference()
 
-  // Charger les données
-  await Promise.all([
-    loadSuppliers(),
-    loadProducts()
-  ])
+  // Charger les données (suppliers supprimés selon consigne)
+  await loadProducts()
 })
 </script>

@@ -253,7 +253,6 @@
             <thead class="bg-gray-700">
               <tr>
                 <th class="text-gray-300">ID</th>
-                <th class="text-gray-300">Produits</th>
                 <th class="text-gray-300">Client</th>
                 <th class="text-gray-300">Total</th>
                 <th class="text-gray-300">Statut</th>
@@ -263,7 +262,7 @@
             </thead>
             <tbody>
               <tr v-if="orderStore.loading" class="border-gray-700">
-                <td colspan="7" class="text-center py-8">
+                <td colspan="6" class="text-center py-8">
                   <span class="loading loading-spinner loading-lg text-blue-400"></span>
                   <p class="text-gray-400 mt-2">
                     {{ Object.keys(appliedFilters).length > 0 ?
@@ -277,37 +276,13 @@
                 </td>
               </tr>
               <tr v-else-if="orderStore.orders.length === 0" class="border-gray-700">
-                <td colspan="7" class="text-center py-8 text-gray-400">
+                <td colspan="6" class="text-center py-8 text-gray-400">
                   Aucune commande trouvée
                 </td>
               </tr>
               <tr v-else v-for="order in orderStore.orders" :key="order.id" @click="viewOrderDetail(order.id)"
                 class="border-gray-700 hover:bg-gray-700/50 cursor-pointer transition-colors">
                 <td class="text-white font-mono">{{ order.id }}</td>
-                <td class="py-2">
-                  <div class="flex -space-x-2 overflow-hidden">
-                    <template v-if="order.products && order.products.length > 0">
-                      <template v-for="(product, index) in order.products.slice(0, 3)" :key="product.id">
-                        <div class="relative">
-                          <img :src="getProductImage(product)" :alt="product.name" :title="product.name"
-                            class="w-10 h-10 rounded-full border-2 border-gray-600 object-cover bg-gray-700"
-                            @error="handleImageError" />
-                        </div>
-                      </template>
-                      <div v-if="order.products.length > 3"
-                        class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-600 flex items-center justify-center text-xs text-white font-medium">
-                        +{{ order.products.length - 3 }}
-                      </div>
-                    </template>
-                    <div v-else
-                      class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-700 flex items-center justify-center">
-                      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8L9 5m0 0v4m0-4l4 4" />
-                      </svg>
-                    </div>
-                  </div>
-                </td>
                 <td class="text-white">{{ order.user?.name || order.user?.id || 'N/A' }}</td>
                 <td class="text-white">{{ formatCurrency(order.total) }}</td>
                 <td>
@@ -421,12 +396,10 @@ import { useRouter } from 'vue-router'
 import { useOrderStore } from '../stores/orderStore'
 import type { OrderFilters, OrderStatus } from '../types'
 import {
-  formatCurrency,
-  formatDate,
-  getProductImage,
-  getStatusBadgeClass,
-  getStatusLabel,
-  handleImageError
+    formatCurrency,
+    formatDate,
+    getStatusBadgeClass,
+    getStatusLabel
 } from '../utils/formatters'
 
 // Composables

@@ -204,8 +204,7 @@
           </svg>
           <h3 class="text-xl font-semibold text-white mb-2">Aucun produit trouvé</h3>
           <p class="text-gray-400 mb-6">
-            {{ searchQuery ? 'Aucun produit ne correspond à votre recherche.' : 'Commencez par ajouter votre premier
-            produit.' }}
+            {{ searchQuery ? 'Aucun produit ne correspond à votre recherche.' : 'Commencez par ajouter votre premierproduit.' }}
           </p>
           <button @click="showCreateModal = true" class="btn btn-primary">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
