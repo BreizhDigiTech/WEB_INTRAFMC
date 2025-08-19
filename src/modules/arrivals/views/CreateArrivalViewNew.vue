@@ -386,7 +386,8 @@ async function createArrival() {
   try {
     // Transformer les données du formulaire vers le format API
     const createArrivalInput: CreateArrivalInput = {
-      // Le montant sera recalculé côté serveur selon la documentation
+      amount: totalAmount.value,
+      status: 'pending',
       products: formData.value.products.map(product => ({
         product_id: product.product_id,
         quantity: product.quantity,

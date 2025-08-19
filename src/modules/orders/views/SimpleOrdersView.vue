@@ -135,7 +135,7 @@
           </div>
         </div>
 
-        <!-- Validées -->
+        <!-- Livrées -->
         <div
           class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all duration-300">
           <div class="flex items-center justify-between mb-4">
@@ -148,10 +148,10 @@
             <div v-if="orderStore.statsLoading" class="loading loading-spinner loading-md text-green-400"></div>
           </div>
           <div class="space-y-1">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Validées</h3>
-            <p class="text-3xl font-bold text-green-400">{{ displayStats.validated }}</p>
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Livrées</h3>
+            <p class="text-3xl font-bold text-green-400">{{ displayStats.delivered }}</p>
             <p class="text-sm text-gray-500">
-              {{ validatedPercentage }}
+              {{ deliveredPercentage }}
             </p>
           </div>
         </div>
@@ -290,8 +290,8 @@
                     <span :class="getStatusBadgeClass(order.status)" class="badge badge-sm font-medium">
                       {{ getStatusLabel(order.status) }}
                     </span>
-                    <!-- Icône facture disponible pour les commandes validées -->
-                    <div v-if="order.status === 'validated'" class="tooltip tooltip-top" data-tip="Facture disponible">
+                    <!-- Icône facture disponible pour les commandes livrées ou expédiées -->
+                    <div v-if="['delivered', 'shipped'].includes(order.status)" class="tooltip tooltip-top" data-tip="Facture disponible">
                       <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -320,7 +320,7 @@
                           Voir détails
                         </a>
                       </li>
-                      <li v-if="order.status === 'validated'">
+                      <li v-if="['delivered', 'shipped'].includes(order.status)">
                         <a @click="generateInvoiceFromList(order.id)" class="text-purple-400 hover:bg-purple-600/20">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -330,11 +330,27 @@
                         </a>
                       </li>
                       <li v-if="order.status === 'pending'">
-                        <a @click="validateOrder(order.id)" class="text-green-400 hover:bg-green-600/20">
+                        <a @click="updateOrderStatus(order.id, 'processing')" class="text-blue-400 hover:bg-blue-600/20">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2" />
+                          </svg>
+                          Traiter
+                        </a>
+                      </li>
+                      <li v-if="order.status === 'processing'">
+                        <a @click="updateOrderStatus(order.id, 'shipped')" class="text-purple-400 hover:bg-purple-600/20">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                          Expédier
+                        </a>
+                      </li>
+                      <li v-if="order.status === 'shipped'">
+                        <a @click="updateOrderStatus(order.id, 'delivered')" class="text-green-400 hover:bg-green-600/20">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                           </svg>
-                          Valider
+                          Livrer
                         </a>
                       </li>
                       <li v-if="order.status === 'pending'">
@@ -396,10 +412,10 @@ import { useRouter } from 'vue-router'
 import { useOrderStore } from '../stores/orderStore'
 import type { OrderFilters, OrderStatus } from '../types'
 import {
-    formatCurrency,
-    formatDate,
-    getStatusBadgeClass,
-    getStatusLabel
+  formatCurrency,
+  formatDate,
+  getStatusBadgeClass,
+  getStatusLabel
 } from '../utils/formatters'
 
 // Composables
@@ -419,8 +435,11 @@ const appliedFilters = ref<OrderFilters>({})
 // Options pour les filtres
 const statusOptions = [
   { value: 'pending' as OrderStatus, label: 'En attente', color: 'text-yellow-400' },
-  { value: 'validated' as OrderStatus, label: 'Validées', color: 'text-green-400' },
-  { value: 'cancelled' as OrderStatus, label: 'Annulées', color: 'text-red-400' }
+  { value: 'processing' as OrderStatus, label: 'En cours', color: 'text-blue-400' },
+  { value: 'shipped' as OrderStatus, label: 'Expédiées', color: 'text-purple-400' },
+  { value: 'delivered' as OrderStatus, label: 'Livrées', color: 'text-green-400' },
+  { value: 'cancelled' as OrderStatus, label: 'Annulées', color: 'text-red-400' },
+  { value: 'refunded' as OrderStatus, label: 'Remboursées', color: 'text-gray-400' }
 ]
 
 // Computed pour le nombre de filtres actifs
@@ -460,8 +479,11 @@ const displayStats = computed(() => {
     return {
       total: orderStore.orders.length,
       pending: orderStore.pendingOrders.length,
-      validated: orderStore.validatedOrders.length,
+      processing: orderStore.orders.filter(o => o.status === 'processing').length,
+      shipped: orderStore.orders.filter(o => o.status === 'shipped').length,
+      delivered: orderStore.deliveredOrders.length,
       cancelled: orderStore.cancelledOrders.length,
+      refunded: orderStore.orders.filter(o => o.status === 'refunded').length,
       totalRevenue: 0
     }
   }
@@ -472,21 +494,21 @@ const statsType = computed(() => {
 })
 
 // Formatage des pourcentages pour éviter les chaînes longues
-const validatedPercentage = computed(() => {
+const deliveredPercentage = computed(() => {
   return displayStats.value.total > 0
-    ? ((displayStats.value.validated / displayStats.value.total) * 100).toFixed(1) + '% du total'
-    : '0% du total'
-})
-
-const cancelledPercentage = computed(() => {
-  return displayStats.value.total > 0
-    ? ((displayStats.value.cancelled / displayStats.value.total) * 100).toFixed(1) + '% du total'
+    ? ((displayStats.value.delivered / displayStats.value.total) * 100).toFixed(1) + '% du total'
     : '0% du total'
 })
 
 const pendingPercentage = computed(() => {
   return displayStats.value.total > 0
     ? ((displayStats.value.pending / displayStats.value.total) * 100).toFixed(1) + '% du total'
+    : '0% du total'
+})
+
+const cancelledPercentage = computed(() => {
+  return displayStats.value.total > 0
+    ? ((displayStats.value.cancelled / displayStats.value.total) * 100).toFixed(1) + '% du total'
     : '0% du total'
 })
 
@@ -583,11 +605,11 @@ function viewOrderDetail(orderId: string) {
   router.push(`/orders/${orderId}`)
 }
 
-async function validateOrder(orderId: string) {
+async function updateOrderStatus(orderId: string, newStatus: string) {
   try {
-    await orderStore.validateOrder(orderId)
+    await orderStore.updateOrderStatus(orderId, newStatus)
   } catch (error) {
-    console.error('Erreur lors de la validation:', error)
+    console.error('Erreur lors de la mise à jour du statut:', error)
   }
 }
 

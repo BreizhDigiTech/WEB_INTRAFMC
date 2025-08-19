@@ -338,7 +338,7 @@ function removeTag(tag: string) {
 }
 
 function generateAutoSKU() {
-  const categoryName = categoryStore.categories.find(c => c.id === form.category_id)?.name
+  const categoryName = categoryStore.categories.find(c => Number(c.id) === (form.category_id ?? NaN))?.name
   form.sku = generateSKU(form.name, categoryName)
   if (!form.name.trim()) {
     errors.name = 'Le nom est requis'

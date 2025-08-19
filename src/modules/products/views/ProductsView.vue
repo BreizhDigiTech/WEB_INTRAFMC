@@ -103,7 +103,7 @@
           <!-- Recherche -->
           <div class="flex-1">
             <div class="relative">
-              <input v-model="searchQuery" type="text" placeholder="Rechercher un produit..."
+              <input v-model="searchQuery" type="text" placeholder="Rechercher par nom de produit..."
                 class="input input-bordered w-full bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 pr-10"
                 @input="onSearchInput">
               <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
@@ -146,9 +146,24 @@
 
       <!-- Grille de produits -->
       <div v-else-if="filteredProducts.length > 0">
+        <!-- Indicateur de recherche/filtrage -->
+        <div v-if="searchQuery || selectedCategory" class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+          <div class="flex items-center gap-2 text-blue-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span class="text-sm font-medium">
+              {{ filteredProducts.length }} résultat(s) trouvé(s)
+              <span v-if="searchQuery"> pour "{{ searchQuery }}"</span>
+              <span v-if="selectedCategory && categoryStore.categories.length"> dans la catégorie "{{ categoryStore.categories.find(c => c.id.toString() === selectedCategory)?.name }}"</span>
+            </span>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           <div v-for="product in filteredProducts" :key="product.id"
-            class="bg-black/20 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600/50 transition-all duration-300 group hover:scale-105">
+            @click="navigateToProductDetail(product)"
+            class="bg-black/20 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600/50 transition-all duration-300 group hover:scale-105 cursor-pointer">
             <!-- Image produit -->
             <div class="aspect-square bg-gray-800/50 rounded-xl mb-4 flex items-center justify-center overflow-hidden">
               <img v-if="product.images && product.images.length > 0" :src="product.images[0]" :alt="product.name"
@@ -163,10 +178,9 @@
 
             <!-- Infos produit -->
             <div class="space-y-2">
-              <router-link :to="`/products/${product.id}`"
-                class="font-semibold text-white text-lg hover:text-blue-400 transition-colors cursor-pointer">
+              <h3 class="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors">
                 {{ product.name }}
-              </router-link>
+              </h3>
               <p v-if="product.description" class="text-gray-400 text-sm line-clamp-2">{{ product.description }}</p>
               <div class="flex items-center justify-between">
                 <span class="text-2xl font-bold text-primary">{{ formatPrice(product.price) }}</span>
@@ -186,31 +200,22 @@
                 </span>
               </div>
             </div>
-
-            <!-- Actions -->
-            <div class="flex gap-2 mt-4">
-              <button @click="editProduct(product)" class="btn btn-sm btn-ghost flex-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Modifier
-              </button>
-              <button @click="deleteProduct(product.id)" class="btn btn-sm btn-error">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
 
-        <!-- Bouton Charger plus -->
-        <div v-if="productStore.hasMorePages && !searchQuery && !selectedCategory" class="text-center">
-          <button @click="loadMoreProducts" class="btn btn-outline btn-primary btn-lg"
-            :class="{ 'loading': productStore.loading }" :disabled="productStore.loading">
-            <svg v-if="!productStore.loading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Infinite scroll trigger -->
+        <div 
+          v-if="productStore.hasMorePages && !searchQuery && !selectedCategory" 
+          ref="scrollTrigger"
+          class="flex justify-center items-center py-8"
+        >
+          <div v-if="productStore.loading" class="loading loading-spinner loading-lg text-primary"></div>
+          <button 
+            v-else 
+            @click="loadMoreProducts" 
+            class="btn btn-outline btn-primary"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
             Charger plus ({{ (productStore.paginatorInfo?.total || 0) - productStore.products.length }} restants)
@@ -239,28 +244,40 @@
       </div>
     </div>
 
-    <!-- Modals -->
-    <EditProductModal v-if="showEditModal && selectedProduct" :product="selectedProduct" @close="showEditModal = false"
-      @updated="onProductUpdated" />
+    <!-- Bouton retour en haut fixe -->
+    <button 
+      v-show="showScrollToTop"
+      @click="scrollToTop"
+      class="fixed bottom-6 right-6 z-50 btn btn-circle btn-primary btn-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+      title="Retour en haut"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCategoryStore } from '../../categories/stores/categoryStore'
-import EditProductModal from '../components/EditProductModal.vue'
 import { useProductStore } from '../stores/productStore'
 import type { Product } from '../types'
+
+// Router
+const router = useRouter()
 
 // Stores
 const productStore = useProductStore()
 const categoryStore = useCategoryStore()
 
 // État local
-const showEditModal = ref(false)
-const selectedProduct = ref<Product | null>(null)
 const searchQuery = ref('')
 const selectedCategory = ref('')
+const scrollTrigger = ref<HTMLElement | null>(null)
+const showScrollToTop = ref(false)
+const searchTimeout = ref<NodeJS.Timeout | null>(null)
 
 // Computed
 const emptyStateMessage = computed(() => {
@@ -270,25 +287,9 @@ const emptyStateMessage = computed(() => {
 })
 
 const filteredProducts = computed(() => {
-  let products = productStore.products
-
-  // Filtrage par recherche
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    products = products.filter(product =>
-      product.name.toLowerCase().includes(query) ||
-      product.description?.toLowerCase().includes(query)
-    )
-  }
-
-  // Filtrage par catégorie
-  if (selectedCategory.value) {
-    products = products.filter(product =>
-      product.category_id?.toString() === selectedCategory.value
-    )
-  }
-
-  return products
+  // Maintenant on utilise directement les produits du store
+  // car la recherche et le filtrage sont gérés côté serveur
+  return productStore.products
 })
 
 const totalStockValue = computed(() => {
@@ -306,51 +307,146 @@ function formatPrice(price: number): string {
 }
 
 function onSearchInput() {
-  // La recherche est réactive via le computed
+  // Annuler la recherche précédente si elle existe
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+  
+  // Programmer une nouvelle recherche après 500ms
+  searchTimeout.value = setTimeout(() => {
+    performSearch()
+  }, 500)
 }
 
 function onCategoryChange() {
-  // Le filtrage est réactif via le computed
+  // Le changement de catégorie se fait immédiatement
+  performSearch()
 }
 
 function clearFilters() {
   searchQuery.value = ''
   selectedCategory.value = ''
+  // Revenir à la liste normale sans filtre
+  fetchProducts()
 }
 
 async function refreshProducts() {
-  await productStore.fetchProducts()
-}
-
-async function loadMoreProducts() {
-  await productStore.loadMoreProducts()
-}
-
-function editProduct(product: Product) {
-  selectedProduct.value = product
-  showEditModal.value = true
-}
-
-async function deleteProduct(id: string) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-    try {
-      await productStore.deleteProduct(id)
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
-    }
+  if (searchQuery.value || selectedCategory.value) {
+    await performSearch()
+  } else {
+    await fetchProducts()
   }
 }
 
-function onProductUpdated() {
-  showEditModal.value = false
-  selectedProduct.value = null
+async function fetchProducts() {
+  await productStore.fetchProducts(1, 20, false)
 }
+
+async function performSearch() {
+  const query = searchQuery.value.trim() || undefined
+  const categoryId = selectedCategory.value || undefined
+  await productStore.searchProducts(query, categoryId, 1, 20, false)
+}
+
+async function loadMoreProducts() {
+  if (searchQuery.value || selectedCategory.value) {
+    // Charger plus de résultats de recherche
+    const query = searchQuery.value.trim() || undefined
+    const categoryId = selectedCategory.value || undefined
+    await productStore.loadMoreSearchResults(query, categoryId)
+  } else {
+    // Charger plus de produits normaux
+    await productStore.loadMoreProducts()
+  }
+}
+
+// Navigation vers la page de détail du produit
+function navigateToProductDetail(product: Product) {
+  router.push(`/products/${product.id}`)
+}
+
+// Fonction pour revenir en haut
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
+
+// Fonction pour gérer l'affichage du bouton retour en haut
+function handleScroll() {
+  showScrollToTop.value = window.scrollY > 300
+}
+
+// Intersection Observer pour l'infinite scroll
+function setupInfiniteScroll(): IntersectionObserver | null {
+  if (!scrollTrigger.value) return null
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      if (entry.isIntersecting && productStore.hasMorePages && !productStore.loading && !searchQuery.value && !selectedCategory.value) {
+        loadMoreProducts()
+      }
+    },
+    {
+      threshold: 0.1,
+      rootMargin: '100px'
+    }
+  )
+
+  observer.observe(scrollTrigger.value)
+  
+  return observer
+}
+
+// Variables pour l'infinite scroll
+let observer: IntersectionObserver | null = null
+
+// Watchers
+watch(selectedCategory, () => {
+  // Seul le changement de catégorie déclenche une recherche immédiate
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+  performSearch()
+})
+
+watch(scrollTrigger, (newTrigger) => {
+  if (observer) {
+    observer.disconnect()
+  }
+  if (newTrigger) {
+    observer = setupInfiniteScroll()
+  }
+})
 
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
-    productStore.fetchProducts(),
+    productStore.fetchProducts(1, 20, false),
     categoryStore.fetchCategories()
   ])
+  
+  // Setup infinite scroll après que le DOM soit mis à jour
+  await nextTick()
+  observer = setupInfiniteScroll()
+  
+  // Ajouter l'event listener pour le scroll (bouton retour en haut)
+  window.addEventListener('scroll', handleScroll)
+  // Vérifier la position initiale
+  handleScroll()
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
+  // Nettoyer l'event listener du scroll
+  window.removeEventListener('scroll', handleScroll)
+  // Nettoyer le timeout de recherche
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
 })
 </script>

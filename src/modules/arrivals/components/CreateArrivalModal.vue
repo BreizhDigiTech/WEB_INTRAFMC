@@ -242,7 +242,7 @@ interface Emits {
   (e: 'created', arrival: any): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // Composables

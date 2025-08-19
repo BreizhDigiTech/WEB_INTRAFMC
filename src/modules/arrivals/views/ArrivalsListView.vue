@@ -514,7 +514,7 @@ const validatedPercentage = computed(() => {
 })
 
 // Watchers pour la recherche avec debounce
-let searchTimeout: number
+let searchTimeout: ReturnType<typeof setTimeout>
 watch(searchQuery, (newQuery) => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {

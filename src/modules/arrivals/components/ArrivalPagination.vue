@@ -149,7 +149,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
+defineEmits<{
   goToPage: [page: number]
   next: []
   prev: []

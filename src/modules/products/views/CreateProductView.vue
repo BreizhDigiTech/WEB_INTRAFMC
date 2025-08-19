@@ -150,7 +150,7 @@
                   </div>
                   <div>
                     <p class="text-gray-300 font-medium">Glissez vos images ici ou</p>
-                    <button type="button" @click="$refs.fileInput.click()"
+                    <button type="button" @click="(fileInput as unknown as HTMLInputElement).click()"
                       class="text-blue-400 hover:text-blue-300 font-medium">
                       cliquez pour parcourir
                     </button>
@@ -200,7 +200,7 @@
                 </div>
                 <div>
                   <p class="text-gray-300 font-medium">Glissez le certificat d'analyse ou</p>
-                  <button type="button" @click="$refs.analysisFileInput.click()"
+                  <button type="button" @click="(analysisFileInput as unknown as HTMLInputElement).click()"
                     class="text-purple-400 hover:text-purple-300 font-medium">
                     cliquez pour parcourir
                   </button>
@@ -268,6 +268,8 @@ const loading = ref(false)
 const isDragging = ref(false)
 const selectedImages = ref<Array<{ file: File; preview: string }>>([])
 const analysisFile = ref<File | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
+const analysisFileInput = ref<HTMLInputElement | null>(null)
 
 // Formulaire
 const form = reactive<CreateProductInput>({

@@ -5,8 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import jsPDF from 'jspdf'
 import type {
     Order,
-    OrderFilters,
-    UpdateOrderData
+    OrderFilters
 } from '../types'
 
 export class OrderService extends GraphQLService {
@@ -16,7 +15,7 @@ export class OrderService extends GraphQLService {
      * Utilise la query admin si l'utilisateur est admin (avec détails des produits)
      * Applique les filtres côté client si l'API GraphQL ne les supporte pas
      */
-    async getOrders(filters: OrderFilters = {}, page = 1, limit = 20, forceUserRole?: boolean): Promise<PaginatedResponse<Order>> {
+    async getOrders(filters: OrderFilters = {}, page = 1, limit = 20): Promise<PaginatedResponse<Order>> {
         // Vérifier la limite maximale autorisée par l'API GraphQL
         if (limit > 50) {
             console.warn(`Limite de ${limit} éléments réduite à 50 (limite maximale de l'API GraphQL)`)
@@ -31,7 +30,7 @@ export class OrderService extends GraphQLService {
 
         // Query pour les administrateurs avec détails des produits (tous les commandes)
         const adminQuery = `
-            query GetAllOrders($first: Int, $page: Int) {
+            query AllOrders($first: Int = 15, $page: Int = 1) {
                 orders(first: $first, page: $page) {
                     paginatorInfo {
                         currentPage
@@ -44,7 +43,9 @@ export class OrderService extends GraphQLService {
                         id
                         total
                         status
+                        formatted_status
                         created_at
+                        updated_at
                         user {
                             id
                             name
@@ -57,7 +58,7 @@ export class OrderService extends GraphQLService {
 
         // Query pour les utilisateurs normaux (leurs commandes uniquement)
         const userQuery = `
-            query GetMyOrders($first: Int, $page: Int) {
+            query MyOrders($first: Int = 10, $page: Int = 1) {
                 myOrders(first: $first, page: $page) {
                     paginatorInfo {
                         currentPage
@@ -70,6 +71,7 @@ export class OrderService extends GraphQLService {
                         id
                         total
                         status
+                        formatted_status
                         created_at
                         updated_at
                         user {
@@ -105,7 +107,7 @@ export class OrderService extends GraphQLService {
     /**
      * Récupère les commandes avec filtres - charge toutes les pages nécessaires pour filtrer correctement
      */
-    async getOrdersWithFilters(filters: OrderFilters, targetPage = 1, targetLimit = 20, forceUserRole?: boolean): Promise<PaginatedResponse<Order>> {
+    async getOrdersWithFilters(filters: OrderFilters, targetPage = 1, targetLimit = 20): Promise<PaginatedResponse<Order>> {
         const authStore = useAuthStore()
         const isAdmin = authStore.isAdmin
 
@@ -257,17 +259,17 @@ export class OrderService extends GraphQLService {
     }
 
     /**
-     * Récupère une commande par son ID
-     * Utilise les champs réels disponibles dans la base de données
+     * Récupère une commande par son ID avec tous les détails
+     * Utilise la query orderDetails de la documentation
      */
-    async getOrder(id: string): Promise<Order> {
-        // Query avec les champs réels supportés par le schéma GraphQL
+    async getOrderDetails(id: string): Promise<Order> {
         const query = `
-            query GetOrder($id: ID!) {
-                order(id: $id) {
+            query GetOrderDetails($id: ID!) {
+                orderDetails(id: $id) {
                     id
                     total
                     status
+                    formatted_status
                     created_at
                     updated_at
                     products {
@@ -289,58 +291,57 @@ export class OrderService extends GraphQLService {
         `
 
         return this.request(query, { id })
-            .then((response: any) => response.order)
+            .then((response: any) => response.orderDetails)
     }
 
     /**
-     * Met à jour une commande
+     * Récupère les statistiques d'une commande
      */
-    async updateOrder(id: string, data: UpdateOrderData): Promise<Order> {
-        const mutation = `
-            mutation UpdateOrder($id: ID!, $data: UpdateOrderInput!) {
-                updateOrder(id: $id, data: $data) {
-                    id
-                    total
-                    status
+    async getOrderStats(id: string): Promise<any> {
+        const query = `
+            query GetOrderStats($id: ID!) {
+                orderStats(id: $id) {
+                    order_id
+                    total_items
+                    product_count
+                    total_amount
+                    average_item_price
                     created_at
-                    updated_at
-                    user {
-                        id
-                        name
-                        email
-                    }
+                    status
                 }
             }
         `
 
-        return this.request(mutation, { id, data })
-            .then((response: any) => response.updateOrder)
+        return this.request(query, { id })
+            .then((response: any) => response.orderStats)
     }
 
     /**
-     * Supprime une commande
+     * Annule une commande en utilisant la mutation CancelOrder de la doc
      */
-    async deleteOrder(id: string): Promise<boolean> {
+    async cancelOrder(id: string): Promise<boolean> {
         const mutation = `
-      mutation DeleteOrder($id: ID!) {
-        deleteOrder(id: $id)
-      }
-    `
+            mutation CancelOrder($id: ID!) {
+                cancelOrder(id: $id)
+            }
+        `
 
         return this.request(mutation, { id })
-            .then((response: any) => response.deleteOrder)
+            .then((response: any) => response.cancelOrder)
     }
 
     /**
-     * Annule une commande (utilise UpdateOrderStatusInput)
+     * Met à jour le statut d'une commande (Admin uniquement)
+     * Utilise UpdateOrderStatusInput selon la documentation
      */
-    async cancelOrder(id: string): Promise<Order> {
+    async updateOrderStatus(input: { id: string; status: string }): Promise<Order> {
         const mutation = `
             mutation UpdateOrderStatus($input: UpdateOrderStatusInput!) {
                 updateOrderStatus(input: $input) {
                     id
                     total
                     status
+                    formatted_status
                     created_at
                     updated_at
                     products {
@@ -361,51 +362,7 @@ export class OrderService extends GraphQLService {
             }
         `
 
-        return this.request(mutation, {
-            input: {
-                id: id,
-                status: 'cancelled'
-            }
-        })
-            .then((response: any) => response.updateOrderStatus)
-    }
-
-    /**
-     * Valide une commande (utilise UpdateOrderStatusInput)
-     */
-    async validateOrder(id: string): Promise<Order> {
-        const mutation = `
-            mutation UpdateOrderStatus($input: UpdateOrderStatusInput!) {
-                updateOrderStatus(input: $input) {
-                    id
-                    total
-                    status
-                    created_at
-                    updated_at
-                    products {
-                        id
-                        name
-                        price
-                        pivot {
-                            quantity
-                            unit_price
-                        }
-                    }
-                    user {
-                        id
-                        name
-                        email
-                    }
-                }
-            }
-        `
-
-        return this.request(mutation, {
-            input: {
-                id: id,
-                status: 'validated'
-            }
-        })
+        return this.request(mutation, { input })
             .then((response: any) => response.updateOrderStatus)
     }
 
@@ -419,6 +376,7 @@ export class OrderService extends GraphQLService {
                     id
                     total
                     status
+                    formatted_status
                     created_at
                     updated_at
                     user {
@@ -474,10 +432,10 @@ export class OrderService extends GraphQLService {
      */
     private async generateInvoiceAlternative(orderId: string): Promise<{ url: string; filename: string }> {
         // Récupérer les détails de la commande
-        const order = await this.getOrder(orderId)
+        const order = await this.getOrderDetails(orderId)
 
-        if (order.status !== 'validated') {
-            throw new Error('Seules les commandes validées peuvent générer une facture')
+        if (!['delivered', 'shipped'].includes(order.status)) {
+            throw new Error('Seules les commandes livrées ou expédiées peuvent générer une facture')
         }
 
         // Créer un nouveau document PDF
@@ -530,7 +488,7 @@ export class OrderService extends GraphQLService {
         yPosition += 7
         doc.text(`Date de facture: ${new Date().toLocaleDateString('fr-FR')}`, margin, yPosition)
         yPosition += 7
-        doc.text(`Statut: ${order.status.toUpperCase()}`, margin, yPosition)
+        doc.text(`Statut: ${(order.status as string).toUpperCase()}`, margin, yPosition)
 
         yPosition += 20
 
@@ -563,7 +521,7 @@ export class OrderService extends GraphQLService {
         let totalAmount = 0
 
         if (order.products && order.products.length > 0) {
-            order.products.forEach(product => {
+            order.products.forEach((product: any) => {
                 xPosition = margin
                 const quantity = product.pivot?.quantity || 1
                 const unitPrice = product.pivot?.unit_price || product.price || 0

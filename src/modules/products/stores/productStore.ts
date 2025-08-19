@@ -1,11 +1,11 @@
-import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import { productService } from '../services/productService'
 import type {
-    Product,
     CreateProductInput,
-    UpdateProductInput,
-    PaginatorInfo
+    PaginatorInfo,
+    Product,
+    UpdateProductInput
 } from '../types'
 
 export const useProductStore = defineStore('products', () => {
@@ -55,6 +55,59 @@ export const useProductStore = defineStore('products', () => {
         if (hasMorePages.value && !loading.value) {
             await fetchProducts(currentPage.value + 1, perPage.value, true)
         }
+    }
+
+    async function searchProducts(searchQuery?: string, categoryId?: string, page: number = 1, first: number = 20, append: boolean = false) {
+        loading.value = true
+        error.value = null
+
+        try {
+            // Récupérer tous les produits (ou un grand nombre)
+            const response = await productService.searchProducts(searchQuery || '', categoryId, first, page)
+            
+            let filteredData = response.data
+
+            // Filtrage côté client par recherche (seulement dans le nom/titre)
+            if (searchQuery && searchQuery.trim()) {
+                const query = searchQuery.toLowerCase().trim()
+                filteredData = filteredData.filter(product =>
+                    product.name.toLowerCase().includes(query)
+                )
+            }
+
+            // Filtrage côté client par catégorie
+            if (categoryId) {
+                filteredData = filteredData.filter(product =>
+                    product.category_id?.toString() === categoryId
+                )
+            }
+
+            if (append) {
+                products.value.push(...filteredData)
+            } else {
+                products.value = filteredData
+            }
+
+            // Mettre à jour les infos de pagination en fonction des résultats filtrés
+            paginatorInfo.value = {
+                ...response.paginatorInfo,
+                total: filteredData.length,
+                hasMorePages: false // Pas de pagination avec le filtrage côté client
+            }
+            currentPage.value = page
+            perPage.value = first
+        } catch (err: any) {
+            error.value = err.message || 'Erreur lors de la recherche de produits'
+            console.error('Erreur searchProducts:', err)
+        } finally {
+            loading.value = false
+        }
+    }
+
+    async function loadMoreSearchResults(searchQuery?: string, categoryId?: string) {
+        // Avec le filtrage côté client, il n'y a pas de "plus de résultats" à charger
+        // Tous les résultats sont déjà affichés après la recherche initiale
+        return
     }
 
     async function fetchProductById(id: string) {
@@ -182,6 +235,8 @@ export const useProductStore = defineStore('products', () => {
         // Actions
         fetchProducts,
         loadMoreProducts,
+        searchProducts,
+        loadMoreSearchResults,
         fetchProductById,
         createProduct,
         updateProduct,

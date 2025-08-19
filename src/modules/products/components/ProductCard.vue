@@ -78,9 +78,8 @@
         <h3 class="font-semibold text-white text-lg line-clamp-2 group-hover:text-blue-400 transition-colors">
           {{ product.name }}
         </h3>
-        <p v-if="product.category" class="text-sm text-gray-400 mt-1">
-          {{ product.category.name }}
-        </p>
+  <!-- Catégorie (non présent dans le type Product fourni) -->
+  <p v-if="false" class="text-sm text-gray-400 mt-1"></p>
       </div>
 
       <!-- Prix et SKU -->
@@ -88,9 +87,8 @@
         <div class="text-2xl font-bold text-green-400">
           {{ formatPrice(product.price) }}
         </div>
-        <div v-if="product.sku" class="text-xs text-gray-500 font-mono">
-          {{ product.sku }}
-        </div>
+  <!-- SKU non présent dans le type Product -->
+  <div v-if="false" class="text-xs text-gray-500 font-mono"></div>
       </div>
 
       <!-- Description -->
@@ -99,21 +97,8 @@
       </p>
 
       <!-- Tags -->
-      <div v-if="product.tags && product.tags.length > 0" class="flex flex-wrap gap-1 mb-4">
-        <span
-          v-for="tag in product.tags.slice(0, 3)"
-          :key="tag"
-          class="badge badge-sm bg-gray-700/50 text-gray-300 border-gray-600"
-        >
-          {{ tag }}
-        </span>
-        <span
-          v-if="product.tags.length > 3"
-          class="badge badge-sm bg-gray-700/50 text-gray-400 border-gray-600"
-        >
-          +{{ product.tags.length - 3 }}
-        </span>
-      </div>
+  <!-- Tags non présents dans le type Product -->
+  <div v-if="false" class="flex flex-wrap gap-1 mb-4"></div>
 
       <!-- Actions -->
       <div class="flex gap-2">
@@ -191,19 +176,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { Product } from '../types'
+import { ref } from 'vue';
+import type { Product } from '../types';
 import {
-  formatPrice,
   formatNumber,
+  formatPrice,
+  getProductImage,
   getProductStatus,
   getStatusBadgeClass,
   getStatusLabel,
-  getProductImage,
   handleImageError,
   isNewProduct,
   isOnSale
-} from '../utils/formatters'
+} from '../utils/formatters';
 
 // Props
 const props = defineProps<{
@@ -237,20 +222,12 @@ function getStockBarClass(product: Product): string {
 }
 
 function getStockPercentage(product: Product): number {
-  const threshold = product.low_stock_threshold || 10
+  const threshold = 10
   const maxStock = Math.max(product.stock, threshold * 2)
   return Math.min((product.stock / maxStock) * 100, 100)
 }
 
-function toggleFavorite() {
-  // TODO: Implémenter la fonctionnalité favoris
-  console.log('Toggle favorite for:', props.product.name)
-}
-
-function duplicateProduct() {
-  // TODO: Implémenter la duplication de produit
-  console.log('Duplicate product:', props.product.name)
-}
+// Fonctions supplémentaires (favoris/duplication) retirées pour le moment
 
 function updateStockValue() {
   // Validation

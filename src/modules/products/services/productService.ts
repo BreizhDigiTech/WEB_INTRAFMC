@@ -98,6 +98,47 @@ export const productService = {
     return response.productsCBD
   },
 
+  async searchProducts(searchQuery: string, categoryId?: string, first: number = 20, page: number = 1): Promise<ProductsResponse> {
+    // Pour l'instant, utilisons la requête normale car les paramètres search et category_id ne sont pas supportés
+    // Nous chargerons plus de produits pour avoir une meilleure recherche côté client
+    const query = `
+            query GetProducts($first: Int, $page: Int) {
+                productsCBD(first: $first, page: $page) {
+                    paginatorInfo {
+                        currentPage
+                        hasMorePages
+                        total
+                        perPage
+                        lastPage
+                    }
+                    data {
+                        id
+                        name
+                        description
+                        price
+                        images
+                        stock
+                        analysis_file_url
+                        category_id
+                        categories {
+                            id
+                            name
+                        }
+                        created_at
+                        updated_at
+                    }
+                }
+            }
+        `
+
+    // Pour une meilleure recherche, chargeons plus de produits
+    const response = await graphqlService.request(query, { 
+      first: Math.max(first, 100), // Minimum 100 produits pour une recherche efficace
+      page: 1 // Toujours commencer à la page 1 pour la recherche
+    })
+    return response.productsCBD
+  },
+
   async getProductById(id: string): Promise<Product> {
     const query = `
             query GetProduct($id: ID!) {

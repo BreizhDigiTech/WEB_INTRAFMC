@@ -39,24 +39,33 @@
                 </svg>
               </button>
               <div>
-                <h1
-                  class="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                <h1 v-if="!editingField.name" 
+                    @dblclick="startEditing('name')"
+                    class="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent cursor-pointer hover:bg-white/5 p-2 rounded">
                   {{ product.name }}
                 </h1>
+                <div v-else class="mb-2">
+                  <input v-model="editingValue.name" 
+                    @keydown.enter="saveField('name')"
+                    @keydown.escape="cancelEdit('name')"
+                    @blur="saveField('name')"
+                    ref="nameInput"
+                    class="text-4xl font-bold bg-transparent text-white border-b-2 border-white/50 focus:border-green-400 outline-none" />
+                </div>
                 <p class="text-gray-300 text-lg">
-                  Détails du produit CBD
+                  Détails du produit CBD - Double-cliquez pour modifier
                 </p>
               </div>
             </div>
 
-            <!-- Actions -->
+            <!-- Actions rapides -->
             <div class="flex items-center space-x-3">
-              <button @click="editProduct" class="btn btn-ghost gap-2">
+              <button @click="duplicateProduct" class="btn btn-ghost gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                Modifier
+                Dupliquer
               </button>
               <button @click="deleteProduct" class="btn btn-error gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,10 +117,27 @@
                 </div>
               </div>
 
-              <!-- Description -->
-              <div v-if="product.description" class="bg-gray-800 rounded-2xl p-6 border border-gray-700 mt-6">
+              <!-- Description éditable -->
+              <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 mt-6">
                 <h2 class="text-2xl font-bold text-white mb-4">Description</h2>
-                <p class="text-gray-300 leading-relaxed">{{ product.description }}</p>
+                <div v-if="!editingField.description" 
+                  @dblclick="startEditing('description')"
+                  class="text-gray-300 leading-relaxed cursor-pointer hover:bg-gray-700/50 p-3 rounded min-h-[100px]">
+                  <p v-if="product.description">{{ product.description }}</p>
+                  <p v-else class="text-gray-500 italic">Aucune description disponible - Double-cliquez pour ajouter</p>
+                </div>
+                <div v-else class="space-y-3">
+                  <textarea v-model="editingValue.description" 
+                    @keydown.enter.ctrl="saveField('description')"
+                    @keydown.escape="cancelEdit('description')"
+                    @blur="saveField('description')"
+                    ref="descriptionInput"
+                    class="w-full min-h-[100px] p-3 bg-gray-700 border border-gray-600 rounded text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    placeholder="Saisissez une description..."></textarea>
+                  <div class="flex items-center space-x-2 text-sm text-gray-400">
+                    <span>Ctrl+Entrée pour sauvegarder, Échap pour annuler</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -123,18 +149,46 @@
                 <h2 class="text-2xl font-bold text-white mb-6">Informations</h2>
 
                 <div class="space-y-4">
-                  <!-- Prix -->
+                  <!-- Prix éditable -->
                   <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                     <span class="text-gray-300">Prix</span>
-                    <span class="text-2xl font-bold text-green-400">{{ formatPrice(product.price) }}€</span>
+                    <div v-if="!editingField.price" 
+                      @dblclick="startEditing('price')"
+                      class="text-2xl font-bold text-green-400 cursor-pointer hover:bg-gray-600/50 p-1 rounded">
+                      {{ formatPrice(product.price) }}€
+                    </div>
+                    <div v-else>
+                      <input v-model="editingValue.price" 
+                        type="number" 
+                        step="0.01"
+                        @keydown.enter="saveField('price')"
+                        @keydown.escape="cancelEdit('price')"
+                        @blur="saveField('price')"
+                        ref="priceInput"
+                        class="text-right text-2xl font-bold bg-gray-600 text-green-400 border border-gray-500 rounded px-2 py-1 w-24" />
+                    </div>
                   </div>
 
-                  <!-- Stock -->
+                  <!-- Stock éditable -->
                   <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                     <span class="text-gray-300">Stock</span>
-                    <span class="font-bold" :class="getStockColorClass(product.stock)">
-                      {{ product.stock }} unités
-                    </span>
+                    <div v-if="!editingField.stock" 
+                      @dblclick="startEditing('stock')"
+                      class="font-bold cursor-pointer hover:bg-gray-600/50 p-1 rounded flex items-center space-x-2"
+                      :class="getStockColorClass(product.stock)">
+                      <span>{{ product.stock }} unités</span>
+                      <button @click="quickAddStock" class="btn btn-xs btn-success ml-2">+10</button>
+                    </div>
+                    <div v-else>
+                      <input v-model="editingValue.stock" 
+                        type="number" 
+                        min="0"
+                        @keydown.enter="saveField('stock')"
+                        @keydown.escape="cancelEdit('stock')"
+                        @blur="saveField('stock')"
+                        ref="stockInput"
+                        class="text-right font-bold bg-gray-600 border border-gray-500 rounded px-2 py-1 w-20" />
+                    </div>
                   </div>
 
                   <!-- Catégorie -->
@@ -155,12 +209,12 @@
                   <!-- Dates -->
                   <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                     <span class="text-gray-300">Créé le</span>
-                    <span class="text-gray-400">{{ formatDate(product.created_at) }}</span>
+                    <span class="text-gray-400">{{ formatDate(product.created_at || '') }}</span>
                   </div>
 
                   <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                     <span class="text-gray-300">Modifié le</span>
-                    <span class="text-gray-400">{{ formatDate(product.updated_at) }}</span>
+                    <span class="text-gray-400">{{ formatDate(product.updated_at || '') }}</span>
                   </div>
                 </div>
               </div>
@@ -186,34 +240,6 @@
                   </svg>
                 </a>
               </div>
-
-              <!-- Actions rapides -->
-              <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4">Actions rapides</h2>
-                <div class="space-y-3">
-                  <button class="w-full btn btn-success gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Ajouter au stock
-                  </button>
-                  <button class="w-full btn btn-warning gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Modifier le produit
-                  </button>
-                  <button class="w-full btn btn-info gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    Dupliquer le produit
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -223,7 +249,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { useErrorStore } from '@/shared/errors/errorStore'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../stores/productStore'
 import type { Product } from '../types'
@@ -232,6 +259,7 @@ import type { Product } from '../types'
 const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
+const errorStore = useErrorStore()
 
 // État local
 const loading = ref(true)
@@ -239,35 +267,178 @@ const error = ref('')
 const product = ref<Product | null>(null)
 const selectedImage = ref('')
 
-// Méthodes utilitaires
+// État d'édition inline
+const editingField = ref<Record<string, boolean>>({
+  name: false,
+  description: false,
+  price: false,
+  stock: false
+})
+
+const editingValue = ref<Record<string, any>>({
+  name: '',
+  description: '',
+  price: 0,
+  stock: 0
+})
+
+// Refs pour les inputs
+const nameInput = ref<HTMLInputElement>()
+const descriptionInput = ref<HTMLTextAreaElement>()
+const priceInput = ref<HTMLInputElement>()
+const stockInput = ref<HTMLInputElement>()
+
+// Méthodes utilitaires pour le formatage
 const formatPrice = (price: number): string => {
   return price.toFixed(2)
 }
 
 const formatDate = (dateString: string): string => {
+  if (!dateString) return 'Non défini'
   return new Date(dateString).toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 
+// Méthodes utilitaires pour le stock
 const getStockColorClass = (stock: number): string => {
   if (stock === 0) return 'text-red-400'
   if (stock < 10) return 'text-yellow-400'
   return 'text-green-400'
 }
 
-// Actions
-const editProduct = () => {
-  // TODO: Naviguer vers la page d'édition
-  console.log('Éditer le produit:', product.value?.id)
+// Méthodes d'édition inline
+const startEditing = async (field: string) => {
+  if (!product.value) return
+  
+  // Mettre la valeur actuelle dans editingValue
+  editingValue.value[field] = product.value[field as keyof Product]
+  
+  // Activer le mode édition
+  editingField.value[field] = true
+  
+  // Focus sur l'input après le prochain tick
+  await nextTick()
+  const inputRef = getInputRef(field)
+  if (inputRef) {
+    inputRef.focus()
+    if (inputRef instanceof HTMLInputElement || inputRef instanceof HTMLTextAreaElement) {
+      inputRef.select()
+    }
+  }
 }
 
-const deleteProduct = () => {
-  if (product.value && confirm(`Êtes-vous sûr de vouloir supprimer le produit "${product.value.name}" ?`)) {
-    // TODO: Implémenter la suppression
-    console.log('Supprimer le produit:', product.value.id)
+const getInputRef = (field: string) => {
+  switch (field) {
+    case 'name': return nameInput.value
+    case 'description': return descriptionInput.value
+    case 'price': return priceInput.value
+    case 'stock': return stockInput.value
+    default: return null
+  }
+}
+
+const saveField = async (field: string) => {
+  if (!product.value || !editingField.value[field]) return
+  
+  try {
+    const newValue = editingValue.value[field]
+    
+    // Validation simple
+    if (field === 'name' && (!newValue || newValue.trim() === '')) {
+      errorStore.addError('Le nom du produit ne peut pas être vide')
+      return
+    }
+    
+    if ((field === 'price' || field === 'stock') && (isNaN(newValue) || newValue < 0)) {
+      errorStore.addError(`La valeur de ${field === 'price' ? 'prix' : 'stock'} doit être un nombre positif`)
+      return
+    }
+    
+    // Préparer les données de mise à jour
+    const updateData: any = {}
+    
+    if (field === 'price') {
+      updateData[field] = parseFloat(newValue)
+    } else if (field === 'stock') {
+      updateData[field] = parseInt(newValue)
+    } else {
+      updateData[field] = newValue
+    }
+    
+    // Appeler l'API de mise à jour
+    await productStore.updateProduct(product.value.id, updateData)
+    
+    // Mettre à jour la valeur locale
+    ;(product.value as any)[field] = updateData[field]
+    
+    // Désactiver le mode édition
+    editingField.value[field] = false
+    
+    // Afficher un message de succès
+    errorStore.addSuccess(`${field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : 'Stock'} mis à jour avec succès`)
+    
+  } catch (err: any) {
+    errorStore.addError(`Erreur lors de la mise à jour: ${err.message || 'Erreur inconnue'}`)
+  }
+}
+
+const cancelEdit = (field: string) => {
+  editingField.value[field] = false
+  editingValue.value[field] = ''
+}
+
+// Actions rapides
+const quickAddStock = async () => {
+  if (!product.value) return
+  
+  try {
+    const newStock = product.value.stock + 10
+    await productStore.updateProduct(product.value.id, { stock: newStock })
+    product.value.stock = newStock
+    errorStore.addSuccess('10 unités ajoutées au stock')
+  } catch (err: any) {
+    errorStore.addError(`Erreur lors de l'ajout du stock: ${err.message}`)
+  }
+}
+
+const duplicateProduct = async () => {
+  if (!product.value) return
+  
+  try {
+    const duplicateData = {
+      name: `${product.value.name} (copie)`,
+      description: product.value.description,
+      price: product.value.price,
+      stock: 0, // Nouveau produit avec stock à 0
+      category_id: product.value.category_id,
+      images: product.value.images
+    }
+    
+    const newProduct = await productStore.createProduct(duplicateData)
+    errorStore.addSuccess('Produit dupliqué avec succès')
+    router.push(`/products/${newProduct.id}`)
+  } catch (err: any) {
+    errorStore.addError(`Erreur lors de la duplication: ${err.message}`)
+  }
+}
+
+const deleteProduct = async () => {
+  if (!product.value) return
+  
+  const confirmed = confirm(`Êtes-vous sûr de vouloir supprimer le produit "${product.value.name}" ?\n\nCette action est irréversible.`)
+  if (!confirmed) return
+  
+  try {
+    await productStore.deleteProduct(product.value.id)
+    errorStore.addSuccess('Produit supprimé avec succès')
+    router.push('/products')
+  } catch (err: any) {
+    errorStore.addError(`Erreur lors de la suppression: ${err.message}`)
   }
 }
 
@@ -278,6 +449,10 @@ const loadProduct = async () => {
     error.value = ''
 
     const productId = route.params.id as string
+    if (!productId) {
+      throw new Error('ID du produit manquant')
+    }
+
     product.value = await productStore.fetchProductById(productId)
 
     if (product.value?.images && product.value.images.length > 0) {
@@ -285,7 +460,7 @@ const loadProduct = async () => {
     }
   } catch (err: any) {
     error.value = err.message || 'Erreur lors du chargement du produit'
-    console.error('Erreur lors du chargement du produit:', err)
+    errorStore.addError(error.value)
   } finally {
     loading.value = false
   }

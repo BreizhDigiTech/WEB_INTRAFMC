@@ -6,8 +6,11 @@ import type { Order } from '../types'
 interface OrderStats {
     total: number
     pending: number
-    validated: number
+    processing: number
+    shipped: number
+    delivered: number
     cancelled: number
+    refunded: number
     totalRevenue: number
 }
 
@@ -26,8 +29,11 @@ export const useOrderStore = defineStore('orders', () => {
     const globalStats = ref<OrderStats>({
         total: 0,
         pending: 0,
-        validated: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
         cancelled: 0,
+        refunded: 0,
         totalRevenue: 0
     })
     const statsLoading = ref(false)
@@ -37,8 +43,8 @@ export const useOrderStore = defineStore('orders', () => {
         orders.value.filter(order => order.status === 'pending')
     )
 
-    const validatedOrders = computed(() =>
-        orders.value.filter(order => order.status === 'validated')
+    const deliveredOrders = computed(() =>
+        orders.value.filter(order => order.status === 'delivered')
     )
 
     const cancelledOrders = computed(() =>
@@ -100,7 +106,7 @@ export const useOrderStore = defineStore('orders', () => {
         loading.value = true
         error.value = null
         try {
-            return await orderService.getOrder(id)
+            return await orderService.getOrderDetails(id)
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'Erreur lors du chargement de la commande'
             console.error('Erreur fetchOrderById:', err)
@@ -133,10 +139,13 @@ export const useOrderStore = defineStore('orders', () => {
             globalStats.value = {
                 total: allOrders.length,
                 pending: allOrders.filter(o => o.status === 'pending').length,
-                validated: allOrders.filter(o => o.status === 'validated').length,
+                processing: allOrders.filter(o => o.status === 'processing').length,
+                shipped: allOrders.filter(o => o.status === 'shipped').length,
+                delivered: allOrders.filter(o => o.status === 'delivered').length,
                 cancelled: allOrders.filter(o => o.status === 'cancelled').length,
+                refunded: allOrders.filter(o => o.status === 'refunded').length,
                 totalRevenue: allOrders
-                    .filter(o => o.status === 'validated')
+                    .filter(o => ['delivered', 'shipped'].includes(o.status))
                     .reduce((sum, o) => sum + o.total, 0)
             }
 
@@ -150,11 +159,11 @@ export const useOrderStore = defineStore('orders', () => {
         }
     }
 
-    async function validateOrder(orderId: string) {
+    async function updateOrderStatus(orderId: string, status: string) {
         loading.value = true
         error.value = null
         try {
-            const updatedOrder = await orderService.validateOrder(orderId)
+            const updatedOrder = await orderService.updateOrderStatus({ id: orderId, status })
             // Mettre à jour la commande dans la liste
             const index = orders.value.findIndex(order => order.id === orderId)
             if (index !== -1) {
@@ -162,14 +171,13 @@ export const useOrderStore = defineStore('orders', () => {
             }
             // Mettre à jour les stats globales si elles sont chargées
             if (globalStats.value.total > 0) {
-                globalStats.value.pending--
-                globalStats.value.validated++
-                globalStats.value.totalRevenue += updatedOrder.total
+                // Ici on devrait recalculer les stats ou les mettre à jour intelligemment
+                await fetchGlobalStats()
             }
             return updatedOrder
         } catch (err) {
-            error.value = err instanceof Error ? err.message : 'Erreur lors de la validation de la commande'
-            console.error('Erreur validateOrder:', err)
+            error.value = err instanceof Error ? err.message : 'Erreur lors de la mise à jour du statut'
+            console.error('Erreur updateOrderStatus:', err)
             throw err
         } finally {
             loading.value = false
@@ -180,18 +188,17 @@ export const useOrderStore = defineStore('orders', () => {
         loading.value = true
         error.value = null
         try {
-            const updatedOrder = await orderService.cancelOrder(orderId)
-            // Mettre à jour la commande dans la liste
-            const index = orders.value.findIndex(order => order.id === orderId)
-            if (index !== -1) {
-                orders.value[index] = updatedOrder
+            const result = await orderService.cancelOrder(orderId)
+            if (result) {
+                // Recharger les commandes pour obtenir les données mises à jour
+                await fetchOrders(currentPage.value, perPage.value)
+                
+                // Mettre à jour les stats globales si elles sont chargées
+                if (globalStats.value.total > 0) {
+                    await fetchGlobalStats()
+                }
             }
-            // Mettre à jour les stats globales si elles sont chargées
-            if (globalStats.value.total > 0) {
-                globalStats.value.pending--
-                globalStats.value.cancelled++
-            }
-            return updatedOrder
+            return result
         } catch (err) {
             error.value = err instanceof Error ? err.message : 'Erreur lors de l\'annulation de la commande'
             console.error('Erreur cancelOrder:', err)
@@ -234,14 +241,14 @@ export const useOrderStore = defineStore('orders', () => {
 
         // Getters
         pendingOrders,
-        validatedOrders,
+        deliveredOrders,
         cancelledOrders,
 
         // Actions
         fetchOrders,
         fetchOrderById,
         fetchGlobalStats,
-        validateOrder,
+        updateOrderStatus,
         cancelOrder,
         updatePerPage,
         generateInvoice

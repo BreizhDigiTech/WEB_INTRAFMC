@@ -38,7 +38,7 @@
               <div>
                 <div class="font-bold text-white">{{ product.name }}</div>
                 <div class="text-sm text-gray-400">
-                  {{ product.sku || 'Pas de SKU' }}
+                  <!-- SKU non pris en charge -->
                 </div>
               </div>
             </div>
@@ -46,12 +46,7 @@
 
           <!-- Catégorie -->
           <td>
-            <div v-if="product.category" class="text-gray-300">
-              {{ product.category.name }}
-            </div>
-            <div v-else class="text-gray-500 italic">
-              Aucune catégorie
-            </div>
+            <div class="text-gray-500 italic">—</div>
           </td>
 
           <!-- Prix -->
@@ -92,12 +87,7 @@
 
           <!-- Fournisseur -->
           <td>
-            <div v-if="product.supplier" class="text-gray-300">
-              {{ product.supplier.name }}
-            </div>
-            <div v-else class="text-gray-500 italic">
-              Aucun fournisseur
-            </div>
+            <div class="text-gray-500 italic">—</div>
           </td>
 
           <!-- Date de modification -->
@@ -129,26 +119,7 @@
                 </div>
                 <ul tabindex="0"
                   class="dropdown-content menu p-2 shadow bg-gray-800 border border-gray-700 rounded-box w-48">
-                  <li>
-                    <button @click="duplicateProduct(product)" class="text-gray-300 hover:bg-gray-700">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Dupliquer
-                    </button>
-                  </li>
-                  <li>
-                    <button @click="toggleActive(product)" class="text-gray-300 hover:bg-gray-700">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      {{ product.is_active ? 'Désactiver' : 'Activer' }}
-                    </button>
-                  </li>
+                  
                   <li>
                     <button @click="$emit('delete', product)" class="text-red-400 hover:bg-red-900/30">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,7 +211,7 @@ function getStockBarClass(product: Product): string {
 }
 
 function getStockPercentage(product: Product): number {
-  const threshold = product.low_stock_threshold || 10
+  const threshold = 10
   const maxStock = Math.max(product.stock, threshold * 2)
   return Math.min((product.stock / maxStock) * 100, 100)
 }
@@ -264,12 +235,7 @@ function updateStockValue() {
   closeStockModal()
 }
 
-function duplicateProduct(product: Product) {
-  // TODO: Implémenter la duplication de produit
-  const duplicateProduct = (product: Product) => {
-    // Logique de duplication
-  }
-}
+// duplication désactivée
 
 function toggleActive(product: Product) {
   // TODO: Implémenter le toggle actif/inactif

@@ -10,6 +10,7 @@ export interface Order {
     // Relations (si chargées par GraphQL)
     user?: OrderUser
     products?: OrderProduct[]
+    formatted_status?: string
 }
 
 export interface OrderProduct {
@@ -28,10 +29,28 @@ export interface OrderUser {
     email: string
 }
 
+export interface OrderStats {
+    order_id: string
+    total_items: number
+    product_count: number
+    total_amount: number
+    average_item_price: number
+    created_at: string
+    status: string
+}
+
+export interface UpdateOrderStatusInput {
+    id: string
+    status: OrderStatus
+}
+
 export type OrderStatus =
     | 'pending'     // En attente
-    | 'validated'   // Validée
+    | 'processing'  // En cours de traitement
+    | 'shipped'     // Expédiée
+    | 'delivered'   // Livrée
     | 'cancelled'   // Annulée
+    | 'refunded'    // Remboursée
 
 export interface OrderFilters {
     status?: OrderStatus[]

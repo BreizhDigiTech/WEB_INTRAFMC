@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 // Messages d'humour rotatifs
 const messages = ref([
@@ -152,7 +152,7 @@ const messages = ref([
 
 const currentMessageIndex = ref(0)
 const currentMessage = ref(messages.value[0])
-let messageInterval: number
+let messageInterval: ReturnType<typeof setInterval>
 
 // Rotation des messages
 const rotateMessages = () => {

@@ -15,6 +15,18 @@ export interface Product {
 
     // Relations de l'API
     categories?: ProductCategory[]
+
+    // Champs facultatifs utilisés par les vues (UI-only)
+    sku?: string
+    barcode?: string
+    weight?: number
+    dimensions?: string
+    low_stock_threshold?: number
+    tags?: string[]
+    is_active?: boolean
+    supplier?: { name: string }
+    category?: { id: string; name: string }
+    image_url?: string
 }
 
 export interface ProductCategory {
@@ -61,6 +73,16 @@ export interface CreateProductInput {
     stock: number
     analysis_file?: string
     category_id?: number
+
+    // Champs optionnels côté formulaire
+    sku?: string
+    barcode?: string
+    weight?: number
+    dimensions?: string
+    low_stock_threshold?: number
+    tags?: string[]
+    is_active?: boolean
+    image_url?: string
 }
 
 export interface UpdateProductInput {
@@ -89,21 +111,6 @@ export interface ProductStats {
         count: number
         value: number
     }>
-}
-
-export interface ProductFilters {
-    search?: string
-    category_id?: string
-    supplier_id?: string
-    min_price?: number
-    max_price?: number
-    min_stock?: number
-    max_stock?: number
-    is_active?: boolean
-    low_stock?: boolean
-    tags?: string[]
-    sort_by?: 'name' | 'price' | 'stock' | 'created_at' | 'updated_at'
-    sort_direction?: 'asc' | 'desc'
 }
 
 export type ProductViewMode = 'grid' | 'list' | 'table'

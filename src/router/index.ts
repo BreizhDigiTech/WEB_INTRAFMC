@@ -33,7 +33,7 @@ const requireGuest = (to: any, from: any, next: any) => {
 
 
 
-const requireAdmin = (to: any, from: any, next: any) => {
+const requireAdmin = (_to: any, _from: any, next: any) => {
     const authStore = useAuthStore()
 
     if (!authStore.isAuthenticated) {

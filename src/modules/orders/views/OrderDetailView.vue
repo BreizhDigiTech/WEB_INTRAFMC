@@ -87,8 +87,8 @@
               </button>
             </template>
 
-            <!-- Génération de facture pour les commandes validées -->
-            <template v-if="order && order.status === 'validated'">
+            <!-- Génération de facture pour les commandes livrées/expédiées -->
+            <template v-if="order && (order.status === 'delivered' || order.status === 'shipped')">
               <button 
                 @click="generateInvoice"
                 :disabled="invoiceLoading"
@@ -167,8 +167,8 @@
                   <div class="w-2 h-2 rounded-full mr-2" :class="getStatusDotClass(order.status)"></div>
                   {{ getStatusLabel(order.status) }}
                 </span>
-                <!-- Icône facture disponible pour les commandes validées -->
-                <div v-if="order.status === 'validated'" class="tooltip tooltip-top" data-tip="Facture disponible">
+                <!-- Icône facture disponible pour les commandes livrées/expédiées -->
+                <div v-if="order.status === 'delivered' || order.status === 'shipped'" class="tooltip tooltip-top" data-tip="Facture disponible">
                   <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -322,19 +322,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useOrderStore } from '../stores/orderStore'
-import { orderService } from '../services/orderService'
 import InvoicePreviewModal from '../components/InvoicePreviewModal.vue'
+import { orderService } from '../services/orderService'
+import { useOrderStore } from '../stores/orderStore'
 import type { Order, OrderStatus } from '../types'
-import { 
-  formatCurrency, 
-  formatDate, 
-  getStatusLabel, 
-  getStatusBadgeClass,
-  getProductImage,
-  handleImageError
+import {
+    formatCurrency,
+    formatDate,
+    getProductImage,
+    getStatusBadgeClass,
+    getStatusLabel,
+    handleImageError
 } from '../utils/formatters'
 
 // Composables
@@ -375,7 +375,7 @@ async function validateOrder() {
   actionLoading.value = true
   
   try {
-    await orderStore.validateOrder(order.value.id)
+    await orderStore.updateOrderStatus(order.value.id, 'validated')
     // Rafraîchir la commande pour mettre à jour le statut
     await refreshOrder()
   } catch (err: any) {
@@ -458,10 +458,14 @@ function showSuccessMessage(message: string) {
 }
 
 function getStatusDotClass(status: OrderStatus): string {
-  const classes = {
+  const classes: Record<string, string> = {
     pending: 'bg-yellow-400',
     validated: 'bg-green-400',
-    cancelled: 'bg-red-400'
+    cancelled: 'bg-red-400',
+    processing: 'bg-blue-400',
+    shipped: 'bg-purple-400',
+    delivered: 'bg-green-500',
+    refunded: 'bg-gray-400'
   }
   return classes[status] || 'bg-gray-500'
 }

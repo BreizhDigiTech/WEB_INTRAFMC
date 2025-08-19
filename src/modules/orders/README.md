@@ -7,9 +7,10 @@ src/modules/orders/
 ├── components/
 │   └── InvoicePreviewModal.vue     # Modal d'aperçu des factures
 ├── constants/
-│   └── index.ts                    # Constantes du module
+│   └── index.ts                    # Constantes et statuts du module
 ├── services/
-│   └── orderService.ts             # Service GraphQL pour les commandes
+│   ├── orderService.ts             # Service GraphQL pour les commandes
+│   └── checkoutService.ts          # Service GraphQL pour le checkout
 ├── stores/
 │   └── orderStore.ts               # Store Pinia pour l'état global
 ├── types/
@@ -18,7 +19,58 @@ src/modules/orders/
 │   └── formatters.ts               # Utilitaires de formatage
 └── views/
     ├── OrderDetailView.vue         # Vue détaillée d'une commande
-    └── SimpleOrdersView.vue        # Liste des commandes avec filtres
+    ├── OrderDetailView_new.vue     # Nouvelle vue détaillée
+    ├── SimpleOrdersView.vue        # Liste des commandes avec filtres
+    └── AdvancedOrdersView.vue      # Vue avancée des commandes
+```
+
+## Nouveautés - Mise à jour API GraphQL
+
+### 🔄 Nouveaux statuts de commandes
+Selon la documentation API, les statuts disponibles sont maintenant :
+- **`pending`** - En attente
+- **`processing`** - En cours de traitement  
+- **`shipped`** - Expédiée
+- **`delivered`** - Livrée
+- **`cancelled`** - Annulée
+- **`refunded`** - Remboursée
+
+### 🎯 Transitions de statut autorisées
+Les transitions sont strictement définies :
+- `pending` → `processing`, `cancelled`
+- `processing` → `shipped`, `cancelled`  
+- `shipped` → `delivered`
+- `delivered` → `refunded`
+- `cancelled` → (aucune transition)
+- `refunded` → (aucune transition)
+
+### 📊 Nouvelles queries et mutations
+
+#### Queries disponibles
+```graphql
+# Commandes utilisateur (pagination automatique)
+query MyOrders($first: Int = 10, $page: Int = 1)
+
+# Toutes les commandes (Admin uniquement)
+query AllOrders($first: Int = 15, $page: Int = 1)
+
+# Détails complets d'une commande
+query GetOrderDetails($id: ID!)
+
+# Statistiques d'une commande
+query GetOrderStats($id: ID!)
+```
+
+#### Mutations disponibles
+```graphql
+# Finaliser le panier en commande
+mutation Checkout
+
+# Annuler une commande
+mutation CancelOrder($id: ID!)
+
+# Modifier le statut (Admin uniquement)
+mutation UpdateOrderStatus($input: UpdateOrderStatusInput!)
 ```
 
 ## Fonctionnalités
@@ -27,19 +79,26 @@ src/modules/orders/
 - ✅ Liste des commandes avec pagination (max 50 par API)
 - ✅ Recherche globale dans toutes les commandes
 - ✅ Filtres par statut, montant, date
-- ✅ Validation/Annulation des commandes
+- ✅ Gestion des transitions de statut
 - ✅ Vue détaillée avec informations complètes
+- ✅ Support des nouveaux statuts API
 
-### 📊 Statistiques et métriques
+### � Workflow de commandes  
+- ✅ Transitions de statut respectant l'API
+- ✅ Validation des changements de statut
+- ✅ Interface admin pour gestion des statuts
+- ✅ Historique des changements
+
+### �📊 Statistiques et métriques
 - ✅ Statistiques en temps réel par statut
 - ✅ Calcul automatique des pourcentages
-- ✅ Chiffre d'affaires total
+- ✅ Chiffre d'affaires basé sur commandes livrées/expédiées
 - ✅ Indicateurs visuels avec graphiques
 
 ### 🧾 Génération de factures
 - ✅ Génération PDF avec jsPDF
 - ✅ Factures professionnelles avec en-tête
-- ✅ Disponible uniquement pour les commandes validées
+- ✅ Disponible pour commandes livrées/expédiées
 - ✅ Téléchargement automatique
 - ✅ Aperçu avant téléchargement
 
@@ -48,6 +107,7 @@ src/modules/orders/
 - ✅ Interface responsive (mobile-first)
 - ✅ Animations et transitions fluides
 - ✅ Thème sombre professionnel
+- ✅ Badges de statut colorés
 
 ## API et contraintes
 
@@ -60,16 +120,24 @@ src/modules/orders/
 ```typescript
 interface Order {
   id: string
+  user_id: string  
   total: number
-  status: 'pending' | 'validated' | 'cancelled'
+  status: OrderStatus
+  formatted_status?: string
   created_at: string
   updated_at: string
-  user?: {
-    id: string
-    name: string
-    email: string
-  }
+  user?: OrderUser
   products?: OrderProduct[]
+}
+
+interface OrderStats {
+  order_id: string
+  total_items: number
+  product_count: number
+  total_amount: number
+  average_item_price: number
+  created_at: string
+  status: string
 }
 ```
 
@@ -77,8 +145,14 @@ interface Order {
 
 ### Importer les utilitaires
 ```typescript
-import { formatCurrency, formatDate, getStatusLabel } from '../utils/formatters'
-import { STATUS_OPTIONS, PAGINATION_CONFIG } from '../constants'
+import { 
+  formatCurrency, 
+  formatDate, 
+  getStatusLabel,
+  isStatusTransitionAllowed,
+  getNextAllowedStatuses
+} from '../utils/formatters'
+import { STATUS_OPTIONS, STATUS_TRANSITIONS } from '../constants'
 ```
 
 ### Utiliser le store
@@ -90,14 +164,76 @@ const orderStore = useOrderStore()
 // Charger les commandes avec filtres
 await orderStore.fetchOrders(page, limit, filters)
 
-// Valider une commande
-await orderStore.validateOrder(orderId)
+// Changer le statut d'une commande
+await orderStore.updateOrderStatus(orderId, newStatus)
+
+// Annuler une commande
+await orderStore.cancelOrder(orderId)
 
 // Générer une facture
 const invoice = await orderStore.generateInvoice(orderId)
 ```
 
-### Générer une facture
+### Gérer les transitions de statut
+```typescript
+import { isStatusTransitionAllowed, getNextAllowedStatuses } from '../utils/formatters'
+
+// Vérifier si une transition est possible
+if (isStatusTransitionAllowed('pending', 'processing')) {
+  // Transition autorisée
+}
+
+// Obtenir les statuts suivants possibles
+const nextStatuses = getNextAllowedStatuses('pending')
+// ['processing', 'cancelled']
+```
+
+### Utiliser les services GraphQL
+```typescript
+import { orderService, checkoutService } from '../services'
+
+// Finaliser une commande
+const order = await checkoutService.checkout()
+
+// Récupérer les détails complets
+const orderDetails = await orderService.getOrderDetails(orderId)
+
+// Obtenir les statistiques
+const stats = await orderService.getOrderStats(orderId)
+```
+
+## Migration depuis l'ancienne version
+
+### Changements de statuts
+```typescript
+// Ancien
+'validated' → 'delivered' ou 'shipped'
+
+// Mapping recommandé
+const statusMigration = {
+  'validated': 'delivered',  // Commandes livrées
+  'pending': 'pending',      // Reste identique  
+  'cancelled': 'cancelled'   // Reste identique
+}
+```
+
+### Nouvelles méthodes
+```typescript
+// Remplace validateOrder()
+orderStore.updateOrderStatus(orderId, 'delivered')
+
+// Remplace getOrder()  
+orderService.getOrderDetails(orderId)
+```
+
+### Nouvelles constantes
+```typescript
+// Nouveau : transitions de statut
+import { STATUS_TRANSITIONS } from '../constants'
+
+// Nouveau : vérification des transitions
+import { isStatusTransitionAllowed } from '../utils/formatters'
+```
 ```typescript
 import { orderService } from '../services/orderService'
 

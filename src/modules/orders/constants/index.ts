@@ -7,9 +7,24 @@ import type { OrderStatus } from '../types'
  */
 export const STATUS_OPTIONS = [
     { value: 'pending' as OrderStatus, label: 'En attente', color: 'text-yellow-400' },
-    { value: 'validated' as OrderStatus, label: 'Validées', color: 'text-green-400' },
-    { value: 'cancelled' as OrderStatus, label: 'Annulées', color: 'text-red-400' }
+    { value: 'processing' as OrderStatus, label: 'En cours de traitement', color: 'text-blue-400' },
+    { value: 'shipped' as OrderStatus, label: 'Expédiée', color: 'text-purple-400' },
+    { value: 'delivered' as OrderStatus, label: 'Livrée', color: 'text-green-400' },
+    { value: 'cancelled' as OrderStatus, label: 'Annulée', color: 'text-red-400' },
+    { value: 'refunded' as OrderStatus, label: 'Remboursée', color: 'text-gray-400' }
 ] as const
+
+/**
+ * Transitions de statut autorisées selon la documentation API
+ */
+export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+    pending: ['processing', 'cancelled'],
+    processing: ['shipped', 'cancelled'],
+    shipped: ['delivered'],
+    delivered: ['refunded'],
+    cancelled: [],
+    refunded: []
+} as const
 
 /**
  * Configurations pour la pagination

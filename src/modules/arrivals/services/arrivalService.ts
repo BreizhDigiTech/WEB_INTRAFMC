@@ -15,7 +15,7 @@ export const arrivalService = {
      * Récupère la liste des arrivages avec pagination
      */
     async getArrivals(variables: ArrivalsQueryVariables = {}): Promise<ArrivalsResponse> {
-        const { first = 15, page = 1, filters } = variables
+        const { first = 15, page = 1 } = variables
         
         const query = `
             query GetArrivals($first: Int, $page: Int) {
