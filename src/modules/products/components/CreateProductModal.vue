@@ -262,8 +262,8 @@ const form = reactive<CreateProductInput>({
   description: '',
   price: 0,
   stock: 0,
-  images: [''],
-  analysis_file: '',
+  image_urls: [''],
+  analysis_file_url: '',
   category_id: undefined
 })
 
@@ -368,7 +368,7 @@ async function handleSubmit() {
     // Upload de l'image si présente
     if (imageFile.value) {
       try {
-        form.image_url = await productService.uploadProductImage(imageFile.value)
+        form.image_url = await productService.uploadSingleProductImage(imageFile.value)
       } catch (error) {
         console.warn('Erreur lors de l\'upload de l\'image:', error)
         // Continue sans image

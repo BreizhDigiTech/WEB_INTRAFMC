@@ -277,9 +277,9 @@ const form = reactive<CreateProductInput>({
   description: '',
   price: 0,
   stock: 0,
-  images: [],
+  image_urls: [],
   category_id: undefined,
-  analysis_file: ''
+  analysis_file_url: ''  // Corrigé selon l'erreur GraphQL
 })
 
 // Erreurs de validation
@@ -403,52 +403,71 @@ const saveProduct = async () => {
           : undefined
     }
 
-  const multipartEnabled = (import.meta as any).env?.VITE_GRAPHQL_MULTIPART === 'true'
+    let newProduct
 
-  let newProduct
-  if (multipartEnabled && (selectedImages.value.length > 0 || analysisFile.value)) {
-      // Envoi multipart GraphQL avec fichiers
-      try {
-        newProduct = await productService.createProductWithFiles({
-          ...baseInput,
-          images: selectedImages.value.map(i => i.file),
-          analysis_file: analysisFile.value || null
-        })
-      } catch (e: any) {
-        // Fallback: si le schéma est [String], on pré-uploade via mutation dédiée puis on envoie les chemins
-        console.warn('Multipart échoué, tentative avec upload mutation dédiée:', e?.message || e)
+    // Préparer les fichiers si présents
+    const imageFiles = selectedImages.value.map(img => img.file)
+    const analysisFileValue = analysisFile.value
+
+    try {
+      console.log('=== DÉBUT CRÉATION PRODUIT (2 ÉTAPES) ===')
+      console.log('Form:', form)
+      console.log('Images sélectionnées:', imageFiles.length, imageFiles.map(f => f.name))
+      console.log('Fichier analyse:', analysisFileValue?.name || 'Aucun')
+      
+      // ÉTAPE 1: Créer le produit de base (sans fichiers)
+      const productInput: CreateProductInput = {
+        name: form.name,
+        description: form.description || '',
+        price: Number(form.price),
+        stock: Number(form.stock)
+      }
+      
+      // Ajouter category_id seulement s'il est défini
+      if ((form as any).category_id !== undefined && (form as any).category_id !== null && (form as any).category_id !== '') {
+        (productInput as any).category_id = Number((form as any).category_id)
+      }
+      
+      console.log('ÉTAPE 1 - Données produit de base:', productInput)
+      newProduct = await productService.createProduct(productInput)
+      console.log('✅ ÉTAPE 1 - Produit créé avec succès (ID:', newProduct.id, '):', newProduct)
+      
+      // ÉTAPE 2: Upload des images si présentes
+      if (imageFiles.length > 0) {
         try {
-          const uploadedImages = selectedImages.value.length
-            ? await Promise.all(selectedImages.value.map(i => productService.uploadImageViaGraphql(i.file)))
-            : []
-          const uploadedPdf = analysisFile.value
-            ? await productService.uploadPdfViaGraphql(analysisFile.value)
-            : ''
-
-          newProduct = await productStore.createProduct({
-            ...baseInput,
-            images: uploadedImages,
-            analysis_file: uploadedPdf
-          })
-        } catch (innerErr: any) {
-          console.warn('Upload mutation dédiée échouée, annulation de la création:', innerErr?.message || innerErr)
-          throw innerErr
+          console.log('ÉTAPE 2 - Upload des images pour le produit', newProduct.id)
+          const imageUrls = await productService.uploadProductImages(newProduct.id, imageFiles)
+          console.log('✅ ÉTAPE 2 - Images uploadées avec succès:', imageUrls)
+          
+          // Recharger le produit pour avoir les URLs des images
+          const updatedProduct = await productService.getProductById(newProduct.id)
+          console.log('Produit mis à jour avec images:', updatedProduct)
+          newProduct = updatedProduct
+        } catch (uploadError: any) {
+          console.warn('⚠️ ÉTAPE 2 - Erreur lors de l\'upload des images (produit créé sans images):', uploadError)
+          // Le produit est créé mais sans images, ce n'est pas grave
         }
       }
-    } else {
-      // Envoi JSON simple
-      newProduct = await productStore.createProduct({
-        ...baseInput,
-        images: [],
-        analysis_file: ''
-      })
+      
+      // ÉTAPE 3: Upload du fichier d'analyse si présent (TODO: à implémenter)
+      if (analysisFileValue) {
+        console.log('ÉTAPE 3 - Fichier d\'analyse détecté mais upload pas encore implémenté')
+        // TODO: Implémenter l'upload du fichier d'analyse
+      }
+      
+    } catch (createError: any) {
+      console.error('❌ Erreur lors de la création du produit:', createError)
+      
+      // Si on a des détails sur l'erreur GraphQL
+      if (createError.response?.errors) {
+        console.error('Erreurs GraphQL détaillées:', createError.response.errors)
+      }
+      
+      throw createError
     }
 
     // Rediriger vers la liste des produits
     router.push('/products')
-
-    // Notification de succès (si vous avez un système de notifications)
-    console.log('Produit créé avec succès:', newProduct)
 
   } catch (error) {
     console.error('Erreur lors de la création du produit:', error)

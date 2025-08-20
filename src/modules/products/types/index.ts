@@ -5,7 +5,7 @@ export interface Product {
     name: string
     description?: string
     price: number
-    images?: string[]
+    image_urls?: string[]
     stock: number
     analysis_file?: string
     analysis_file_url?: string
@@ -69,9 +69,9 @@ export interface CreateProductInput {
     name: string
     description?: string
     price: number
-    images?: string[]
+    image_urls?: string[]
     stock: number
-    analysis_file?: string
+    analysis_file_url?: string
     category_id?: number
 
     // Champs optionnels côté formulaire
@@ -89,9 +89,9 @@ export interface UpdateProductInput {
     name?: string
     description?: string
     price?: number
-    images?: string[]
+    image_urls?: string[]
     stock?: number
-    analysis_file?: string
+    analysis_file_url?: string | null
     category_id?: number
 }
 

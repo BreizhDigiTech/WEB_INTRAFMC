@@ -33,11 +33,18 @@ export const useProductStore = defineStore('products', () => {
 
         try {
             const response = await productService.getProducts(first, page)
+            
+            // Trier les produits par date de création (plus récent en premier)
+            const sortedProducts = response.data.sort((a, b) => {
+                const dateA = new Date(a.created_at || '').getTime()
+                const dateB = new Date(b.created_at || '').getTime()
+                return dateB - dateA // DESC (plus récent en premier)
+            })
 
             if (append) {
-                products.value.push(...response.data)
+                products.value.push(...sortedProducts)
             } else {
-                products.value = response.data
+                products.value = sortedProducts
             }
 
             paginatorInfo.value = response.paginatorInfo
@@ -62,8 +69,8 @@ export const useProductStore = defineStore('products', () => {
         error.value = null
 
         try {
-            // Récupérer tous les produits (ou un grand nombre)
-            const response = await productService.searchProducts(searchQuery || '', categoryId, first, page)
+            // Pour la recherche, récupérer TOUS les produits pour un filtrage côté client efficace
+            const response = await productService.getAllProductsForSearch()
             
             let filteredData = response.data
 
@@ -81,6 +88,13 @@ export const useProductStore = defineStore('products', () => {
                     product.category_id?.toString() === categoryId
                 )
             }
+            
+            // Trier les résultats par date de création (plus récent en premier)
+            filteredData = filteredData.sort((a, b) => {
+                const dateA = new Date(a.created_at || '').getTime()
+                const dateB = new Date(b.created_at || '').getTime()
+                return dateB - dateA // DESC (plus récent en premier)
+            })
 
             if (append) {
                 products.value.push(...filteredData)

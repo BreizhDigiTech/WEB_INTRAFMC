@@ -219,8 +219,8 @@ export function formatWeight(weight: number): string {
  */
 export function getProductImage(product: Product): string {
     // Première image du tableau
-    if (product.images && product.images.length > 0) {
-        return product.images[0]
+    if (product.image_urls && product.image_urls.length > 0) {
+        return product.image_urls[0]
     }
 
     // Image par défaut
@@ -234,9 +234,9 @@ export function getProductImages(product: Product): string[] {
     const images: string[] = []
 
     // Ajouter les images du tableau
-    if (product.images && product.images.length > 0) {
+    if (product.image_urls && product.image_urls.length > 0) {
         // Éviter les doublons
-        product.images.forEach(img => {
+        product.image_urls.forEach((img: string) => {
             if (!images.includes(img)) {
                 images.push(img)
             }

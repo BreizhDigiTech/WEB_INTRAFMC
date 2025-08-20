@@ -166,8 +166,9 @@
             class="bg-black/20 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600/50 transition-all duration-300 group hover:scale-105 cursor-pointer">
             <!-- Image produit -->
             <div class="aspect-square bg-gray-800/50 rounded-xl mb-4 flex items-center justify-center overflow-hidden">
-              <img v-if="product.images && product.images.length > 0" :src="product.images[0]" :alt="product.name"
-                class="w-full h-full object-cover">
+              <img v-if="product.image_urls && product.image_urls.length > 0" :src="getImageUrl(product.image_urls[0])" :alt="product.name"
+                class="w-full h-full object-cover"
+                @error="(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-product.svg' }">
               <div v-else class="text-gray-500">
                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -297,6 +298,39 @@ const totalStockValue = computed(() => {
     return total + (product.price * product.stock)
   }, 0)
 })
+
+// Fonction pour corriger les URLs d'images
+const getImageUrl = (imageUrl: string): string => {
+  if (!imageUrl) return ''
+  
+  // Si l'URL est complète et suit le format de l'API
+  if (imageUrl.startsWith('http://localhost/API_INTRAFMC/public/')) {
+    // Extraire le chemin après /public/
+    const pathAfterPublic = imageUrl.replace('http://localhost/API_INTRAFMC/public/', '')
+    
+    // Si le chemin est juste {ID}/{filename}, ajouter le préfixe product_images/
+    if (pathAfterPublic.match(/^\d+\//)) {
+      const correctedUrl = `http://localhost/API_INTRAFMC/public/product_images/${pathAfterPublic}`
+      return correctedUrl
+    }
+    
+    // Sinon retourner l'URL originale
+    return imageUrl
+  }
+  
+  // Si l'URL est complète avec un autre format, la retourner telle quelle
+  if (imageUrl.startsWith('http')) {
+    return imageUrl
+  }
+  
+  // Si l'URL commence par /, l'ajouter au domaine du serveur
+  if (imageUrl.startsWith('/')) {
+    return `${import.meta.env.VITE_IMAGE_BASE_URL}${imageUrl}`
+  }
+  
+  // Pour les chemins relatifs, utiliser la base URL configurée
+  return `${import.meta.env.VITE_IMAGE_BASE_URL}/${imageUrl}`
+}
 
 // Méthodes
 function formatPrice(price: number): string {
