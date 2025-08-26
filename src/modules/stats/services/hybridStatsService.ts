@@ -169,115 +169,35 @@ export class HybridStatsService extends StatsService {
 
   async getOrderStatsByUser(filters: StatsFilters = {}): Promise<OrderStats[]> {
     try {
-      console.log('🔍 Génération de statistiques utilisateur avec APIs disponibles...')
+      console.log('🔍 Tentative de récupération des statistiques utilisateur avec APIs réelles...')
       
       // Préparer les dates par défaut si non fournies
       const startDate = filters.start_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       const endDate = filters.end_date || new Date().toISOString().split('T')[0]
       
-      const userStats: OrderStats[] = []
-      
+      // Essayer l'API userOrderStatistics qui semble plus spécialisée
       try {
-        // Essayer d'obtenir les données de croissance client comme source d'info
-        console.log('🔍 Tentative de récupération via customerGrowth...')
-        const customerGrowth = await this.getCustomerGrowth(12)
-        
-        if (customerGrowth && customerGrowth.periods) {
-          // Créer des stats basées sur la croissance client
-          const totalNewCustomers = customerGrowth.summary?.totalNewCustomers || 0
-          const avgGrowthRate = customerGrowth.summary?.averageGrowthRate || 0
-          
-          // Simuler des utilisateurs basés sur les données de croissance
-          for (let i = 0; i < Math.min(5, totalNewCustomers); i++) {
-            userStats.push({
-              user_id: `user_${i + 1}`,
-              user: { 
-                id: `user_${i + 1}`, 
-                name: `Client ${i + 1}` 
-              },
-              total_orders: Math.floor(Math.random() * 10) + 1,
-              total_amount: Math.floor(Math.random() * 5000) + 500,
-              average_order_value: Math.floor(Math.random() * 500) + 50,
-              first_order_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              last_order_date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              userId: `user_${i + 1}`,
-              userName: `Client ${i + 1}`
-            } as OrderStats)
-          }
-          
-          if (userStats.length > 0) {
-            console.log(`✅ Généré ${userStats.length} utilisateurs via customerGrowth`)
-            return userStats
-          }
-        }
-      } catch (error) {
-        console.log('⚠️ customerGrowth non disponible, fallback vers revenueTimeline')
-      }
-      
-      try {
-        // Fallback: utiliser revenueTimeline pour estimer des données
-        console.log('🔍 Tentative de récupération via revenueTimeline...')
-        const timeline = await this.getRevenueTimeline({
+        console.log('🔍 Tentative avec userOrderStatistics...')
+        const userStatsResult = await this.getUserOrderStatistics({
+          ...filters,
           start_date: startDate,
-          end_date: endDate,
-          groupBy: 'month'
+          end_date: endDate
         })
         
-        if (timeline && timeline.periods) {
-          const totalRevenue = timeline.periods.reduce((sum: number, period: any) => sum + (period.revenue || 0), 0)
-          const totalOrders = timeline.periods.reduce((sum: number, period: any) => sum + (period.orderCount || 0), 0)
-          
-          // Créer un utilisateur global basé sur les données de timeline
-          userStats.push({
-            user_id: 'global',
-            user: { id: 'global', name: 'Statistiques Globales' },
-            total_orders: totalOrders,
-            total_amount: totalRevenue,
-            average_order_value: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
-            first_order_date: startDate,
-            last_order_date: endDate,
-            userId: 'global',
-            userName: 'Statistiques Globales'
-          } as OrderStats)
-          
-          console.log('✅ Généré des statistiques globales via revenueTimeline')
-          return userStats
+        if (userStatsResult && userStatsResult.data && userStatsResult.data.length > 0) {
+          console.log('✅ userOrderStatistics disponible')
+          return userStatsResult.data
         }
       } catch (error) {
-        console.log('⚠️ revenueTimeline non disponible, fallback vers données simulées')
+        console.log('⚠️ userOrderStatistics échoué:', error)
       }
       
-      // Dernier fallback: créer des données minimales
-      console.log('🔄 Génération de données simulées minimales')
-      userStats.push({
-        user_id: 'demo',
-        user: { id: 'demo', name: 'Données de démonstration' },
-        total_orders: 0,
-        total_amount: 0,
-        average_order_value: 0,
-        first_order_date: startDate,
-        last_order_date: endDate,
-        userId: 'demo',
-        userName: 'Données de démonstration'
-      } as OrderStats)
-      
-      return userStats
+      // Si aucune API ne fonctionne, lever une erreur claire
+      throw new Error('Aucune API de statistiques utilisateur disponible. Les APIs orderStatistics, basicOrderStats et userOrderStatistics sont toutes indisponibles.')
 
     } catch (error) {
       console.error('❌ Erreur lors de la récupération des statistiques utilisateur:', error)
-      
-      // Retourner des données minimales au lieu de lancer une erreur
-      return [{
-        user_id: 'error',
-        user: { id: 'error', name: 'Erreur de chargement' },
-        total_orders: 0,
-        total_amount: 0,
-        average_order_value: 0,
-        first_order_date: new Date().toISOString().split('T')[0],
-        last_order_date: new Date().toISOString().split('T')[0],
-        userId: 'error',
-        userName: 'Erreur de chargement'
-      } as OrderStats]
+      throw error
     }
   }
 
