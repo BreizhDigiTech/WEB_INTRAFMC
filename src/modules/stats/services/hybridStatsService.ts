@@ -1,3 +1,4 @@
+import { userService } from '../../../shared/services/userService'
 import type { OrderStats, StatsFilters } from '../types'
 import { StatsService } from './statsService'
 
@@ -15,30 +16,11 @@ export class HybridStatsService extends StatsService {
     apiName: string
   ): Promise<T> {
     try {
-      // Diagnostic du token avant l'appel API
-      const token = localStorage.getItem('auth_token')
-      console.log(`🔐 Token présent pour ${apiName}:`, token ? 'OUI ✅' : 'NON ❌')
-      if (token) {
-        console.log('🔍 Token preview:', token.substring(0, 20) + '...')
-      }
-      
       return await realApiCall()
     } catch (error: any) {
-      // Logs détaillés pour debug si nécessaire
-      console.error(`❌ Erreur API ${apiName}:`, error.message)
-      
-      // Créer un message d'erreur détaillé
       const originalMessage = error.message || 'Erreur inconnue'
       const errorCode = error.extensions?.code || 'API_ERROR'
       const detailedMessage = `API ${apiName} - ${originalMessage} (Code: ${errorCode})`
-      
-      // Logger pour le debug
-      console.error('Détails de l\'erreur:', { 
-        api: apiName, 
-        message: originalMessage, 
-        code: errorCode,
-        stack: error.stack 
-      })
       
       throw new Error(detailedMessage)
     }
@@ -69,7 +51,6 @@ export class HybridStatsService extends StatsService {
       await super.getOrderStatistics({ start_date: '2025-01-01', end_date: '2025-01-02' })
       results.orderStatistics = true
     } catch (e) {
-      console.log('❌ orderStatistics non disponible')
     }
 
     // Test userOrderStatistics
@@ -77,7 +58,6 @@ export class HybridStatsService extends StatsService {
       await super.getUserOrderStatistics({ start_date: '2025-01-01', end_date: '2025-01-02' })
       results.userOrderStatistics = true
     } catch (e) {
-      console.log('❌ userOrderStatistics non disponible')
     }
 
     // Test revenueTimeline
@@ -85,7 +65,6 @@ export class HybridStatsService extends StatsService {
       await super.getRevenueTimeline({ start_date: '2025-01-01', end_date: '2025-01-02' })
       results.revenueTimeline = true
     } catch (e) {
-      console.log('❌ revenueTimeline non disponible')
     }
 
     // Test customerGrowth
@@ -93,7 +72,6 @@ export class HybridStatsService extends StatsService {
       await super.getCustomerGrowth(3)
       results.customerGrowth = true
     } catch (e) {
-      console.log('❌ customerGrowth non disponible')
     }
 
     // Test basicOrderStats
@@ -101,7 +79,6 @@ export class HybridStatsService extends StatsService {
       await super.getBasicOrderStats('2025-01-01', '2025-01-02')
       results.basicOrderStats = true
     } catch (e) {
-      console.log('❌ basicOrderStats non disponible')
     }
 
     // Test monthlyRevenue
@@ -109,7 +86,6 @@ export class HybridStatsService extends StatsService {
       await super.getMonthlyRevenue(3)
       results.monthlyRevenue = true
     } catch (e) {
-      console.log('❌ monthlyRevenue non disponible')
     }
 
     return results
@@ -139,7 +115,7 @@ export class HybridStatsService extends StatsService {
     )
   }
 
-  async getRevenueTimeline(filters: StatsFilters & { groupBy?: string, includeComparison?: boolean }): Promise<any> {
+  async getRevenueTimeline(filters: StatsFilters & { groupBy?: string }): Promise<any> {
     return this.executeRealApi(
       () => super.getRevenueTimeline(filters),
       'getRevenueTimeline'
@@ -169,34 +145,156 @@ export class HybridStatsService extends StatsService {
 
   async getOrderStatsByUser(filters: StatsFilters = {}): Promise<OrderStats[]> {
     try {
-      console.log('🔍 Tentative de récupération des statistiques utilisateur avec APIs réelles...')
-      
       // Préparer les dates par défaut si non fournies
       const startDate = filters.start_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       const endDate = filters.end_date || new Date().toISOString().split('T')[0]
       
-      // Essayer l'API userOrderStatistics qui semble plus spécialisée
+      // 1. Récupérer TOUS les utilisateurs d'abord
       try {
-        console.log('🔍 Tentative avec userOrderStatistics...')
+        const allUsersResponse = await userService.getUsers(50, 1) // Limite à 50 comme requis par l'API
+        
+        // Vérifier la structure réelle de la réponse
+        const users = allUsersResponse?.data || (allUsersResponse as any)?.users?.data || (allUsersResponse as any)?.users || []
+        
+        if (users && Array.isArray(users) && users.length > 0) {
+          // 2. Récupérer les données de commandes via orderStatistics
+          let orderStatsData = []
+          try {
+            const orderStatsResult = await this.getOrderStatistics({
+              start_date: startDate,
+              end_date: endDate,
+              compareWithPrevious: false
+            })
+            orderStatsData = orderStatsResult?.topCustomers || []
+          } catch (error) {
+          }
+          
+          // 3. Enrichir chaque utilisateur avec ses données de commandes
+          const enrichedUsers = users.map((user: any) => {
+            // Chercher les données de commandes pour cet utilisateur
+            const userOrderData = orderStatsData.find((order: any) => 
+              order.user_id?.toString() === user.id
+            )
+            
+            const orderStats = {
+              user_id: user.id,
+              user: user,
+              total_orders: userOrderData?.order_count || 0,
+              total_amount: parseFloat(userOrderData?.total_spent || '0'),
+              average_order_value: userOrderData 
+                ? parseFloat(userOrderData.total_spent || '0') / Math.max(userOrderData.order_count || 1, 1)
+                : 0,
+              first_order_date: startDate,
+              last_order_date: endDate,
+              userId: user.id,
+              userName: user.name,
+              userEmail: user.email,
+              customerSegment: userOrderData 
+                ? (parseFloat(userOrderData.total_spent || '0') > 5000 ? 'VIP' : 
+                   parseFloat(userOrderData.total_spent || '0') > 1000 ? 'PREMIUM' : 'STANDARD')
+                : 'NEW' as const
+            } as OrderStats
+            
+            return orderStats
+          })
+          
+          return enrichedUsers.sort((a, b) => b.total_amount - a.total_amount) // Trier par montant décroissant
+        }
+      } catch (error: any) {
+      }
+      
+      // Fallback: ancien comportement si la nouvelle approche échoue
+      
+      // 2. Essayer userOrderStatistics sans userId pour obtenir tous les utilisateurs (API principale pour les noms)
+      try {
         const userStatsResult = await this.getUserOrderStatistics({
-          ...filters,
           start_date: startDate,
           end_date: endDate
+          // Pas de userId spécifique pour obtenir tous les utilisateurs
         })
         
         if (userStatsResult && userStatsResult.data && userStatsResult.data.length > 0) {
-          console.log('✅ userOrderStatistics disponible')
           return userStatsResult.data
         }
       } catch (error) {
-        console.log('⚠️ userOrderStatistics échoué:', error)
+      }
+      
+      // 1. Fallback: orderStatistics avec les paramètres corrects selon la doc
+      try {
+        const orderStatsResult = await this.getOrderStatistics({
+          start_date: startDate,
+          end_date: endDate,
+          compareWithPrevious: false
+        })
+        
+        if (orderStatsResult && orderStatsResult.topCustomers && orderStatsResult.topCustomers.length > 0) {
+          
+          // Enrichir les données avec les noms des clients
+          const enrichedCustomers = await Promise.all(
+            orderStatsResult.topCustomers.map(async (customer: any) => {
+              let clientName = 'Client inconnu'
+              let clientEmail = 'Email non disponible'
+              
+              try {
+                if (customer.user_id) {
+                  const userInfo = await userService.getUser(customer.user_id.toString())
+                  clientName = userInfo.name || 'Client inconnu'
+                  clientEmail = userInfo.email || 'Email non disponible'
+                }
+              } catch (error) {
+              }
+              
+              return {
+                user_id: customer.user_id?.toString() || 'unknown',
+                user: { 
+                  id: customer.user_id?.toString() || 'unknown', 
+                  name: clientName,
+                  email: clientEmail,
+                  is_admin: false,
+                  is_active: true
+                },
+                total_orders: customer.order_count || 0,
+                total_amount: parseFloat(customer.total_spent || '0'),
+                average_order_value: parseFloat(customer.total_spent || '0') / Math.max(customer.order_count || 1, 1),
+                first_order_date: startDate,
+                last_order_date: endDate,
+                userId: customer.user_id?.toString(),
+                userName: clientName,
+                userEmail: clientEmail
+              } as OrderStats
+            })
+          )
+          
+          return enrichedCustomers
+        }
+      } catch (error) {
+      }
+      
+      // 3. Fallback avec basicOrderStats selon la doc
+      try {
+        const basicStats = await this.getBasicOrderStats(startDate, endDate)
+        
+        if (basicStats) {
+          
+          return [{
+            user_id: 'global_basic_stats',
+            user: { id: 'global_basic_stats', name: 'Statistiques Globales (BasicOrderStats)' },
+            total_orders: basicStats.totalOrders || 0,
+            total_amount: basicStats.totalRevenue || 0,
+            average_order_value: basicStats.averageOrderValue || 0,
+            first_order_date: startDate,
+            last_order_date: endDate,
+            userId: 'global_basic_stats',
+            userName: 'Statistiques Globales (BasicOrderStats)'
+          } as OrderStats]
+        }
+      } catch (error) {
       }
       
       // Si aucune API ne fonctionne, lever une erreur claire
-      throw new Error('Aucune API de statistiques utilisateur disponible. Les APIs orderStatistics, basicOrderStats et userOrderStatistics sont toutes indisponibles.')
+      throw new Error('Aucune API de statistiques utilisateur disponible. Toutes les APIs (orderStatistics, userOrderStatistics, basicOrderStats) sont indisponibles.')
 
     } catch (error) {
-      console.error('❌ Erreur lors de la récupération des statistiques utilisateur:', error)
       throw error
     }
   }
@@ -215,7 +313,6 @@ export class HybridStatsService extends StatsService {
 
       return timeline.periods || []
     } catch (error) {
-      console.error('❌ getMonthlyStats via getRevenueTimeline a échoué:', error)
       throw error
     }
   }

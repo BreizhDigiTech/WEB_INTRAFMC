@@ -6,7 +6,7 @@ import type {
 
 export class StatsService extends GraphQLService {
   /**
-   * Récupère les statistiques générales des commandes sur une période
+   * Récupère les statistiques de commandes selon la nouvelle documentation
    */
   async getOrderStatistics(filters: StatsFilters & { compareWithPrevious?: boolean }): Promise<any> {
     const query = `
@@ -16,63 +16,12 @@ export class StatsService extends GraphQLService {
           endDate: $endDate
           compareWithPrevious: $compareWithPrevious
         ) {
-          # Métriques principales
           totalRevenue
           totalOrders
           averageOrderValue
           uniqueCustomers
-          
-          # Comparaison avec période précédente
-          comparison {
-            revenueGrowth {
-              value
-              percentage
-              trend
-            }
-            ordersGrowth {
-              value
-              percentage
-              trend
-            }
-            customersGrowth {
-              value
-              percentage
-              trend
-            }
-            avgOrderGrowth {
-              value
-              percentage
-              trend
-            }
-          }
-          
-          # Métriques supplémentaires
-          metrics {
-            cancelledOrders
-            cancelledOrdersPercent
-            repeatCustomersCount
-            repeatCustomersPercent
-            averageTimeToOrder
-            conversionRate
-          }
-          
-          # Top produits de la période
-          topProducts {
-            productId
-            productName
-            quantitySold
-            revenue
-            orderCount
-          }
-          
-          # Top clients de la période
-          topCustomers {
-            userId
-            userName
-            ordersCount
-            totalAmount
-            customerSegment
-          }
+          topProducts
+          topCustomers
         }
       }
     `
@@ -80,7 +29,7 @@ export class StatsService extends GraphQLService {
     const variables = {
       startDate: filters.start_date,
       endDate: filters.end_date,
-      compareWithPrevious: filters.compareWithPrevious ?? true
+      compareWithPrevious: filters.compareWithPrevious ?? false
     }
 
     try {
@@ -130,41 +79,10 @@ export class StatsService extends GraphQLService {
           orderFrequency
           daysSinceFirstOrder
           customerSegment
-          favoriteProducts {
-            productId
-            productName
-            price
-            totalQuantity
-            orderCount
-            totalSpent
-          }
-          favoriteCategories {
-            categoryId
-            categoryName
-            totalQuantity
-            orderCount
-            totalSpent
-          }
-          behaviorAnalysis {
-            preferredTimeOfDay
-            preferredDayOfWeek
-            seasonality
-            spendingPattern
-            loyaltyScore
-          }
-          recommendations {
-            products {
-              productId
-              productName
-              price
-              reason
-            }
-            actions {
-              type
-              message
-              priority
-            }
-          }
+          favoriteProducts
+          favoriteCategories
+          behaviorAnalysis
+          recommendations
           lastOrderDate
           memberSince
         }
@@ -199,70 +117,16 @@ export class StatsService extends GraphQLService {
    * Récupère la timeline des revenus pour graphiques
    */
   async getRevenueTimeline(filters: StatsFilters & { 
-    groupBy?: string,
-    includeComparison?: boolean
+    groupBy?: string
   }): Promise<any> {
     const query = `
-      query RevenueTimeline($startDate: Date!, $endDate: Date!, $groupBy: TimeGrouping, $includeComparison: Boolean) {
+      query RevenueTimeline($startDate: Date!, $endDate: Date!, $groupBy: TimeGrouping) {
         revenueTimeline(
           startDate: $startDate
           endDate: $endDate
           groupBy: $groupBy
-          includeComparison: $includeComparison
         ) {
-          periods {
-            period
-            date
-            revenue
-            orders
-            uniqueCustomers
-            averageOrderValue
-            cancelledOrders
-            categoryBreakdown {
-              categoryId
-              categoryName
-              revenue
-              orders
-            }
-          }
-          
-          comparison {
-            periods {
-              period
-              revenue
-              orders
-              uniqueCustomers
-            }
-          }
-          
-          totals {
-            totalRevenue
-            totalOrders
-            averageOrderValue
-            peakPeriod {
-              date
-              revenue
-              orders
-            }
-            lowestPeriod {
-              date
-              revenue
-              orders
-            }
-          }
-          
-          insights {
-            trend
-            seasonality
-            volatility
-            forecast
-            anomalies {
-              date
-              type
-              severity
-              description
-            }
-          }
+          periods
         }
       }
     `
@@ -270,8 +134,7 @@ export class StatsService extends GraphQLService {
     const variables = {
       startDate: filters.start_date,
       endDate: filters.end_date,
-      groupBy: filters.groupBy || 'DAY',
-      includeComparison: filters.includeComparison || false
+      groupBy: filters.groupBy || 'DAY'
     }
 
     try {
@@ -391,13 +254,7 @@ export class StatsService extends GraphQLService {
             confidence
           }
           
-          globalInsights {
-            totalProductsAnalyzed
-            averageGrowthRate
-            topPerformingCategory
-            seasonalTrends
-            marketingRecommendations
-          }
+          globalInsights
           
           summary {
             topPerformersCount
@@ -526,25 +383,9 @@ export class StatsService extends GraphQLService {
           endDate: $endDate
           groupBy: $groupBy
         ) {
-          periods {
-            period
-            newCustomers
-            returningCustomers
-            totalCustomers
-            growthRate
-          }
-          summary {
-            totalNewCustomers
-            averageGrowthRate
-            peakGrowthPeriod
-            projectedNextPeriod
-          }
-          trends {
-            isGrowing
-            trend
-            momentum
-            seasonality
-          }
+          periods
+          summary
+          trends
         }
       }
     `
@@ -604,12 +445,7 @@ export class StatsService extends GraphQLService {
           totalOrders
           totalRevenue
           averageOrderValue
-          popularProducts {
-            id
-            name
-            orderCount
-            revenue
-          }
+          popularProducts
         }
       }
     `;
