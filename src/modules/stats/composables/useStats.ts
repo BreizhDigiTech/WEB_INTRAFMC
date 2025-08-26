@@ -101,11 +101,16 @@ export function useStats() {
   }
 
   const calculateGrowthPercentage = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0
-    return ((current - previous) / previous) * 100
+    // Vérifier que les valeurs sont valides
+    if (isNaN(current) || isNaN(previous) || previous === 0) {
+      return 0
+    }
+    const percentage = ((current - previous) / previous) * 100
+    return isNaN(percentage) ? 0 : percentage
   }
 
   const getPerformanceColor = (percentage: number) => {
+    if (isNaN(percentage)) return 'text-gray-500'
     if (percentage > 10) return 'text-green-500'
     if (percentage > 0) return 'text-blue-500'
     if (percentage > -10) return 'text-yellow-500'
@@ -125,33 +130,51 @@ export function useStats() {
   }
 
   const getRevenueTrend = () => {
-    if (monthlyStats.value.length < 2) return { trend: 0, isPositive: false }
+    if (!monthlyStats.value || monthlyStats.value.length < 2) {
+      return { trend: 0, isPositive: false, hasData: false }
+    }
     
     const current = monthlyStats.value[monthlyStats.value.length - 1]
     const previous = monthlyStats.value[monthlyStats.value.length - 2]
     
+    if (!current || !previous) {
+      return { trend: 0, isPositive: false, hasData: false }
+    }
+    
     const trend = calculateGrowthPercentage(current.total_revenue, previous.total_revenue)
-    return { trend, isPositive: trend > 0 }
+    return { trend, isPositive: trend > 0, hasData: true }
   }
 
   const getOrdersTrend = () => {
-    if (monthlyStats.value.length < 2) return { trend: 0, isPositive: false }
+    if (!monthlyStats.value || monthlyStats.value.length < 2) {
+      return { trend: 0, isPositive: false, hasData: false }
+    }
     
     const current = monthlyStats.value[monthlyStats.value.length - 1]
     const previous = monthlyStats.value[monthlyStats.value.length - 2]
     
+    if (!current || !previous) {
+      return { trend: 0, isPositive: false, hasData: false }
+    }
+    
     const trend = calculateGrowthPercentage(current.total_orders, previous.total_orders)
-    return { trend, isPositive: trend > 0 }
+    return { trend, isPositive: trend > 0, hasData: true }
   }
 
   const getCustomersTrend = () => {
-    if (customerGrowth.value.length < 2) return { trend: 0, isPositive: false }
+    if (!customerGrowth.value || customerGrowth.value.length < 2) {
+      return { trend: 0, isPositive: false, hasData: false }
+    }
     
     const current = customerGrowth.value[customerGrowth.value.length - 1]
     const previous = customerGrowth.value[customerGrowth.value.length - 2]
     
+    if (!current || !previous) {
+      return { trend: 0, isPositive: false, hasData: false }
+    }
+    
     const trend = calculateGrowthPercentage(current.total_customers, previous.total_customers)
-    return { trend, isPositive: trend > 0 }
+    return { trend, isPositive: trend > 0, hasData: true }
   }
 
   return {

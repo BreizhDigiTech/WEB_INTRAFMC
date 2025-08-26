@@ -124,11 +124,14 @@
                 <p class="text-green-400 text-sm font-medium">Chiffre d'affaires</p>
                 <p class="text-3xl font-bold text-white">{{ formatCurrency(totalRevenue) }}</p>
                 <div class="flex items-center mt-2">
-                  <svg :class="getPerformanceColor(revenueTrend.trend)" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="revenueTrend.hasData" :class="getPerformanceColor(revenueTrend.trend)" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="revenueTrend.isPositive ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'" />
                   </svg>
-                  <span :class="getPerformanceColor(revenueTrend.trend)" class="text-sm font-medium">
+                  <span v-if="revenueTrend.hasData" :class="getPerformanceColor(revenueTrend.trend)" class="text-sm font-medium">
                     {{ Math.abs(revenueTrend.trend).toFixed(1) }}%
+                  </span>
+                  <span v-else class="text-sm text-gray-500">
+                    Données insuffisantes
                   </span>
                 </div>
               </div>
@@ -147,11 +150,14 @@
                 <p class="text-blue-400 text-sm font-medium">Commandes</p>
                 <p class="text-3xl font-bold text-white">{{ totalOrders }}</p>
                 <div class="flex items-center mt-2">
-                  <svg :class="getPerformanceColor(ordersTrend.trend)" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="ordersTrend.hasData" :class="getPerformanceColor(ordersTrend.trend)" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ordersTrend.isPositive ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'" />
                   </svg>
-                  <span :class="getPerformanceColor(ordersTrend.trend)" class="text-sm font-medium">
+                  <span v-if="ordersTrend.hasData" :class="getPerformanceColor(ordersTrend.trend)" class="text-sm font-medium">
                     {{ Math.abs(ordersTrend.trend).toFixed(1) }}%
+                  </span>
+                  <span v-else class="text-sm text-gray-500">
+                    Données insuffisantes
                   </span>
                 </div>
               </div>
@@ -186,11 +192,14 @@
                 <p class="text-orange-400 text-sm font-medium">Clients actifs</p>
                 <p class="text-3xl font-bold text-white">{{ activeCustomers }}</p>
                 <div class="flex items-center mt-2">
-                  <svg :class="getPerformanceColor(customersTrend.trend)" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="customersTrend.hasData" :class="getPerformanceColor(customersTrend.trend)" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="customersTrend.isPositive ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'" />
                   </svg>
-                  <span :class="getPerformanceColor(customersTrend.trend)" class="text-sm font-medium">
+                  <span v-if="customersTrend.hasData" :class="getPerformanceColor(customersTrend.trend)" class="text-sm font-medium">
                     {{ Math.abs(customersTrend.trend).toFixed(1) }}%
+                  </span>
+                  <span v-else class="text-sm text-gray-500">
+                    Données insuffisantes
                   </span>
                 </div>
               </div>
