@@ -32,11 +32,8 @@ export function formatDate(dateString: string): string {
 export function getStatusLabel(status: OrderStatus): string {
     const labels = {
         pending: 'En attente',
-        processing: 'En cours de traitement',
-        shipped: 'Expédiée',
-        delivered: 'Livrée',
-        cancelled: 'Annulée',
-        refunded: 'Remboursée'
+        validated: 'Validée',
+        cancelled: 'Annulée'
     }
     return labels[status] || status
 }
@@ -47,11 +44,8 @@ export function getStatusLabel(status: OrderStatus): string {
 export function getStatusBadgeClass(status: OrderStatus): string {
     const classes = {
         pending: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
-        processing: 'bg-blue-600/20 text-blue-400 border-blue-600/30',
-        shipped: 'bg-purple-600/20 text-purple-400 border-purple-600/30',
-        delivered: 'bg-green-600/20 text-green-400 border-green-600/30',
-        cancelled: 'bg-red-600/20 text-red-400 border-red-600/30',
-        refunded: 'bg-gray-600/20 text-gray-400 border-gray-600/30'
+        validated: 'bg-green-600/20 text-green-400 border-green-600/30',
+        cancelled: 'bg-red-600/20 text-red-400 border-red-600/30'
     }
     return classes[status] || 'bg-gray-600/20 text-gray-400 border-gray-600/30'
 }
@@ -61,12 +55,9 @@ export function getStatusBadgeClass(status: OrderStatus): string {
  */
 export function isStatusTransitionAllowed(currentStatus: OrderStatus, newStatus: OrderStatus): boolean {
     const transitions: Record<OrderStatus, OrderStatus[]> = {
-        pending: ['processing', 'cancelled'],
-        processing: ['shipped', 'cancelled'],
-        shipped: ['delivered'],
-        delivered: ['refunded'],
-        cancelled: [],
-        refunded: []
+        pending: ['validated', 'cancelled'],
+        validated: [],
+        cancelled: []
     }
     
     return transitions[currentStatus]?.includes(newStatus) || false
@@ -77,12 +68,9 @@ export function isStatusTransitionAllowed(currentStatus: OrderStatus, newStatus:
  */
 export function getNextAllowedStatuses(currentStatus: OrderStatus): OrderStatus[] {
     const transitions: Record<OrderStatus, OrderStatus[]> = {
-        pending: ['processing', 'cancelled'],
-        processing: ['shipped', 'cancelled'],
-        shipped: ['delivered'],
-        delivered: ['refunded'],
-        cancelled: [],
-        refunded: []
+        pending: ['validated', 'cancelled'],
+        validated: [],
+        cancelled: []
     }
     
     return transitions[currentStatus] || []

@@ -1,6 +1,9 @@
 <template>
   <div class="flex items-center justify-center min-h-[calc(100vh-200px)]">
-    <div class="text-center max-w-2xl mx-auto p-8">
+    <div class="text-center max-w-4xl mx-auto p-8">
+      <!-- Alerte de permissions -->
+      <PermissionAlert />
+
       <!-- Logo/Icône principal -->
       <div class="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl flex items-center justify-center shadow-2xl">
         <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center">
@@ -10,44 +13,136 @@
 
       <!-- Message principal -->
       <h1 class="text-4xl font-light text-white mb-6">
-        FMC Intranet
+        Bienvenue {{ authStore.isAdmin ? 'Administrateur' : '' }} {{ authStore.userName }}
       </h1>
       
-      <div class="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 mb-8">
+      <!-- Dashboard Admin -->
+      <div v-if="authStore.isAdmin" class="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 mb-8">
         <div class="flex items-center justify-center mb-6">
           <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center">
             <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
           </div>
         </div>
 
         <h2 class="text-2xl font-medium text-white mb-4">
-          Fonctionnalités en développement
+          Panneau d'Administration
         </h2>
         
         <p class="text-gray-300 text-lg leading-relaxed mb-6">
-          L'interface de gestion est actuellement en cours de développement. 
-          Les modules suivants seront bientôt disponibles :
+          Accédez aux outils de gestion et d'administration de la plateforme FMC.
         </p>
 
-        <!-- Liste des fonctionnalités disponibles -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span class="text-gray-300">Gestion des utilisateurs</span>
+        <!-- Modules Admin -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <router-link to="/orders" class="flex flex-col items-center space-y-3 p-4 bg-gradient-to-br from-green-500/10 to-teal-600/10 border border-green-500/20 rounded-xl hover:from-green-500/20 hover:to-teal-600/20 transition-all duration-200 group">
+            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+              <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-white font-medium">Commandes</div>
+              <div class="text-xs text-gray-400">Gestion des commandes</div>
+            </div>
+          </router-link>
+
+          <router-link to="/arrivals" class="flex flex-col items-center space-y-3 p-4 bg-gradient-to-br from-purple-500/10 to-pink-600/10 border border-purple-500/20 rounded-xl hover:from-purple-500/20 hover:to-pink-600/20 transition-all duration-200 group">
+            <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 9h6m-6 2h6m-6 2h6m-6 2h6" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-white font-medium">Arrivages</div>
+              <div class="text-xs text-gray-400">Gestion des livraisons</div>
+            </div>
+          </router-link>
+
+          <router-link to="/products" class="flex flex-col items-center space-y-3 p-4 bg-gradient-to-br from-orange-500/10 to-red-600/10 border border-orange-500/20 rounded-xl hover:from-orange-500/20 hover:to-red-600/20 transition-all duration-200 group">
+            <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
+              <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 9h6" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-white font-medium">Produits</div>
+              <div class="text-xs text-gray-400">Gestion du catalogue</div>
+            </div>
+          </router-link>
+
+          <router-link to="/categories" class="flex flex-col items-center space-y-3 p-4 bg-gradient-to-br from-blue-500/10 to-purple-600/10 border border-blue-500/20 rounded-xl hover:from-blue-500/20 hover:to-purple-600/20 transition-all duration-200 group">
+            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+              <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-white font-medium">Catégories</div>
+              <div class="text-xs text-gray-400">Organisation produits</div>
+            </div>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Dashboard Utilisateur -->
+      <div v-else class="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 mb-8">
+        <div class="flex items-center justify-center mb-6">
+          <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
+            <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
           </div>
-          <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-100"></div>
-            <span class="text-gray-300">Monitoring système</span>
-          </div>
-          <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
-            <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse delay-200"></div>
-            <span class="text-gray-300">Rapports et analytics</span>
-          </div>
-          <div class="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-xl">
-            <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse delay-300"></div>
-            <span class="text-gray-300">Configuration système</span>
+        </div>
+
+        <h2 class="text-2xl font-medium text-white mb-4">
+          Bienvenue dans la Boutique FMC
+        </h2>
+        
+        <p class="text-gray-300 text-lg leading-relaxed mb-6">
+          Découvrez notre catalogue de produits CBD de qualité et passez vos commandes en toute simplicité.
+        </p>
+
+        <!-- Actions Utilisateur -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <router-link to="/ecommerce" class="flex flex-col items-center space-y-4 p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/10 border border-emerald-500/20 rounded-xl hover:from-emerald-500/20 hover:to-teal-600/20 transition-all duration-200 group">
+            <div class="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+              <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-white font-semibold text-lg">Catalogue Produits</div>
+              <div class="text-sm text-gray-400">Parcourir tous nos produits</div>
+            </div>
+          </router-link>
+
+          <router-link to="/ecommerce/cart" class="flex flex-col items-center space-y-4 p-6 bg-gradient-to-br from-blue-500/10 to-purple-600/10 border border-blue-500/20 rounded-xl hover:from-blue-500/20 hover:to-purple-600/20 transition-all duration-200 group">
+            <div class="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+              <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-white font-semibold text-lg">Mon Panier</div>
+              <div class="text-sm text-gray-400">Voir mes articles sélectionnés</div>
+            </div>
+          </router-link>
+
+          <router-link to="/orders" class="flex flex-col items-center space-y-4 p-6 bg-gradient-to-br from-green-500/10 to-teal-600/10 border border-green-500/20 rounded-xl hover:from-green-500/20 hover:to-teal-600/20 transition-all duration-200 group">
+            <div class="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <div class="text-green-400 font-semibold text-lg">Mes Commandes</div>
+              <div class="text-sm text-gray-400">Consulter l'historique</div>
+            </div>
+          </router-link>
+        </div>
+      </div>
           </div>
         </div>
 
@@ -57,70 +152,25 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             <span class="text-sm">Système opérationnel</span>
-          </div>
+      <!-- Section info -->
+      <div class="mt-8 p-4 bg-gradient-to-br from-blue-500/10 to-purple-600/10 rounded-xl border border-blue-500/20">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span class="text-xs font-medium text-green-400">Système opérationnel</span>
         </div>
-      </div>
-
-      <!-- Actions disponibles -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button 
-          @click="navigateTo('/dashboard')"
-          class="flex flex-col items-center p-6 bg-gray-900/30 hover:bg-gray-800/50 rounded-2xl border border-gray-800 hover:border-gray-700 transition-all duration-300 group"
-        >
-          <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-3 group-hover:bg-green-500/30 transition-colors">
-            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <span class="text-white font-medium">Dashboard</span>
-          <span class="text-gray-400 text-sm">Vue d'ensemble</span>
-        </button>
-
-        <button 
-          @click="navigateTo('/profile')"
-          class="flex flex-col items-center p-6 bg-gray-900/30 hover:bg-gray-800/50 rounded-2xl border border-gray-800 hover:border-gray-700 transition-all duration-300 group"
-        >
-          <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-500/30 transition-colors">
-            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <span class="text-white font-medium">Profil</span>
-          <span class="text-gray-400 text-sm">Paramètres utilisateur</span>
-        </button>
-
-        <button 
-          @click="logout"
-          class="flex flex-col items-center p-6 bg-gray-900/30 hover:bg-red-500/10 rounded-2xl border border-gray-800 hover:border-red-500/30 transition-all duration-300 group"
-        >
-          <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-3 group-hover:bg-red-500/30 transition-colors">
-            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </div>
-          <span class="text-white font-medium">Déconnexion</span>
-          <span class="text-gray-400 text-sm">Se déconnecter</span>
-        </button>
+        <div class="text-xs text-gray-400">
+          Dernière mise à jour: 25/08/2025
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import PermissionAlert from '@/shared/components/PermissionAlert.vue';
+import { useAuthStore } from '@/stores/auth';
 
-const router = useRouter()
 const authStore = useAuthStore()
-
-const navigateTo = (path: string) => {
-  router.push(path)
-}
-
-const logout = async () => {
-  await authStore.logout()
-  router.push('/login')
-}
 </script>
 
 <style scoped>

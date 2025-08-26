@@ -11,6 +11,7 @@ import type {
 export const useProductStore = defineStore('products', () => {
     // État
     const products = ref<Product[]>([])
+    const allProducts = ref<Product[]>([]) // Tous les produits pour les statistiques
     const currentProduct = ref<Product | null>(null)
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -21,9 +22,9 @@ export const useProductStore = defineStore('products', () => {
     const perPage = ref(10)
 
     // Computed
-    const totalProducts = computed(() => paginatorInfo.value?.total || products.value.length)
-    const inStockProducts = computed(() => products.value.filter(p => p.stock > 0))
-    const outOfStockProducts = computed(() => products.value.filter(p => p.stock === 0))
+    const totalProducts = computed(() => allProducts.value.length)
+    const inStockProducts = computed(() => allProducts.value.filter(p => p.stock > 0))
+    const outOfStockProducts = computed(() => allProducts.value.filter(p => p.stock === 0))
     const hasMorePages = computed(() => paginatorInfo.value?.hasMorePages || false)
 
     // Actions
@@ -55,6 +56,15 @@ export const useProductStore = defineStore('products', () => {
             console.error('Erreur fetchProducts:', err)
         } finally {
             loading.value = false
+        }
+    }
+
+    async function fetchAllProductsForStats() {
+        try {
+            const response = await productService.getAllProductsForSearch()
+            allProducts.value = response.data
+        } catch (err: any) {
+            console.error('Erreur fetchAllProductsForStats:', err)
         }
     }
 
@@ -233,6 +243,7 @@ export const useProductStore = defineStore('products', () => {
     return {
         // State
         products,
+        allProducts,
         currentProduct,
         loading,
         error,
@@ -248,6 +259,7 @@ export const useProductStore = defineStore('products', () => {
 
         // Actions
         fetchProducts,
+        fetchAllProductsForStats,
         loadMoreProducts,
         searchProducts,
         loadMoreSearchResults,

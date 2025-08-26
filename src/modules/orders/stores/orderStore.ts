@@ -6,11 +6,8 @@ import type { Order } from '../types'
 interface OrderStats {
     total: number
     pending: number
-    processing: number
-    shipped: number
-    delivered: number
+    validated: number
     cancelled: number
-    refunded: number
     totalRevenue: number
 }
 
@@ -29,11 +26,8 @@ export const useOrderStore = defineStore('orders', () => {
     const globalStats = ref<OrderStats>({
         total: 0,
         pending: 0,
-        processing: 0,
-        shipped: 0,
-        delivered: 0,
+        validated: 0,
         cancelled: 0,
-        refunded: 0,
         totalRevenue: 0
     })
     const statsLoading = ref(false)
@@ -43,8 +37,8 @@ export const useOrderStore = defineStore('orders', () => {
         orders.value.filter(order => order.status === 'pending')
     )
 
-    const deliveredOrders = computed(() =>
-        orders.value.filter(order => order.status === 'delivered')
+    const validatedOrders = computed(() =>
+        orders.value.filter(order => order.status === 'validated')
     )
 
     const cancelledOrders = computed(() =>
@@ -139,13 +133,10 @@ export const useOrderStore = defineStore('orders', () => {
             globalStats.value = {
                 total: allOrders.length,
                 pending: allOrders.filter(o => o.status === 'pending').length,
-                processing: allOrders.filter(o => o.status === 'processing').length,
-                shipped: allOrders.filter(o => o.status === 'shipped').length,
-                delivered: allOrders.filter(o => o.status === 'delivered').length,
+                validated: allOrders.filter(o => o.status === 'validated').length,
                 cancelled: allOrders.filter(o => o.status === 'cancelled').length,
-                refunded: allOrders.filter(o => o.status === 'refunded').length,
                 totalRevenue: allOrders
-                    .filter(o => ['delivered', 'shipped'].includes(o.status))
+                    .filter(o => o.status === 'validated')
                     .reduce((sum, o) => sum + o.total, 0)
             }
 
@@ -241,7 +232,7 @@ export const useOrderStore = defineStore('orders', () => {
 
         // Getters
         pendingOrders,
-        deliveredOrders,
+        validatedOrders,
         cancelledOrders,
 
         // Actions

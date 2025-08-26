@@ -10,6 +10,10 @@ export * from './utils/formatters'
 export { default as InvoicePreviewModal } from './components/InvoicePreviewModal.vue'
 
 // Vues
+export { default as AdvancedOrdersView } from './views/AdvancedOrdersView.vue'
 export { default as OrderDetailView } from './views/OrderDetailView.vue'
 export { default as SimpleOrdersView } from './views/SimpleOrdersView.vue'
+
+// Composables
+export { useOrderIntelligence } from './composables/useOrderIntelligence'
 

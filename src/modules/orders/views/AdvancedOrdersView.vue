@@ -132,6 +132,15 @@
         </div>
       </div>
 
+      <!-- Alerte de permissions -->
+      <PermissionAlert 
+        v-if="!canManageOrderStatus"
+        type="warning"
+        title="Permissions limitées"
+        message="Vous n'avez pas les permissions nécessaires pour modifier le statut des commandes. Seuls les administrateurs peuvent valider ou annuler des commandes."
+        class="mb-6"
+      />
+
       <!-- Panier actuel -->
       <div v-if="cartItems.length > 0" class="card mb-8">
         <div class="card-body">
@@ -234,8 +243,8 @@
             <select v-model="statusFilter" class="select select-bordered">
               <option value="">Tous les statuts</option>
               <option value="pending">En attente</option>
-              <option value="validated">Validées</option>
-              <option value="cancelled">Annulées</option>
+              <option value="validated">Validée</option>
+              <option value="cancelled">Annulée</option>
             </select>
           </div>
 
@@ -353,7 +362,7 @@
                         </svg>
                       </button>
 
-                      <div class="dropdown dropdown-end">
+                      <div class="dropdown dropdown-end" v-if="canManageOrderStatus">
                         <label tabindex="0" class="btn btn-sm btn-ghost">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -492,6 +501,8 @@ import { checkoutService, type OrderStats } from '@/modules/orders/services/chec
 import { OrderService } from '@/modules/orders/services/orderService'
 import type { Order, OrderFilters, OrderStatus } from '@/modules/orders/types'
 import { getStatusBadgeClass, getStatusLabel } from '@/modules/orders/utils/formatters'
+import PermissionAlert from '@/shared/components/PermissionAlert.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { cartService, type CartItem, type CartSummary } from '@/shared/services/cartService'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -501,6 +512,10 @@ const router = useRouter()
 
 // Services
 const api = new OrderService()
+
+// Permissions
+const { hasPermission } = usePermissions()
+const canManageOrderStatus = computed(() => hasPermission('orders:update'))
 
 // État réactif
 const orders = ref<Order[]>([])
@@ -527,11 +542,7 @@ const filteredOrders = computed(() => {
   let filtered = orders.value
 
   if (statusFilter.value) {
-    if (statusFilter.value === 'validated') {
-      filtered = filtered.filter(order => ['delivered', 'shipped'].includes(order.status))
-    } else {
-      filtered = filtered.filter(order => order.status === statusFilter.value)
-    }
+    filtered = filtered.filter(order => order.status === statusFilter.value)
   }
 
   if (userSearchFilter.value) {
@@ -557,7 +568,7 @@ const filteredOrders = computed(() => {
 })
 
 const pendingOrders = computed(() => orders.value.filter(o => o.status === 'pending'))
-const validatedOrders = computed(() => orders.value.filter(o => ['delivered', 'shipped'].includes(o.status)))
+const validatedOrders = computed(() => orders.value.filter(o => o.status === 'validated'))
 
 const totalRevenue = computed(() => {
   const total = validatedOrders.value.reduce((sum, order) => sum + order.total, 0)
@@ -653,20 +664,38 @@ async function performCheckout() {
 }
 
 async function onValidate(orderId: string) {
+  // Vérification des permissions
+  if (!canManageOrderStatus.value) {
+    alert('Vous n\'avez pas les permissions nécessaires pour modifier le statut des commandes.')
+    return
+  }
+
   actionLoading.value = true
   try {
     await api.updateOrderStatus({ id: orderId, status: 'validated' })
     await loadOrders()
+  } catch (error) {
+    console.error('Erreur lors de la validation:', error)
+    alert('Erreur lors de la validation de la commande. Veuillez réessayer.')
   } finally {
     actionLoading.value = false
   }
 }
 
 async function onCancel(orderId: string) {
+  // Vérification des permissions
+  if (!canManageOrderStatus.value) {
+    alert('Vous n\'avez pas les permissions nécessaires pour modifier le statut des commandes.')
+    return
+  }
+
   actionLoading.value = true
   try {
     await checkoutService.cancelOrder(orderId)
     await loadOrders()
+  } catch (error) {
+    console.error('Erreur lors de l\'annulation:', error)
+    alert('Erreur lors de l\'annulation de la commande. Veuillez réessayer.')
   } finally {
     actionLoading.value = false
   }

@@ -52,6 +52,11 @@ async function bootstrap() {
 
   console.log('🚀 Application WEB_INTRAFMC démarrée')
   console.log(`📊 Mode: ${import.meta.env.MODE}`)
+  
+  // Import du helper JWT en développement
+  if (import.meta.env.MODE === 'development') {
+    import('@/modules/stats/utils/jwtTokenHelper')
+  }
 }
 
 // Démarrage de l'application avec gestion d'erreur

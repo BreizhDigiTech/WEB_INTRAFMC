@@ -61,7 +61,7 @@
             </button>
 
             <!-- Actions de statut -->
-            <template v-if="order && order.status === 'pending'">
+            <template v-if="order && order.status === 'pending' && canManageOrderStatus">
               <button 
                 @click="validateOrder"
                 :disabled="actionLoading"
@@ -87,8 +87,8 @@
               </button>
             </template>
 
-            <!-- Génération de facture pour les commandes livrées/expédiées -->
-            <template v-if="order && (order.status === 'delivered' || order.status === 'shipped')">
+            <!-- Génération de facture pour les commandes validées -->
+            <template v-if="order && order.status === 'validated'">>
               <button 
                 @click="generateInvoice"
                 :disabled="invoiceLoading"
@@ -107,6 +107,15 @@
     </div>
 
     <div class="container mx-auto px-4 py-8">
+      <!-- Alerte de permissions -->
+      <PermissionAlert 
+        v-if="!canManageOrderStatus && order && order.status === 'pending'"
+        type="warning"
+        title="Permissions limitées"
+        message="Vous n'avez pas les permissions nécessaires pour modifier le statut de cette commande. Seuls les administrateurs peuvent valider ou annuler des commandes."
+        class="mb-6"
+      />
+
       <!-- Message de succès -->
       <div v-if="successMessage" class="mb-6">
         <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
@@ -167,8 +176,8 @@
                   <div class="w-2 h-2 rounded-full mr-2" :class="getStatusDotClass(order.status)"></div>
                   {{ getStatusLabel(order.status) }}
                 </span>
-                <!-- Icône facture disponible pour les commandes livrées/expédiées -->
-                <div v-if="order.status === 'delivered' || order.status === 'shipped'" class="tooltip tooltip-top" data-tip="Facture disponible">
+                <!-- Icône facture disponible pour les commandes validées -->
+                <div v-if="order.status === 'validated'" class="tooltip tooltip-top" data-tip="Facture disponible">
                   <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -268,13 +277,13 @@
                     </div>
                     <ul tabindex="0" class="dropdown-content menu p-2 shadow-xl bg-gray-800 rounded-xl w-48 border border-gray-700">
                       <li>
-                        <a class="text-gray-400 hover:bg-gray-700/50">
+                        <RouterLink :to="`/products/${product.id}`" class="text-gray-400 hover:bg-gray-700/50">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                           Voir produit
-                        </a>
+                        </RouterLink>
                       </li>
                     </ul>
                   </div>
@@ -322,25 +331,31 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import PermissionAlert from '@/shared/components/PermissionAlert.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import InvoicePreviewModal from '../components/InvoicePreviewModal.vue'
 import { orderService } from '../services/orderService'
 import { useOrderStore } from '../stores/orderStore'
 import type { Order, OrderStatus } from '../types'
 import {
-    formatCurrency,
-    formatDate,
-    getProductImage,
-    getStatusBadgeClass,
-    getStatusLabel,
-    handleImageError
+  formatCurrency,
+  formatDate,
+  getProductImage,
+  getStatusBadgeClass,
+  getStatusLabel,
+  handleImageError
 } from '../utils/formatters'
 
 // Composables
 const route = useRoute()
 const router = useRouter()
 const orderStore = useOrderStore()
+
+// Permissions
+const { hasPermission } = usePermissions()
+const canManageOrderStatus = computed(() => hasPermission('orders:update'))
 
 // État local
 const order = ref<Order | null>(null)
@@ -372,6 +387,12 @@ async function refreshOrder() {
 async function validateOrder() {
   if (!order.value) return
 
+  // Vérification des permissions
+  if (!canManageOrderStatus.value) {
+    alert('Vous n\'avez pas les permissions nécessaires pour modifier le statut des commandes.')
+    return
+  }
+
   actionLoading.value = true
   
   try {
@@ -381,6 +402,7 @@ async function validateOrder() {
   } catch (err: any) {
     error.value = err.message || 'Erreur lors de la validation'
     console.error('Erreur validateOrder:', err)
+    alert('Erreur lors de la validation de la commande. Veuillez réessayer.')
   } finally {
     actionLoading.value = false
   }
@@ -388,6 +410,12 @@ async function validateOrder() {
 
 async function cancelOrder() {
   if (!order.value) return
+
+  // Vérification des permissions
+  if (!canManageOrderStatus.value) {
+    alert('Vous n\'avez pas les permissions nécessaires pour modifier le statut des commandes.')
+    return
+  }
 
   actionLoading.value = true
   
@@ -398,6 +426,7 @@ async function cancelOrder() {
   } catch (err: any) {
     error.value = err.message || 'Erreur lors de l\'annulation'
     console.error('Erreur cancelOrder:', err)
+    alert('Erreur lors de l\'annulation de la commande. Veuillez réessayer.')
   } finally {
     actionLoading.value = false
   }
@@ -461,11 +490,7 @@ function getStatusDotClass(status: OrderStatus): string {
   const classes: Record<string, string> = {
     pending: 'bg-yellow-400',
     validated: 'bg-green-400',
-    cancelled: 'bg-red-400',
-    processing: 'bg-blue-400',
-    shipped: 'bg-purple-400',
-    delivered: 'bg-green-500',
-    refunded: 'bg-gray-400'
+    cancelled: 'bg-red-400'
   }
   return classes[status] || 'bg-gray-500'
 }

@@ -72,7 +72,8 @@ export interface CreateProductInput {
     image_urls?: string[]
     stock: number
     analysis_file_url?: string
-    category_id?: number
+    category_id?: string              // Pour une catégorie unique  
+    category_ids?: string[]           // Pour plusieurs catégories
 
     // Champs optionnels côté formulaire
     sku?: string
@@ -92,7 +93,8 @@ export interface UpdateProductInput {
     image_urls?: string[]
     stock?: number
     analysis_file_url?: string | null
-    category_id?: number
+    category_id?: string | null       // Pour une catégorie unique
+    category_ids?: string[]           // Pour plusieurs catégories
 }
 
 export interface DeleteResponse {

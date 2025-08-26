@@ -112,6 +112,15 @@
     </div>
 
     <div class="container mx-auto px-4 py-8">
+      <!-- Alerte de permissions -->
+      <PermissionAlert 
+        v-if="!canManageOrderStatus"
+        type="warning"
+        title="Permissions limitées"
+        message="Vous n'avez pas les permissions nécessaires pour modifier le statut des commandes. Seuls les administrateurs peuvent valider ou annuler des commandes."
+        class="mb-6"
+      />
+
       <!-- Statistiques améliorées -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- En attente -->
@@ -148,10 +157,10 @@
             <div v-if="orderStore.statsLoading" class="loading loading-spinner loading-md text-green-400"></div>
           </div>
           <div class="space-y-1">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Livrées</h3>
-            <p class="text-3xl font-bold text-green-400">{{ displayStats.delivered }}</p>
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Validées</h3>
+            <p class="text-3xl font-bold text-green-400">{{ displayStats.validated }}</p>
             <p class="text-sm text-gray-500">
-              {{ deliveredPercentage }}
+              {{ validatedPercentage }}
             </p>
           </div>
         </div>
@@ -290,8 +299,8 @@
                     <span :class="getStatusBadgeClass(order.status)" class="badge badge-sm font-medium">
                       {{ getStatusLabel(order.status) }}
                     </span>
-                    <!-- Icône facture disponible pour les commandes livrées ou expédiées -->
-                    <div v-if="['delivered', 'shipped'].includes(order.status)" class="tooltip tooltip-top" data-tip="Facture disponible">
+                    <!-- Icône facture disponible pour les commandes validées -->
+                    <div v-if="order.status === 'validated'" class="tooltip tooltip-top" data-tip="Facture disponible">
                       <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -320,7 +329,7 @@
                           Voir détails
                         </a>
                       </li>
-                      <li v-if="['delivered', 'shipped'].includes(order.status)">
+                      <li v-if="order.status === 'validated'">
                         <a @click="generateInvoiceFromList(order.id)" class="text-purple-400 hover:bg-purple-600/20">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -329,31 +338,15 @@
                           Générer facture
                         </a>
                       </li>
-                      <li v-if="order.status === 'pending'">
-                        <a @click="updateOrderStatus(order.id, 'processing')" class="text-blue-400 hover:bg-blue-600/20">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2" />
-                          </svg>
-                          Traiter
-                        </a>
-                      </li>
-                      <li v-if="order.status === 'processing'">
-                        <a @click="updateOrderStatus(order.id, 'shipped')" class="text-purple-400 hover:bg-purple-600/20">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
-                          Expédier
-                        </a>
-                      </li>
-                      <li v-if="order.status === 'shipped'">
-                        <a @click="updateOrderStatus(order.id, 'delivered')" class="text-green-400 hover:bg-green-600/20">
+                      <li v-if="order.status === 'pending' && canManageOrderStatus">
+                        <a @click="updateOrderStatus(order.id, 'validated')" class="text-green-400 hover:bg-green-600/20">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                           </svg>
-                          Livrer
+                          Valider
                         </a>
-                      </li>
-                      <li v-if="order.status === 'pending'">
+                      </li>>
+                      <li v-if="order.status === 'pending' && canManageOrderStatus">
                         <a @click="cancelOrder(order.id)" class="text-red-400 hover:bg-red-600/20">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -406,6 +399,8 @@
 </template>
 
 <script setup lang="ts">
+import PermissionAlert from '@/shared/components/PermissionAlert.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import UIPagination from '@shared/components/UIPagination.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -422,6 +417,10 @@ import {
 const router = useRouter()
 const orderStore = useOrderStore()
 
+// Permissions
+const { hasPermission } = usePermissions()
+const canManageOrderStatus = computed(() => hasPermission('orders:update'))
+
 // Recherche et filtres
 const searchQuery = ref('')
 const filters = ref<OrderFilters>({
@@ -435,14 +434,12 @@ const appliedFilters = ref<OrderFilters>({})
 // Options pour les filtres
 const statusOptions = [
   { value: 'pending' as OrderStatus, label: 'En attente', color: 'text-yellow-400' },
-  { value: 'processing' as OrderStatus, label: 'En cours', color: 'text-blue-400' },
-  { value: 'shipped' as OrderStatus, label: 'Expédiées', color: 'text-purple-400' },
-  { value: 'delivered' as OrderStatus, label: 'Livrées', color: 'text-green-400' },
-  { value: 'cancelled' as OrderStatus, label: 'Annulées', color: 'text-red-400' },
-  { value: 'refunded' as OrderStatus, label: 'Remboursées', color: 'text-gray-400' }
+  { value: 'validated' as OrderStatus, label: 'Validées', color: 'text-green-400' },
+  { value: 'cancelled' as OrderStatus, label: 'Annulées', color: 'text-red-400' }
 ]
 
 // Computed pour le nombre de filtres actifs
+
 const activeFiltersCount = computed(() => {
   let count = 0
   if (filters.value.status && filters.value.status.length > 0) count++
@@ -479,11 +476,8 @@ const displayStats = computed(() => {
     return {
       total: orderStore.orders.length,
       pending: orderStore.pendingOrders.length,
-      processing: orderStore.orders.filter(o => o.status === 'processing').length,
-      shipped: orderStore.orders.filter(o => o.status === 'shipped').length,
-      delivered: orderStore.deliveredOrders.length,
+      validated: orderStore.validatedOrders.length,
       cancelled: orderStore.cancelledOrders.length,
-      refunded: orderStore.orders.filter(o => o.status === 'refunded').length,
       totalRevenue: 0
     }
   }
@@ -494,9 +488,9 @@ const statsType = computed(() => {
 })
 
 // Formatage des pourcentages pour éviter les chaînes longues
-const deliveredPercentage = computed(() => {
+const validatedPercentage = computed(() => {
   return displayStats.value.total > 0
-    ? ((displayStats.value.delivered / displayStats.value.total) * 100).toFixed(1) + '% du total'
+    ? ((displayStats.value.validated / displayStats.value.total) * 100).toFixed(1) + '% du total'
     : '0% du total'
 })
 
@@ -606,18 +600,32 @@ function viewOrderDetail(orderId: string) {
 }
 
 async function updateOrderStatus(orderId: string, newStatus: string) {
+  // Vérification des permissions
+  if (!canManageOrderStatus.value) {
+    alert('Vous n\'avez pas les permissions nécessaires pour modifier le statut des commandes.')
+    return
+  }
+
   try {
     await orderStore.updateOrderStatus(orderId, newStatus)
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut:', error)
+    alert('Erreur lors de la mise à jour du statut. Veuillez réessayer.')
   }
 }
 
 async function cancelOrder(orderId: string) {
+  // Vérification des permissions
+  if (!canManageOrderStatus.value) {
+    alert('Vous n\'avez pas les permissions nécessaires pour modifier le statut des commandes.')
+    return
+  }
+
   try {
     await orderStore.cancelOrder(orderId)
   } catch (error) {
     console.error('Erreur lors de l\'annulation:', error)
+    alert('Erreur lors de l\'annulation de la commande. Veuillez réessayer.')
   }
 }
 

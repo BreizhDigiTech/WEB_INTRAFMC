@@ -1,3 +1,4 @@
+
 <template>
   <div class="min-h-screen bg-gray-900 text-white">
     <!-- Chargement -->
@@ -52,6 +53,20 @@
                     ref="nameInput"
                     class="text-4xl font-bold bg-transparent text-white border-b-2 border-white/50 focus:border-green-400 outline-none" />
                 </div>
+                
+                <!-- Catégories en haut -->
+                <div v-if="productCategories && productCategories.length > 0" 
+                  class="flex flex-wrap gap-2 mb-3">
+                  <span v-for="category in productCategories" 
+                    :key="category.id"
+                    class="inline-flex items-center px-2 py-1 bg-blue-500/30 text-blue-300 rounded-md text-xs font-medium border border-blue-400/40">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    {{ category.name }}
+                  </span>
+                </div>
+                
                 <p class="text-gray-300 text-lg">
                   Détails du produit CBD - Double-cliquez pour modifier
                 </p>
@@ -111,8 +126,23 @@
                       :data-original-path="product.image_urls[0]"
                       class="w-full h-80 object-cover" 
                       @error="onImageError($event)" />
+                    
+                    <!-- Bouton de suppression pour l'image principale -->
+                    <button
+                      @click="deleteImage(selectedImage ? product.image_urls.find(img => getImageUrl(img) === selectedImage) || product.image_urls[0] : product.image_urls[0])"
+                      :disabled="deletingImage"
+                      class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:opacity-50"
+                      title="Supprimer cette image">
+                      <svg v-if="!deletingImage" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </button>
+                    
                     <!-- Overlay avec instruction -->
-                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                       <div class="text-center text-white">
                         <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -124,14 +154,32 @@
 
                   <!-- Miniatures -->
                   <div v-if="product.image_urls.length > 1" class="grid grid-cols-4 gap-2">
-                    <button v-for="(image, index) in product.image_urls" :key="index" @click="selectedImage = getImageUrl(image)"
-                      class="aspect-square bg-gray-700 rounded-lg overflow-hidden border-2 transition-colors"
+                    <div v-for="(image, index) in product.image_urls" :key="index" 
+                      class="relative group aspect-square bg-gray-700 rounded-lg overflow-hidden border-2 transition-colors"
                       :class="{ 'border-green-500': selectedImage === getImageUrl(image) || (!selectedImage && index === 0), 'border-gray-600': selectedImage !== getImageUrl(image) && (selectedImage || index !== 0) }">
-                      <img :src="getImageUrl(image)" :alt="`${product.name} ${index + 1}`" 
-                        :data-original-path="image"
-                        class="w-full h-full object-cover" 
-                        @error="onImageError($event)" />
-                    </button>
+                      
+                      <button @click="selectedImage = getImageUrl(image)"
+                        class="w-full h-full block">
+                        <img :src="getImageUrl(image)" :alt="`${product.name} ${index + 1}`" 
+                          :data-original-path="image"
+                          class="w-full h-full object-cover" 
+                          @error="onImageError($event)" />
+                      </button>
+                      
+                      <!-- Bouton de suppression -->
+                      <button
+                        @click="deleteImage(image)"
+                        :disabled="deletingImage"
+                        class="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:opacity-50"
+                        title="Supprimer cette image">
+                        <svg v-if="!deletingImage" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <svg v-else class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -211,35 +259,145 @@
                     </div>
                   </div>
 
-                  <!-- Stock éditable -->
+                  <!-- Stock (lecture seule) -->
                   <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                     <span class="text-gray-300">Stock</span>
-                    <div v-if="!editingField.stock" 
-                      @dblclick="startEditing('stock')"
-                      class="font-bold cursor-pointer hover:bg-gray-600/50 p-1 rounded flex items-center space-x-2"
+                    <div class="font-bold flex items-center space-x-2"
                       :class="getStockColorClass(product.stock)">
                       <span>{{ product.stock }} unités</span>
-                      <button @click="quickAddStock" class="btn btn-xs btn-success ml-2">+10</button>
-                    </div>
-                    <div v-else>
-                      <input v-model="editingValue.stock" 
-                        type="number" 
-                        min="0"
-                        @keydown.enter="saveField('stock')"
-                        @keydown.escape="cancelEdit('stock')"
-                        @blur="saveField('stock')"
-                        ref="stockInput"
-                        class="text-right font-bold bg-gray-600 border border-gray-500 rounded px-2 py-1 w-20" />
+                      <div v-if="product.stock < 30" class="badge badge-warning badge-sm">
+                        Stock faible
+                      </div>
                     </div>
                   </div>
 
-                  <!-- Catégorie -->
-                  <div v-if="product.categories && product.categories.length > 0"
-                    class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                    <span class="text-gray-300">Catégorie</span>
-                    <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium">
-                      {{ product.categories[0].name }}
-                    </span>
+                  <!-- Catégories du produit -->
+                  <div class="p-4 bg-gray-700 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="text-gray-300 font-medium">Catégorie(s)</span>
+                    </div>
+                    
+                    <div>
+                      <!-- Affichage de toutes les catégories -->
+                      <div v-if="productCategories.length > 0" 
+                        class="flex flex-wrap gap-2 mb-3">
+                        <div v-for="category in productCategories" 
+                          :key="category.id"
+                          class="inline-flex items-center px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30 group relative">
+                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                          {{ category.name }}
+                          
+                          <!-- Bouton pour retirer la liaison -->
+                          <button 
+                            @click="removeCategoryFromProduct(category.id)"
+                            class="ml-1 text-red-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Retirer cette catégorie du produit">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <!-- Interface d'ajout - Design amélioré -->
+                      <div class="space-y-3">
+                        <!-- Section d'ajout avec toggle -->
+                        <div v-if="!showCategorySelector" class="flex items-center justify-between">
+                          <span v-if="productCategories.length === 0" class="flex items-center text-gray-500 italic">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7" />
+                            </svg>
+                            Aucune catégorie assignée
+                          </span>
+                          <button 
+                            @click="openCategorySelector"
+                            v-if="availableCategoriesForAdd.length > 0"
+                            class="flex items-center gap-2 px-3 py-2 bg-gray-600 hover:bg-gray-500 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border-2 border-dashed border-gray-500 hover:border-blue-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            <span class="text-sm font-medium">Ajouter une catégorie</span>
+                          </button>
+                        </div>
+                        
+                        <!-- Sélecteur de catégories avec recherche en temps réel -->
+                        <div v-if="showCategorySelector" class="bg-gray-600/50 rounded-lg p-4 border border-gray-500">
+                          <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-medium text-gray-300">Rechercher et ajouter une catégorie</h4>
+                            <button 
+                              @click="closeCategorySelector"
+                              class="text-gray-400 hover:text-gray-300 transition-colors">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          
+                          <!-- Barre de recherche -->
+                          <div class="relative mb-4">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                            </div>
+                            <input
+                              v-model="categorySearchQuery"
+                              ref="categorySearchInput"
+                              type="text"
+                              placeholder="Tapez pour rechercher une catégorie..."
+                              class="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-500 rounded-lg text-gray-300 placeholder-gray-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                            <div v-if="categorySearchQuery" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                              <button 
+                                @click="clearCategorySearch"
+                                class="text-gray-400 hover:text-gray-300 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <!-- Résultats de recherche en temps réel -->
+                          <div v-if="categorySearchQuery && filteredCategories.length > 0" class="space-y-2">
+                            <div class="flex flex-wrap gap-2">
+                              <button
+                                v-for="category in filteredCategories"
+                                :key="category.id"
+                                @click="addSpecificCategoryToProduct(category.id)"
+                                class="inline-flex items-center px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30 hover:bg-green-500/30 hover:border-green-400 transition-all duration-200 cursor-pointer">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                {{ category.name }}
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <!-- États de la recherche -->
+                          <div v-else-if="categorySearchQuery && filteredCategories.length === 0" class="text-center py-4">
+                            <div class="text-gray-500 italic mb-2">
+                              <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                              Aucune catégorie trouvée pour "{{ categorySearchQuery }}"
+                            </div>
+                          </div>
+                          
+                          <!-- État initial (pas de recherche) -->
+                          <div v-else-if="!categorySearchQuery" class="text-center py-6">
+                            <div class="text-gray-400 italic">
+                              <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                              Commencez à taper pour rechercher des catégories
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- ID Produit -->
@@ -355,8 +513,9 @@
 
 <script setup lang="ts">
 import { useErrorStore } from '@/shared/errors/errorStore'
-import { nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useCategoryStore } from '../../categories/stores/categoryStore'
 import { useProductStore } from '../stores/productStore'
 import type { Product } from '../types'
 
@@ -364,6 +523,7 @@ import type { Product } from '../types'
 const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
+const categoryStore = useCategoryStore()
 const errorStore = useErrorStore()
 
 // État local
@@ -371,9 +531,55 @@ const loading = ref(true)
 const error = ref('')
 const product = ref<Product | null>(null)
 const selectedImage = ref('')
+const availableCategories = ref<Array<{id: string, name: string}>>([])
+
+// Variables pour la gestion des catégories multiples
+const selectedCategoryToAdd = ref('')
+const showCategorySelector = ref(false)
+const categorySearchQuery = ref('')
+
+// Ref pour l'input de recherche
+const categorySearchInput = ref<HTMLInputElement>()
+
+// Computed pour récupérer les catégories du produit
+const productCategories = computed(() => {
+  if (!product.value) return []
+  
+  // Si les catégories sont directement disponibles dans le produit
+  if (product.value.categories && Array.isArray(product.value.categories) && product.value.categories.length > 0) {
+    return product.value.categories
+  }
+  
+  // Sinon, essayer de récupérer la catégorie depuis le category_id et le store
+  if (product.value.category_id && availableCategories.value.length > 0) {
+    const category = availableCategories.value.find(cat => cat.id === product.value?.category_id?.toString())
+    return category ? [category] : []
+  }
+  
+  return []
+})
+
+// Computed pour les catégories disponibles à ajouter (celles qui ne sont pas déjà assignées)
+const availableCategoriesForAdd = computed(() => {
+  if (!availableCategories.value) return []
+  
+  const assignedCategoryIds = productCategories.value.map(cat => cat.id)
+  return availableCategories.value.filter(cat => !assignedCategoryIds.includes(cat.id))
+})
+
+// Computed pour filtrer les catégories selon la recherche en temps réel
+const filteredCategories = computed(() => {
+  if (!categorySearchQuery.value.trim()) return []
+  
+  const query = categorySearchQuery.value.toLowerCase().trim()
+  return availableCategoriesForAdd.value.filter(category => 
+    category.name.toLowerCase().includes(query)
+  )
+})
 
 // État pour l'upload d'images
 const uploadingImages = ref(false)
+const deletingImage = ref(false)
 const imageInput = ref<HTMLInputElement>()
 
 // État pour l'upload de fichier d'analyse
@@ -385,21 +591,20 @@ const editingField = ref<Record<string, boolean>>({
   name: false,
   description: false,
   price: false,
-  stock: false
+  category: false
 })
 
 const editingValue = ref<Record<string, any>>({
   name: '',
   description: '',
   price: 0,
-  stock: 0
+  category: ''
 })
 
 // Refs pour les inputs
 const nameInput = ref<HTMLInputElement>()
 const descriptionInput = ref<HTMLTextAreaElement>()
 const priceInput = ref<HTMLInputElement>()
-const stockInput = ref<HTMLInputElement>()
 
 // Méthodes utilitaires pour le formatage
 const formatPrice = (price: number): string => {
@@ -429,7 +634,14 @@ const startEditing = async (field: string) => {
   if (!product.value) return
   
   // Mettre la valeur actuelle dans editingValue
-  editingValue.value[field] = product.value[field as keyof Product]
+  if (field === 'category') {
+    // Pour les catégories, utiliser l'ID de la première catégorie ou chaîne vide
+    editingValue.value[field] = productCategories.value.length > 0 
+      ? productCategories.value[0].id 
+      : ''
+  } else {
+    editingValue.value[field] = product.value[field as keyof Product]
+  }
   
   // Activer le mode édition
   editingField.value[field] = true
@@ -450,7 +662,6 @@ const getInputRef = (field: string) => {
     case 'name': return nameInput.value
     case 'description': return descriptionInput.value
     case 'price': return priceInput.value
-    case 'stock': return stockInput.value
     default: return null
   }
 }
@@ -467,8 +678,8 @@ const saveField = async (field: string) => {
       return
     }
     
-    if ((field === 'price' || field === 'stock') && (isNaN(newValue) || newValue < 0)) {
-      errorStore.addError(`La valeur de ${field === 'price' ? 'prix' : 'stock'} doit être un nombre positif`)
+    if ((field === 'price') && (isNaN(newValue) || newValue < 0)) {
+      errorStore.addError(`La valeur de prix doit être un nombre positif`)
       return
     }
     
@@ -477,8 +688,14 @@ const saveField = async (field: string) => {
     
     if (field === 'price') {
       updateData[field] = parseFloat(newValue)
-    } else if (field === 'stock') {
-      updateData[field] = parseInt(newValue)
+    } else if (field === 'category') {
+      // Gestion des catégories selon la nouvelle API
+      if (newValue === '' || newValue === null || newValue === undefined) {
+        updateData.category_id = null
+      } else {
+        // Convertir en string car l'API attend des ID en string maintenant
+        updateData.category_id = newValue.toString()
+      }
     } else {
       updateData[field] = newValue
     }
@@ -486,14 +703,25 @@ const saveField = async (field: string) => {
     // Appeler l'API de mise à jour
     await productStore.updateProduct(product.value.id, updateData)
     
-    // Mettre à jour la valeur locale
-    ;(product.value as any)[field] = updateData[field]
+    // Mettre à jour la valeur locale selon le champ
+    if (field === 'category') {
+      // Recharger le produit pour avoir les catégories mises à jour
+      await loadProduct()
+    } else {
+      ;(product.value as any)[field] = updateData[field]
+    }
     
     // Désactiver le mode édition
     editingField.value[field] = false
     
     // Afficher un message de succès
-    errorStore.addSuccess(`${field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : 'Stock'} mis à jour avec succès`)
+    const fieldNames: Record<string, string> = {
+      name: 'Nom',
+      description: 'Description', 
+      price: 'Prix',
+      category: 'Catégorie'
+    }
+    errorStore.addSuccess(`${fieldNames[field]} mis à jour avec succès`)
     
   } catch (err: any) {
     errorStore.addError(`Erreur lors de la mise à jour: ${err.message || 'Erreur inconnue'}`)
@@ -506,19 +734,6 @@ const cancelEdit = (field: string) => {
 }
 
 // Actions rapides
-const quickAddStock = async () => {
-  if (!product.value) return
-  
-  try {
-    const newStock = product.value.stock + 10
-    await productStore.updateProduct(product.value.id, { stock: newStock })
-    product.value.stock = newStock
-    errorStore.addSuccess('10 unités ajoutées au stock')
-  } catch (err: any) {
-    errorStore.addError(`Erreur lors de l'ajout du stock: ${err.message}`)
-  }
-}
-
 const duplicateProduct = async () => {
   if (!product.value) return
   
@@ -528,7 +743,9 @@ const duplicateProduct = async () => {
       description: product.value.description,
       price: product.value.price,
       stock: 0, // Nouveau produit avec stock à 0
-      category_id: product.value.category_id,
+      category_id: product.value.categories && product.value.categories.length > 0 
+        ? product.value.categories[0].id 
+        : undefined,
       image_urls: product.value.image_urls
     }
     
@@ -555,11 +772,125 @@ const deleteProduct = async () => {
   }
 }
 
+// Retirer une catégorie du produit (suppression de la liaison uniquement)
+const removeCategoryFromProduct = async (categoryId: string) => {
+  if (!product.value) return
+  
+  try {
+    // Récupérer les IDs des catégories actuelles
+    const currentCategoryIds = productCategories.value.map(cat => cat.id)
+    
+    // Retirer la catégorie spécifique de la liste
+    const updatedCategoryIds = currentCategoryIds.filter(id => id !== categoryId)
+    
+    // Mettre à jour le produit avec les nouvelles catégories
+    if (updatedCategoryIds.length > 0) {
+      // S'il reste des catégories, les mettre à jour
+      await productStore.updateProduct(product.value.id, { 
+        category_ids: updatedCategoryIds 
+      })
+    } else {
+      // S'il n'y a plus de catégories, mettre category_id à null
+      await productStore.updateProduct(product.value.id, { 
+        category_id: null,
+        category_ids: []
+      })
+    }
+    
+    // Recharger le produit pour avoir les catégories mises à jour
+    await loadProduct()
+    
+    errorStore.addSuccess('Catégorie retirée du produit')
+  } catch (err: any) {
+    errorStore.addError(`Erreur: ${err.message}`)
+  }
+}
+
+// Ajouter une catégorie au produit
+const addCategoryToProduct = async () => {
+  if (!product.value || !selectedCategoryToAdd.value) return
+  
+  try {
+    // Récupérer les IDs des catégories actuelles
+    const currentCategoryIds = productCategories.value.map(cat => cat.id)
+    
+    // Ajouter la nouvelle catégorie
+    const updatedCategoryIds = [...currentCategoryIds, selectedCategoryToAdd.value]
+    
+    // Mettre à jour le produit avec les nouvelles catégories
+    await productStore.updateProduct(product.value.id, { 
+      category_ids: updatedCategoryIds,
+      category_id: updatedCategoryIds[0] // Le premier comme catégorie principale
+    })
+    
+    // Recharger le produit pour avoir les catégories mises à jour
+    await loadProduct()
+    
+    // Réinitialiser la sélection
+    selectedCategoryToAdd.value = ''
+    
+    errorStore.addSuccess('Catégorie ajoutée au produit')
+  } catch (err: any) {
+    errorStore.addError(`Erreur: ${err.message}`)
+  }
+}
+
+// Ajouter une catégorie spécifique au produit (depuis les badges cliquables)
+const addSpecificCategoryToProduct = async (categoryId: string) => {
+  if (!product.value) return
+  
+  try {
+    // Récupérer les IDs des catégories actuelles
+    const currentCategoryIds = productCategories.value.map(cat => cat.id)
+    
+    // Ajouter la nouvelle catégorie
+    const updatedCategoryIds = [...currentCategoryIds, categoryId]
+    
+    // Mettre à jour le produit avec les nouvelles catégories
+    await productStore.updateProduct(product.value.id, { 
+      category_ids: updatedCategoryIds,
+      category_id: updatedCategoryIds[0] // Le premier comme catégorie principale
+    })
+    
+    // Recharger le produit pour avoir les catégories mises à jour
+    await loadProduct()
+    
+    // Fermer le sélecteur après ajout
+    showCategorySelector.value = false
+    
+    errorStore.addSuccess('Catégorie ajoutée au produit')
+  } catch (err: any) {
+    errorStore.addError(`Erreur: ${err.message}`)
+  }
+}
+
+// Fonctions pour la recherche de catégories
+const clearCategorySearch = () => {
+  categorySearchQuery.value = ''
+  // Refocus sur l'input après clear
+  if (categorySearchInput.value) {
+    categorySearchInput.value.focus()
+  }
+}
+
+const closeCategorySelector = () => {
+  showCategorySelector.value = false
+  categorySearchQuery.value = '' // Réinitialiser la recherche
+}
+
+const openCategorySelector = async () => {
+  showCategorySelector.value = true
+  // Focus sur l'input de recherche après l'ouverture du panel
+  await nextTick(() => {
+    if (categorySearchInput.value) {
+      categorySearchInput.value.focus()
+    }
+  })
+}
+
 // Fonction pour corriger les URLs d'images
 const getImageUrl = (imageUrl: string): string => {
   if (!imageUrl) return ''
-  
-  console.log('🔍 Traitement URL:', imageUrl)
   
   // Si l'URL est complète et suit le format de l'API
   if (imageUrl.startsWith('http://localhost/API_INTRAFMC/public/')) {
@@ -569,18 +900,15 @@ const getImageUrl = (imageUrl: string): string => {
     // Si le chemin est juste {ID}/{filename}, ajouter le préfixe product_images/
     if (pathAfterPublic.match(/^\d+\//)) {
       const correctedUrl = `http://localhost/API_INTRAFMC/public/product_images/${pathAfterPublic}`
-      console.log('🔧 URL corrigée:', correctedUrl)
       return correctedUrl
     }
     
     // Sinon retourner l'URL originale
-    console.log('✅ URL déjà correcte:', imageUrl)
     return imageUrl
   }
   
   // Si l'URL est complète avec un autre format, la retourner telle quelle
   if (imageUrl.startsWith('http')) {
-    console.log('✅ URL complète reçue:', imageUrl)
     return imageUrl
   }
   
@@ -590,16 +918,13 @@ const getImageUrl = (imageUrl: string): string => {
   }
   
   // Pour les chemins relatifs, utiliser la base URL configurée
-  console.log('🔍 Construction URL pour:', imageUrl)
   const defaultUrl = `${import.meta.env.VITE_IMAGE_BASE_URL}/${imageUrl}`
-  console.log('📁 URL construite:', defaultUrl)
   return defaultUrl
 }
 
-// Gestion des erreurs d'images - Version simplifiée pour debug
+// Gestion des erreurs d'images
 const onImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
-  console.error('❌ Erreur de chargement image:', img.src)
   
   // Si c'est déjà un placeholder, ne rien faire
   if (img.src.includes('placeholder')) {
@@ -607,7 +932,6 @@ const onImageError = (event: Event) => {
   }
   
   // Remplacer par le placeholder
-  console.log('🔄 Image remplacée par placeholder')
   img.src = '/images/placeholder-product.svg'
 }
 
@@ -624,21 +948,8 @@ const loadProduct = async () => {
 
     product.value = await productStore.fetchProductById(productId)
 
-    // Debug des images
-    console.log('=== PRODUIT CHARGÉ ===')
-    console.log('Produit complet:', product.value)
-    console.log('Images brutes:', product.value?.image_urls)
-    
     if (product.value?.image_urls && product.value.image_urls.length > 0) {
-      console.log('Images trouvées:')
-      product.value.image_urls.forEach((img: string, index: number) => {
-        console.log(`  Image ${index}: "${img}"`)
-        console.log(`  URL corrigée: "${getImageUrl(img)}"`)
-      })
-      
       selectedImage.value = getImageUrl(product.value.image_urls[0])
-    } else {
-      console.log('❌ Aucune image trouvée pour ce produit')
     }
   } catch (err: any) {
     error.value = err.message || 'Erreur lors du chargement du produit'
@@ -666,9 +977,6 @@ const handleImageUpload = async (event: Event) => {
   try {
     uploadingImages.value = true
     
-    console.log('Upload de nouvelles images pour le produit:', product.value.id)
-    console.log('Fichiers sélectionnés:', Array.from(files).map(f => f.name))
-    
     // Importer le service produit
     const { productService } = await import('../services/productService')
     
@@ -677,8 +985,6 @@ const handleImageUpload = async (event: Event) => {
       product.value.id, 
       Array.from(files)
     )
-    
-    console.log('Nouvelles images uploadées:', newImageUrls)
     
     // Recharger le produit pour avoir toutes les images
     await loadProduct()
@@ -689,10 +995,51 @@ const handleImageUpload = async (event: Event) => {
     target.value = ''
     
   } catch (err: any) {
-    console.error('Erreur lors de l\'upload:', err)
     errorStore.addError(`Erreur lors de l'upload des images: ${err.message || 'Erreur inconnue'}`)
   } finally {
     uploadingImages.value = false
+  }
+}
+
+// Fonction pour supprimer une image
+const deleteImage = async (imageUrl: string) => {
+  if (!product.value || !imageUrl) {
+    return
+  }
+
+  // Demander confirmation
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cette image ?')) {
+    return
+  }
+
+  try {
+    deletingImage.value = true
+    
+    // Importer le service produit
+    const { productService } = await import('../services/productService')
+    
+    // Supprimer l'image
+    const updatedImageUrls = await productService.deleteProductImage(
+      product.value.id, 
+      imageUrl
+    )
+    
+    // Mettre à jour le produit localement
+    if (product.value) {
+      product.value.image_urls = updatedImageUrls
+    }
+    
+    // Réinitialiser l'image sélectionnée si elle a été supprimée
+    if (selectedImage.value === getImageUrl(imageUrl)) {
+      selectedImage.value = ''
+    }
+    
+    errorStore.addSuccess('Image supprimée avec succès')
+    
+  } catch (err: any) {
+    errorStore.addError(`Erreur lors de la suppression de l'image: ${err.message || 'Erreur inconnue'}`)
+  } finally {
+    deletingImage.value = false
   }
 }
 
@@ -716,9 +1063,6 @@ const handleAnalysisUpload = async (event: Event) => {
   try {
     uploadingAnalysis.value = true
     
-    console.log('Upload du fichier d\'analyse pour le produit:', product.value.id)
-    console.log('Fichier sélectionné:', file.name)
-    
     // Importer le service produit
     const { productService } = await import('../services/productService')
     
@@ -727,8 +1071,6 @@ const handleAnalysisUpload = async (event: Event) => {
       product.value.id, 
       file
     )
-    
-    console.log('Fichier d\'analyse uploadé:', analysisUrl)
     
     // Mettre à jour le produit localement
     if (product.value) {
@@ -741,7 +1083,6 @@ const handleAnalysisUpload = async (event: Event) => {
     target.value = ''
     
   } catch (err: any) {
-    console.error('Erreur lors de l\'upload du fichier d\'analyse:', err)
     errorStore.addError(`Erreur lors de l'upload du fichier d'analyse: ${err.message || 'Erreur inconnue'}`)
   } finally {
     uploadingAnalysis.value = false
@@ -768,7 +1109,18 @@ const removeAnalysisFile = async () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadProduct()
+onMounted(async () => {
+  // Charger les catégories et le produit en parallèle
+  try {
+    await Promise.all([
+      categoryStore.fetchCategories(),
+      loadProduct()
+    ])
+    // Les catégories sont maintenant dans le store
+    availableCategories.value = categoryStore.categories || []
+  } catch (err) {
+    // Les erreurs sont déjà gérées dans les fonctions individuelles
+    await loadProduct()
+  }
 })
 </script>

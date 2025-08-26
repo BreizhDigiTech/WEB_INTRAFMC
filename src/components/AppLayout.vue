@@ -34,35 +34,14 @@
 
           <!-- Actions navbar -->
           <div class="flex items-center gap-4">
+            <!-- Indicateur de panier pour utilisateurs non-admin -->
+            <CartIndicator />
+
             <!-- Indicateur de statut -->
             <div
               class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-500/20 border border-green-500/30 rounded-full">
               <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span class="text-xs font-medium text-green-400">En ligne</span>
-            </div>
-
-            <!-- Notifications -->
-            <div class="dropdown dropdown-end">
-              <div tabindex="0" role="button"
-                class="btn btn-ghost btn-circle text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 relative">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M15 17h5l-5 5v-5zM10 3A7 7 0 003 10c0 5.25 3.94 7.5 7 8.27A7.002 7.002 0 0017 10a7 7 0 00-7-7z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.73 21a2 2 0 01-3.46 0" />
-                </svg>
-                <!-- Badge notification -->
-                <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></div>
-              </div>
-              <div tabindex="0"
-                class="dropdown-content z-[1] menu p-0 shadow-2xl bg-gray-900 border border-gray-700 rounded-2xl w-64 mt-3">
-                <div class="p-4 border-b border-gray-700">
-                  <div class="text-sm font-semibold text-white">Notifications</div>
-                  <div class="text-xs text-gray-400">Vous avez 2 nouvelles notifications</div>
-                </div>
-                <div class="p-2 max-h-64 overflow-y-auto">
-                  <div class="text-xs text-gray-500 text-center py-4">Aucune notification récente</div>
-                </div>
-              </div>
             </div>
 
             <!-- Profil utilisateur -->
@@ -78,7 +57,9 @@
                   </div>
                   <div class="hidden md:block text-left">
                     <div class="text-sm font-medium text-white">{{ authStore.userName || 'Utilisateur' }}</div>
-                    <div class="text-xs text-gray-400">Administrateur</div>
+                    <div class="text-xs text-gray-400">
+                      {{ authStore.isAdmin ? 'Administrateur' : 'Utilisateur' }}
+                    </div>
                   </div>
                   <svg class="w-4 h-4 text-gray-400 hidden md:block" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -100,7 +81,9 @@
                     <div>
                       <div class="text-sm font-semibold text-white">{{ authStore.userName || 'Utilisateur' }}</div>
                       <div class="text-xs text-gray-400">{{ authStore.userEmail || 'email@fmc.com' }}</div>
-                      <div class="text-xs text-blue-400 font-medium">Administrateur</div>
+                      <div class="text-xs text-blue-400 font-medium">
+                        {{ authStore.isAdmin ? 'Administrateur' : 'Utilisateur' }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -208,7 +191,7 @@
                 </router-link>
               </li>
 
-              <!-- Commandes -->
+              <!-- Commandes - Accessible à tous les utilisateurs -->
               <li>
                 <router-link to="/orders"
                   class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-green-500/20 hover:to-teal-600/20 transition-all duration-200 group"
@@ -223,7 +206,9 @@
                   </div>
                   <div class="flex-1">
                     <span class="font-semibold">Commandes</span>
-                    <div class="text-xs text-gray-500">Gestion des commandes</div>
+                    <div class="text-xs text-gray-500">
+                      {{ authStore.isAdmin ? 'Gestion des commandes' : 'Mes commandes' }}
+                    </div>
                   </div>
                   <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     :class="{ 'opacity-100': $route.path.startsWith('/orders') }" fill="none" stroke="currentColor"
@@ -233,8 +218,8 @@
                 </router-link>
               </li>
 
-              <!-- Arrivages -->
-              <li>
+              <!-- Arrivages - Admin uniquement -->
+              <li v-if="authStore.isAdmin">
                 <router-link to="/arrivals"
                   class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-600/20 transition-all duration-200 group"
                   :class="{ 'bg-gradient-to-r from-purple-500/20 to-pink-600/20 text-purple-400 shadow-lg': $route.path.startsWith('/arrivals') }">
@@ -258,8 +243,8 @@
                 </router-link>
               </li>
 
-              <!-- Produits -->
-              <li>
+              <!-- Produits Admin - Admin uniquement -->
+              <li v-if="authStore.isAdmin">
                 <router-link to="/products"
                   class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-red-600/20 transition-all duration-200 group"
                   :class="{ 'bg-gradient-to-r from-orange-500/20 to-red-600/20 text-orange-400 shadow-lg': $route.path.startsWith('/products') }">
@@ -272,8 +257,8 @@
                     </svg>
                   </div>
                   <div class="flex-1">
-                    <span class="font-semibold">Produits</span>
-                    <div class="text-xs text-gray-500">Catalogue produits</div>
+                    <span class="font-semibold">Produits Admin</span>
+                    <div class="text-xs text-gray-500">Gestion catalogue</div>
                   </div>
                   <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     :class="{ 'opacity-100': $route.path.startsWith('/products') }" fill="none" stroke="currentColor"
@@ -283,8 +268,8 @@
                 </router-link>
               </li>
 
-              <!-- Catégories -->
-              <li>
+              <!-- Catégories - Admin uniquement -->
+              <li v-if="authStore.isAdmin">
                 <router-link to="/categories"
                   class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-600/20 transition-all duration-200 group"
                   :class="{ 'bg-gradient-to-r from-purple-500/20 to-pink-600/20 text-purple-400 shadow-lg': $route.path.startsWith('/categories') }">
@@ -302,6 +287,56 @@
                   </div>
                   <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     :class="{ 'opacity-100': $route.path.startsWith('/categories') }" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </router-link>
+              </li>
+
+              <!-- Statistiques - Admin uniquement -->
+              <li v-if="authStore.isAdmin">
+                <router-link to="/stats"
+                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-indigo-500/20 hover:to-cyan-600/20 transition-all duration-200 group"
+                  :class="{ 'bg-gradient-to-r from-indigo-500/20 to-cyan-600/20 text-indigo-400 shadow-lg': $route.path.startsWith('/stats') }">
+                  <div
+                    class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors duration-200"
+                    :class="{ 'bg-indigo-500/30': $route.path.startsWith('/stats') }">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-semibold">Statistiques</span>
+                    <div class="text-xs text-gray-500">Analytics avancés</div>
+                  </div>
+                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    :class="{ 'opacity-100': $route.path.startsWith('/stats') }" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </router-link>
+              </li>
+
+              <!-- E-commerce - Utilisateurs non-admin uniquement -->
+              <li v-if="!authStore.isAdmin">
+                <router-link to="/ecommerce"
+                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-emerald-500/20 hover:to-teal-600/20 transition-all duration-200 group"
+                  :class="{ 'bg-gradient-to-r from-emerald-500/20 to-teal-600/20 text-emerald-400 shadow-lg': $route.path.startsWith('/ecommerce') }">
+                  <div
+                    class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors duration-200"
+                    :class="{ 'bg-emerald-500/30': $route.path.startsWith('/ecommerce') }">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="font-semibold">Boutique</span>
+                    <div class="text-xs text-gray-500">Catalogue produits</div>
+                  </div>
+                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    :class="{ 'opacity-100': $route.path.startsWith('/ecommerce') }" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                   </svg>
@@ -329,6 +364,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
+import CartIndicator from './CartIndicator.vue';
 
 const authStore = useAuthStore()
 </script>

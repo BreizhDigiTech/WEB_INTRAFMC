@@ -434,8 +434,8 @@ export class OrderService extends GraphQLService {
         // Récupérer les détails de la commande
         const order = await this.getOrderDetails(orderId)
 
-        if (!['delivered', 'shipped'].includes(order.status)) {
-            throw new Error('Seules les commandes livrées ou expédiées peuvent générer une facture')
+        if (order.status !== 'validated') {
+            throw new Error('Seules les commandes validées peuvent générer une facture')
         }
 
         // Créer un nouveau document PDF

@@ -45,54 +45,78 @@
           </div>
         </div>
 
-        <!-- Produits en stock -->
+        <!-- Produits en alerte -->
         <div
-          class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all duration-300">
+          @click="setStockFilter('alert')"
+          class="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 backdrop-blur-sm border border-yellow-500/20 rounded-2xl p-6 hover:border-yellow-500/40 transition-all duration-300 cursor-pointer group"
+          :class="{ 'ring-2 ring-yellow-400 border-yellow-400/60': stockFilter === 'alert' }">
           <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-green-500/20 rounded-xl">
-              <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-3 bg-yellow-500/20 rounded-xl group-hover:bg-yellow-500/30 transition-colors">
+              <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div v-if="stockFilter === 'alert'" class="text-yellow-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
           <div class="space-y-1">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">En stock</h3>
-            <p class="text-3xl font-bold text-green-400">{{ productStore.inStockProducts.length }}</p>
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Produits en alerte</h3>
+            <p class="text-3xl font-bold text-yellow-400">{{ lowStockProducts.length }}</p>
+            <p class="text-xs text-yellow-300/70">Stock < 30 unités</p>
           </div>
         </div>
 
         <!-- Produits rupture -->
         <div
-          class="bg-gradient-to-br from-red-500/10 to-pink-500/10 backdrop-blur-sm border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all duration-300">
+          @click="setStockFilter('outofstock')"
+          class="bg-gradient-to-br from-red-500/10 to-pink-500/10 backdrop-blur-sm border border-red-500/20 rounded-2xl p-6 hover:border-red-500/40 transition-all duration-300 cursor-pointer group"
+          :class="{ 'ring-2 ring-red-400 border-red-400/60': stockFilter === 'outofstock' }">
           <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-red-500/20 rounded-xl">
+            <div class="p-3 bg-red-500/20 rounded-xl group-hover:bg-red-500/30 transition-colors">
               <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div v-if="stockFilter === 'outofstock'" class="text-red-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
           <div class="space-y-1">
             <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Rupture de stock</h3>
             <p class="text-3xl font-bold text-red-400">{{ productStore.outOfStockProducts.length }}</p>
+            <p class="text-xs text-red-300/70">Stock = 0</p>
           </div>
         </div>
 
-        <!-- Valeur totale -->
+        <!-- Tous les produits -->
         <div
-          class="bg-gradient-to-br from-purple-500/10 to-indigo-500/10 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6 hover:border-purple-500/40 transition-all duration-300">
+          @click="setStockFilter('')"
+          class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all duration-300 cursor-pointer group"
+          :class="{ 'ring-2 ring-green-400 border-green-400/60': stockFilter === '' }">
           <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-purple-500/20 rounded-xl">
-              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-3 bg-green-500/20 rounded-xl group-hover:bg-green-500/30 transition-colors">
+              <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <div v-if="stockFilter === ''" class="text-green-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
           <div class="space-y-1">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Valeur totale</h3>
-            <p class="text-3xl font-bold text-purple-400">{{ formatPrice(totalStockValue) }}</p>
+            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Tous les produits</h3>
+            <p class="text-3xl font-bold text-green-400">{{ productStore.allProducts.length }}</p>
+            <p class="text-xs text-green-300/70">Afficher tout</p>
           </div>
         </div>
       </div>
@@ -127,7 +151,7 @@
           </div>
 
           <!-- Bouton effacer filtres -->
-          <button v-if="searchQuery || selectedCategory" @click="clearFilters" class="btn btn-ghost btn-sm">
+          <button v-if="searchQuery || selectedCategory || stockFilter" @click="clearFilters" class="btn btn-ghost btn-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -147,7 +171,7 @@
       <!-- Grille de produits -->
       <div v-else-if="filteredProducts.length > 0">
         <!-- Indicateur de recherche/filtrage -->
-        <div v-if="searchQuery || selectedCategory" class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+        <div v-if="searchQuery || selectedCategory || stockFilter" class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
           <div class="flex items-center gap-2 text-blue-400">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -156,6 +180,8 @@
               {{ filteredProducts.length }} résultat(s) trouvé(s)
               <span v-if="searchQuery"> pour "{{ searchQuery }}"</span>
               <span v-if="selectedCategory && categoryStore.categories.length"> dans la catégorie "{{ categoryStore.categories.find(c => c.id.toString() === selectedCategory)?.name }}"</span>
+              <span v-if="stockFilter === 'alert'"> - Produits en alerte (stock < 30)</span>
+              <span v-if="stockFilter === 'outofstock'"> - Produits en rupture de stock</span>
             </span>
           </div>
         </div>
@@ -185,11 +211,21 @@
               <p v-if="product.description" class="text-gray-400 text-sm line-clamp-2">{{ product.description }}</p>
               <div class="flex items-center justify-between">
                 <span class="text-2xl font-bold text-primary">{{ formatPrice(product.price) }}</span>
-                <div class="flex items-center gap-1">
-                  <span class="text-sm text-gray-400">Stock:</span>
-                  <span class="text-sm font-medium" :class="product.stock > 0 ? 'text-green-400' : 'text-red-400'">
-                    {{ product.stock }}
-                  </span>
+                <div class="flex items-center gap-2">
+                  <div class="text-right">
+                    <div class="flex items-center gap-1">
+                      <span class="text-sm text-gray-400">Stock:</span>
+                      <span class="text-sm font-medium" :class="getStockColorClass(product.stock)">
+                        {{ product.stock }}
+                      </span>
+                    </div>
+                    <div v-if="product.stock < 30 && product.stock > 0" class="text-xs text-yellow-400">
+                      ⚠️ Stock faible
+                    </div>
+                    <div v-else-if="product.stock === 0" class="text-xs text-red-400">
+                      ❌ Rupture
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -276,27 +312,46 @@ const categoryStore = useCategoryStore()
 // État local
 const searchQuery = ref('')
 const selectedCategory = ref('')
+const stockFilter = ref('') // '' = tous, 'alert' = en alerte, 'outofstock' = rupture
 const scrollTrigger = ref<HTMLElement | null>(null)
 const showScrollToTop = ref(false)
 const searchTimeout = ref<NodeJS.Timeout | null>(null)
 
 // Computed
 const emptyStateMessage = computed(() => {
+  if (stockFilter.value === 'alert') return 'Aucun produit en alerte trouvé.'
+  if (stockFilter.value === 'outofstock') return 'Aucun produit en rupture de stock trouvé.'
   return searchQuery.value
     ? 'Aucun produit ne correspond à votre recherche.'
     : 'Commencez par ajouter votre premier produit.'
 })
 
 const filteredProducts = computed(() => {
-  // Maintenant on utilise directement les produits du store
-  // car la recherche et le filtrage sont gérés côté serveur
+  // Si on a un filtre de stock actif, utiliser allProducts pour le filtrage côté client
+  if (stockFilter.value === 'alert' || stockFilter.value === 'outofstock') {
+    let products = productStore.allProducts
+    
+    if (stockFilter.value === 'alert') {
+      products = products.filter(product => product.stock > 0 && product.stock < 30)
+    } else if (stockFilter.value === 'outofstock') {
+      products = products.filter(product => product.stock === 0)
+    }
+    
+    return products
+  }
+  
+  // Sinon, utiliser les produits du store (qui peuvent être filtrés par recherche/catégorie)
   return productStore.products
 })
 
 const totalStockValue = computed(() => {
-  return productStore.products.reduce((total, product) => {
+  return productStore.allProducts.reduce((total, product) => {
     return total + (product.price * product.stock)
   }, 0)
+})
+
+const lowStockProducts = computed(() => {
+  return productStore.allProducts.filter(product => product.stock > 0 && product.stock < 30)
 })
 
 // Fonction pour corriger les URLs d'images
@@ -340,6 +395,12 @@ function formatPrice(price: number): string {
   }).format(price)
 }
 
+function getStockColorClass(stock: number): string {
+  if (stock === 0) return 'text-red-400'
+  if (stock < 30) return 'text-yellow-400'
+  return 'text-green-400'
+}
+
 function onSearchInput() {
   // Annuler la recherche précédente si elle existe
   if (searchTimeout.value) {
@@ -360,16 +421,31 @@ function onCategoryChange() {
 function clearFilters() {
   searchQuery.value = ''
   selectedCategory.value = ''
+  stockFilter.value = ''
   // Revenir à la liste normale sans filtre
   fetchProducts()
 }
 
-async function refreshProducts() {
-  if (searchQuery.value || selectedCategory.value) {
-    await performSearch()
+function setStockFilter(filterType: 'alert' | 'outofstock' | '') {
+  // Si on clique sur le même filtre, on l'enlève
+  if (stockFilter.value === filterType) {
+    stockFilter.value = ''
   } else {
-    await fetchProducts()
+    stockFilter.value = filterType
   }
+  
+  // Réinitialiser la recherche et les filtres de catégorie quand on filtre par stock
+  if (stockFilter.value) {
+    searchQuery.value = ''
+    selectedCategory.value = ''
+  }
+}
+
+async function refreshProducts() {
+  await Promise.all([
+    searchQuery.value || selectedCategory.value ? performSearch() : fetchProducts(),
+    productStore.fetchAllProductsForStats()
+  ])
 }
 
 async function fetchProducts() {
@@ -459,6 +535,7 @@ watch(scrollTrigger, (newTrigger) => {
 onMounted(async () => {
   await Promise.all([
     productStore.fetchProducts(1, 20, false),
+    productStore.fetchAllProductsForStats(),
     categoryStore.fetchCategories()
   ])
   

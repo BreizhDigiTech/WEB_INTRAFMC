@@ -51,7 +51,7 @@ export interface CheckoutOrder {
 
 export interface UpdateOrderStatusInput {
     id: string
-    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+    status: 'pending' | 'validated' | 'cancelled'
 }
 
 export interface OrderStats {

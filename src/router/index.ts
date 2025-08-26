@@ -1,53 +1,6 @@
-import { useAuthStore } from '@/stores/auth'
+import { requireAdmin, requireAuth, requireGuest, requireNonAdmin } from '@/shared/guards/routeGuards'
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
-
-// Guards d'authentification
-const requireAuth = async (to: any, from: any, next: any) => {
-    const authStore = useAuthStore()
-
-    if (!authStore.isAuthenticated) {
-        // Vérification du token stocké
-        const isAuthenticated = await authStore.checkAuth()
-
-        if (!isAuthenticated) {
-            next('/login')
-            return
-        }
-    }
-
-    next()
-}
-
-const requireGuest = (to: any, from: any, next: any) => {
-    const authStore = useAuthStore()
-
-    if (authStore.isAuthenticated) {
-        // Redirection vers le dashboard pour tous les utilisateurs connectés
-        next('/dashboard')
-        return
-    }
-
-    next()
-}
-
-
-
-const requireAdmin = (_to: any, _from: any, next: any) => {
-    const authStore = useAuthStore()
-
-    if (!authStore.isAuthenticated) {
-        next('/login')
-        return
-    }
-
-    if (!authStore.isAdmin) {
-        next('/dashboard') // Redirection vers dashboard pour les non-admin
-        return
-    }
-
-    next()
-}
 
 const routes: RouteRecordRaw[] = [
     // Redirection racine vers dashboard
@@ -83,7 +36,7 @@ const routes: RouteRecordRaw[] = [
                 }
             },
 
-            // Gestion des commandes
+            // Gestion des commandes - Accessible à tous les utilisateurs
             {
                 path: '/orders',
                 name: 'Orders',
@@ -101,11 +54,23 @@ const routes: RouteRecordRaw[] = [
                 }
             },
 
-            // Gestion des arrivages
+            // Gestion avancée des commandes - Admin uniquement
+            {
+                path: '/orders/advanced',
+                name: 'AdvancedOrders',
+                component: () => import('@/modules/orders/views/AdvancedOrdersView.vue'),
+                beforeEnter: requireAdmin,
+                meta: {
+                    title: 'Gestion Avancée des Commandes - WEB IntraFMC'
+                }
+            },
+
+            // Gestion des arrivages - Admin uniquement
             {
                 path: '/arrivals',
                 name: 'Arrivals',
                 component: () => import('@/modules/arrivals/views/ArrivalsListView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Arrivages - WEB IntraFMC'
                 }
@@ -114,6 +79,7 @@ const routes: RouteRecordRaw[] = [
                 path: '/arrivals/create',
                 name: 'CreateArrival',
                 component: () => import('@/modules/arrivals/views/CreateArrivalView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Créer un arrivage - WEB IntraFMC'
                 }
@@ -122,16 +88,18 @@ const routes: RouteRecordRaw[] = [
                 path: '/arrivals/:id',
                 name: 'ArrivalDetail',
                 component: () => import('@/modules/arrivals/views/ArrivalDetailView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Détail arrivage - WEB IntraFMC'
                 }
             },
 
-            // Gestion des produits
+            // Gestion des produits - Admin uniquement
             {
                 path: '/products',
                 name: 'Products',
                 component: () => import('@/modules/products/views/ProductsView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Produits - WEB IntraFMC'
                 }
@@ -140,6 +108,7 @@ const routes: RouteRecordRaw[] = [
                 path: '/products/create',
                 name: 'CreateProduct',
                 component: () => import('@/modules/products/views/CreateProductView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Nouveau Produit - WEB IntraFMC'
                 }
@@ -148,18 +117,63 @@ const routes: RouteRecordRaw[] = [
                 path: '/products/:id',
                 name: 'ProductDetail',
                 component: () => import('@/modules/products/views/ProductDetailView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Détail Produit - WEB IntraFMC'
                 }
             },
 
-            // Gestion des catégories
+            // Gestion des catégories - Admin uniquement
             {
                 path: '/categories',
                 name: 'Categories',
                 component: () => import('@/modules/categories/views/CategoriesView.vue'),
+                beforeEnter: requireAdmin,
                 meta: {
                     title: 'Catégories - WEB IntraFMC'
+                }
+            },
+
+            // Statistiques avancées - Admin uniquement
+            {
+                path: '/stats',
+                name: 'Stats',
+                component: () => import('@/modules/stats/views/StatsView.vue'),
+                beforeEnter: requireAdmin,
+                meta: {
+                    title: 'Statistiques Avancées - WEB IntraFMC'
+                }
+            },
+
+            // Module E-commerce - Utilisateurs non-admin
+            {
+                path: '/ecommerce',
+                name: 'EcommerceCatalog',
+                component: () => import('@/modules/ecommerce/views/ProductCatalogView.vue'),
+                beforeEnter: requireNonAdmin,
+                meta: {
+                    title: 'Boutique - WEB IntraFMC',
+                    requireNonAdmin: true
+                }
+            },
+            {
+                path: '/ecommerce/products/:id',
+                name: 'EcommerceProductDetail',
+                component: () => import('@/modules/ecommerce/views/ProductDetailView.vue'),
+                beforeEnter: requireNonAdmin,
+                meta: {
+                    title: 'Produit - WEB IntraFMC',
+                    requireNonAdmin: true
+                }
+            },
+            {
+                path: '/ecommerce/cart',
+                name: 'EcommerceCart',
+                component: () => import('@/modules/ecommerce/views/CartView.vue'),
+                beforeEnter: requireNonAdmin,
+                meta: {
+                    title: 'Panier - WEB IntraFMC',
+                    requireNonAdmin: true
                 }
             }
         ]

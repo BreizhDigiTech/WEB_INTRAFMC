@@ -1,3 +1,8 @@
+
+
+
+
+
 // Utilitaires de formatage pour le module produits
 
 import type { Product, ProductStatus } from '../types'
