@@ -29,6 +29,10 @@ export function useStats() {
   const activeCustomers = computed(() => statsStore.activeCustomers)
 
   // Actions
+  const fetchGlobalStats = async () => {
+    await statsStore.fetchGlobalStats()
+  }
+
   const fetchOrderStatsByUser = async (filters: StatsFilters = {}) => {
     await statsStore.fetchOrderStatsByUser(filters)
   }
@@ -198,6 +202,7 @@ export function useStats() {
     activeCustomers,
 
     // Actions
+    fetchGlobalStats,
     fetchOrderStatsByUser,
     fetchPeriodStats,
     fetchMonthlyStats,

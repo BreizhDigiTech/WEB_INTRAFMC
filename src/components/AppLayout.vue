@@ -116,13 +116,20 @@
                     <hr class="my-2 border-gray-700">
                   </li>
                   <li>
-                    <a @click="authStore.logout"
-                      class="flex items-center gap-3 p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl cursor-pointer transition-all duration-200">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a @click="handleLogout"
+                      class="flex items-center gap-3 p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl cursor-pointer transition-all duration-200"
+                      :class="{ 'opacity-50 pointer-events-none': authStore.isLoading }">
+                      <!-- 🆕 Spinner de chargement pendant la déconnexion -->
+                      <svg v-if="authStore.isLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <!-- Icône normale quand pas de chargement -->
+                      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      Déconnexion
+                      {{ authStore.isLoading ? 'Déconnexion...' : 'Déconnexion' }}
                     </a>
                   </li>
                 </ul>
@@ -367,4 +374,17 @@ import { useAuthStore } from '@/stores/auth';
 import CartIndicator from './CartIndicator.vue';
 
 const authStore = useAuthStore()
+
+// 🆕 Fonction pour gérer la déconnexion avec feedback utilisateur
+const handleLogout = async () => {
+  try {
+    console.log('🔐 Début de la déconnexion...')
+    await authStore.logout()
+    console.log('✅ Déconnexion terminée')
+  } catch (error) {
+    console.error('❌ Erreur lors de la déconnexion:', error)
+    // En cas d'erreur, on force quand même la déconnexion locale
+    authStore.logout()
+  }
+}
 </script>

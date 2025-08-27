@@ -61,6 +61,10 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Sélection de période
+            <span v-if="selectedQuickPeriod === ''" class="text-sm font-normal text-green-400">(Toutes les données)</span>
+            <span v-else-if="selectedQuickPeriod === 'custom' && filters.start_date && filters.end_date" class="text-sm font-normal text-blue-400">
+              ({{ formatDate(filters.start_date) }} - {{ formatDate(filters.end_date) }})
+            </span>
           </h2>
 
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -72,11 +76,12 @@
                 @change="applyQuickPeriod"
                 class="select select-bordered w-full bg-base-200 text-white"
               >
-                <option value="">Personnalisée</option>
+                <option value="">Toutes les données</option>
                 <option value="week">7 derniers jours</option>
                 <option value="month">30 derniers jours</option>
                 <option value="quarter">3 derniers mois</option>
                 <option value="year">12 derniers mois</option>
+                <option value="custom">Période personnalisée</option>
               </select>
             </div>
 
@@ -106,10 +111,11 @@
             <div class="flex items-end">
               <button 
                 @click="applyFilters" 
-                :disabled="!filters.start_date || !filters.end_date"
+                :disabled="selectedQuickPeriod !== 'custom' || !filters.start_date || !filters.end_date"
                 class="btn btn-primary w-full"
+                :class="{ 'btn-disabled': selectedQuickPeriod !== 'custom' }"
               >
-                Appliquer
+                {{ selectedQuickPeriod === 'custom' ? 'Appliquer' : 'Sélectionnez "Période personnalisée"' }}
               </button>
             </div>
           </div>
@@ -316,6 +322,7 @@ const {
   averageOrderValue,
   topCustomers,
   activeCustomers,
+  fetchGlobalStats,
   fetchOrderStatsByUser,
   fetchMonthlyStats,
   fetchCustomerGrowth,
@@ -354,7 +361,16 @@ const customersTrend = computed(() => getCustomersTrend())
 
 // Méthodes
 const applyQuickPeriod = () => {
-  if (selectedQuickPeriod.value) {
+  if (!selectedQuickPeriod.value || selectedQuickPeriod.value === '') {
+    // Toutes les données - pas de filtre de date
+    filters.value.start_date = ''
+    filters.value.end_date = ''
+    loadAllStats()
+  } else if (selectedQuickPeriod.value === 'custom') {
+    // Mode personnalisé - ne rien faire, l'utilisateur va saisir ses dates
+    return
+  } else {
+    // Période prédéfinie
     const dateRange = getQuickDateRange(selectedQuickPeriod.value as 'week' | 'month' | 'quarter' | 'year')
     filters.value.start_date = dateRange.start_date
     filters.value.end_date = dateRange.end_date
@@ -363,7 +379,8 @@ const applyQuickPeriod = () => {
 }
 
 const onDateChange = () => {
-  selectedQuickPeriod.value = ''
+  // Quand l'utilisateur modifie une date, passer en mode personnalisé
+  selectedQuickPeriod.value = 'custom'
 }
 
 const applyFilters = async () => {
@@ -388,14 +405,22 @@ const exportCurrentStats = async () => {
   }
 }
 
+const loadAllStats = async () => {
+  // Charger les vraies stats globales pour les cartes du dashboard
+  await Promise.all([
+    fetchGlobalStats(), // 🆕 Vraies stats globales pour les cartes 
+    fetchOrderStatsByUser({}), // Données par utilisateur pour la liste (filtrage côté frontend)
+    fetchMonthlyStats(),
+    fetchCustomerGrowth()
+  ])
+  
+  console.log('📊 Chargement des stats globales terminé')
+}
+
 // Initialisation
 onMounted(() => {
-  // Charger les données du mois dernier par défaut
-  const defaultRange = getQuickDateRange('month')
-  filters.value.start_date = defaultRange.start_date
-  filters.value.end_date = defaultRange.end_date
-  selectedQuickPeriod.value = 'month'
-  applyFilters()
+  // Charger toutes les données sans filtre de date (stats totales)
+  loadAllStats()
 })
 </script>
 

@@ -1,8 +1,9 @@
 // Store d'authentification global
 
-import { defineStore } from 'pinia'
+import router from '@/router'; // 🆕 Import du router pour la redirection
 import { graphqlService } from '@/shared/services/graphql'
-import type { User, AuthState, LoginCredentials, AuthResponse } from '@/shared/types'
+import type { AuthResponse, AuthState, LoginCredentials, User } from '@/shared/types'
+import { defineStore } from 'pinia'
 
 export const useAuthStore = defineStore('auth', {
     state: (): AuthState => ({
@@ -26,12 +27,29 @@ export const useAuthStore = defineStore('auth', {
         async initialize() {
             const token = localStorage.getItem('auth_token')
             if (token) {
+                // Vérification basique de l'expiration du token JWT côté client
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]))
+                    const isExpired = payload.exp && payload.exp < Date.now() / 1000
+                    
+                    if (isExpired) {
+                        console.log('🕐 Token expiré détecté, nettoyage automatique')
+                        this.logout()
+                        return
+                    }
+                } catch (error) {
+                    console.log('🔍 Token invalide détecté, nettoyage automatique')
+                    this.logout()
+                    return
+                }
+
                 graphqlService.setToken(token)
                 this.token = token
                 try {
                     await this.fetchUser()
                 } catch (error) {
-                    // Token invalide, on nettoie
+                    // Token invalide côté serveur, on nettoie
+                    console.log('🚫 Échec de validation serveur, déconnexion')
                     this.logout()
                 }
             }
@@ -89,6 +107,10 @@ export const useAuthStore = defineStore('auth', {
                 // Nettoyage du service et du stockage
                 graphqlService.setToken(null)
                 localStorage.removeItem('auth_token')
+
+                // 🆕 Redirection automatique vers la page de connexion
+                console.log('🚪 Déconnexion réussie, redirection vers la page de connexion')
+                await router.push('/login')
             }
         },
 
@@ -116,10 +138,28 @@ export const useAuthStore = defineStore('auth', {
                 return false
             }
 
+            // Vérification basique de l'expiration côté client
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]))
+                const isExpired = payload.exp && payload.exp < Date.now() / 1000
+                
+                if (isExpired) {
+                    console.log('🕐 Token expiré détecté dans checkAuth')
+                    this.logout()
+                    return false
+                }
+            } catch (error) {
+                console.log('🔍 Token invalide détecté dans checkAuth')
+                this.logout()
+                return false
+            }
+
+            // Validation côté serveur
             try {
                 await this.fetchUser()
                 return true
             } catch (error) {
+                console.log('🚫 Échec de validation serveur dans checkAuth')
                 this.logout()
                 return false
             }

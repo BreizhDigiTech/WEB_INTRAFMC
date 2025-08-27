@@ -53,9 +53,11 @@ async function bootstrap() {
   console.log('🚀 Application WEB_INTRAFMC démarrée')
   console.log(`📊 Mode: ${import.meta.env.MODE}`)
   
-  // Import du helper JWT en développement
+  // Helper JWT disponible en développement (pour tests manuels uniquement)
+  // Pour utiliser un token de test, appelez updateWorkingJWTToken() dans la console
   if (import.meta.env.MODE === 'development') {
     import('@/modules/stats/utils/jwtTokenHelper')
+    console.log('💡 Helper JWT disponible: updateWorkingJWTToken(), verifyCurrentToken(), diagnoseJWTToken()')
   }
 }
 

@@ -145,16 +145,21 @@ export class HybridStatsService extends StatsService {
 
   async getOrderStatsByUser(filters: StatsFilters = {}): Promise<OrderStats[]> {
     try {
-      // Préparer les dates par défaut si non fournies
-      const startDate = filters.start_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      // 🆕 Préparer les dates pour TOUTES les données si non fournies
+      const startDate = filters.start_date || '2020-01-01' // Depuis 2020 pour avoir TOUTES les données
       const endDate = filters.end_date || new Date().toISOString().split('T')[0]
+      
+      console.log('📅 Période des stats:', { startDate, endDate })
       
       // 1. Récupérer TOUS les utilisateurs d'abord
       try {
-        const allUsersResponse = await userService.getUsers(50, 1) // Limite à 50 comme requis par l'API
+        console.log('🔍 Récupération de tous les utilisateurs...')
+        const allUsersResponse = await userService.getUsers(50, 1) // ✅ Respecter la limite API de 50
+        console.log('👥 Réponse getUsers:', allUsersResponse)
         
         // Vérifier la structure réelle de la réponse
         const users = allUsersResponse?.data || (allUsersResponse as any)?.users?.data || (allUsersResponse as any)?.users || []
+        console.log('👤 Utilisateurs extraits:', users.length, 'utilisateurs')
         
         if (users && Array.isArray(users) && users.length > 0) {
           // 2. Récupérer les données de commandes via orderStatistics
@@ -198,15 +203,20 @@ export class HybridStatsService extends StatsService {
             return orderStats
           })
           
+          console.log('✅ Utilisateurs enrichis:', enrichedUsers.length, 'utilisateurs')
+          console.log('📊 Premier utilisateur enrichi:', enrichedUsers[0])
+          
           return enrichedUsers.sort((a, b) => b.total_amount - a.total_amount) // Trier par montant décroissant
         }
       } catch (error: any) {
+        console.error('❌ Erreur lors de la récupération des utilisateurs:', error)
       }
       
       // Fallback: ancien comportement si la nouvelle approche échoue
       
       // 2. Essayer userOrderStatistics sans userId pour obtenir tous les utilisateurs (API principale pour les noms)
       try {
+        console.log('🔄 Tentative de fallback avec userOrderStatistics...')
         const userStatsResult = await this.getUserOrderStatistics({
           start_date: startDate,
           end_date: endDate
@@ -214,9 +224,12 @@ export class HybridStatsService extends StatsService {
         })
         
         if (userStatsResult && userStatsResult.data && userStatsResult.data.length > 0) {
+          console.log('✅ Fallback réussi, données récupérées:', userStatsResult.data.length, 'utilisateurs')
           return userStatsResult.data
         }
       } catch (error) {
+        console.log('ℹ️ Fallback userOrderStatistics non disponible, passage au fallback suivant')
+        // Silent - ne pas logger d'erreur car c'est un fallback
       }
       
       // 1. Fallback: orderStatistics avec les paramètres corrects selon la doc

@@ -108,7 +108,7 @@ export class StatsService extends GraphQLService {
         }
       }
     } catch (error) {
-      console.error('API userOrderStatistics error:', error)
+      // ✅ Pas de log d'erreur - c'est utilisé comme fallback
       throw new Error('API userOrderStatistics indisponible')
     }
   }

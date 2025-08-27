@@ -21,6 +21,13 @@ export const useStatsStore = defineStore('stats', () => {
   const customerGrowth = ref<CustomerGrowth[]>([])
   const topProducts = ref<ProductStats[]>([])
   
+  // 🆕 État pour les statistiques globales (vraies totaux)
+  const globalStats = ref({
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageOrderValue: 0
+  })
+  
   const loading = ref({
     orderStats: false,
     periodStats: false,
@@ -28,6 +35,7 @@ export const useStatsStore = defineStore('stats', () => {
     dailyStats: false,
     customerGrowth: false,
     topProducts: false,
+    globalStats: false,
     export: false
   })
   
@@ -38,6 +46,7 @@ export const useStatsStore = defineStore('stats', () => {
     dailyStats: null as string | null,
     customerGrowth: null as string | null,
     topProducts: null as string | null,
+    globalStats: null as string | null,
     export: null as string | null
   })
 
@@ -48,7 +57,14 @@ export const useStatsStore = defineStore('stats', () => {
   })
 
   // Getters
+  // 🔄 Getters conditionnels : utilise globalStats si pas de filtre, sinon orderStats
   const totalRevenue = computed(() => {
+    // Si on n'a pas de filtres actifs, utilise les stats globales
+    if (!currentFilters.value.start_date && !currentFilters.value.end_date && !currentFilters.value.user_id) {
+      return globalStats.value.totalRevenue
+    }
+    
+    // Sinon, calcule depuis orderStats (pour les filtres)
     return orderStats.value.reduce((sum, stat) => {
       const amount = (stat as any).totalAmount || stat.total_amount || 0
       return sum + amount
@@ -56,6 +72,12 @@ export const useStatsStore = defineStore('stats', () => {
   })
 
   const totalOrders = computed(() => {
+    // Si on n'a pas de filtres actifs, utilise les stats globales
+    if (!currentFilters.value.start_date && !currentFilters.value.end_date && !currentFilters.value.user_id) {
+      return globalStats.value.totalOrders
+    }
+    
+    // Sinon, calcule depuis orderStats (pour les filtres)
     return orderStats.value.reduce((sum, stat) => {
       const orders = (stat as any).totalOrders || stat.total_orders || 0
       return sum + orders
@@ -75,7 +97,7 @@ export const useStatsStore = defineStore('stats', () => {
         const amountB = (b as any).totalAmount || b.total_amount || 0
         return amountB - amountA
       })
-      .slice(0, 10)
+      // 🆕 TOUS les utilisateurs, pas de filtre, pas de limite
   })
 
   const activeCustomers = computed(() => {
@@ -86,6 +108,40 @@ export const useStatsStore = defineStore('stats', () => {
   })
 
   // Actions
+  // 🆕 Fonction pour charger les vraies stats globales
+  async function fetchGlobalStats() {
+    loading.value.globalStats = true
+    error.value.globalStats = null
+
+    try {
+      // On prend une date range très large pour avoir TOUTES les données
+      const startDate = '2020-01-01'
+      const endDate = new Date().toISOString().split('T')[0] // Aujourd'hui
+      
+      const stats = await statsService.getBasicOrderStats(startDate, endDate)
+      
+      globalStats.value = {
+        totalRevenue: stats.totalRevenue || 0,
+        totalOrders: stats.totalOrders || 0,
+        averageOrderValue: stats.averageOrderValue || 0
+      }
+      
+      console.log('✅ Stats globales chargées:', globalStats.value)
+    } catch (err) {
+      error.value.globalStats = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques globales'
+      console.error('❌ Erreur fetchGlobalStats:', err)
+      
+      // Fallback : remettre à zéro
+      globalStats.value = {
+        totalRevenue: 0,
+        totalOrders: 0,
+        averageOrderValue: 0
+      }
+    } finally {
+      loading.value.globalStats = false
+    }
+  }
+
   async function fetchOrderStatsByUser(filters: StatsFilters = {}) {
     loading.value.orderStats = true
     error.value.orderStats = null
@@ -269,6 +325,7 @@ export const useStatsStore = defineStore('stats', () => {
     dailyStats,
     customerGrowth,
     topProducts,
+    globalStats,
     loading,
     error,
     currentFilters,
@@ -282,6 +339,7 @@ export const useStatsStore = defineStore('stats', () => {
     activeCustomers,
 
     // Actions
+    fetchGlobalStats,
     fetchOrderStatsByUser,
     fetchPeriodStats,
     fetchMonthlyStats,

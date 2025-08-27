@@ -1,467 +1,1313 @@
-# 📋 GUIDE COMPLET - API FRONTEND INTRAFMC
+# 📚 Documentation API Complète - Frontend
 
-> **Version :** 2.0 - Août 2025  
-> **Statut :** ✅ Toutes les erreurs frontend corrigées  
-> **Backend :** Laravel 12 + Lighthouse GraphQL
+> Guide exhaustif de toutes les APIs GraphQL disponibles pour l'application INTRAFMC
+
+## 🌟 Vue d'Ensemble
+
+Cette API utilise **GraphQL** avec authentification **JWT** et suit une architecture modulaire. Chaque module gère un domaine métier spécifique.
+
+**Endpoint GraphQL** : `http://localhost:8000/graphql`  
+**Playground** : `http://localhost:8000/graphql-playground`  
+**Authentification** : JWT Bearer Token
+
+## 🗂️ Modules Disponibles
+
+1. **[Auth](#-1-authentification)** - Connexion, déconnexion, utilisateur connecté
+2. **[Register](#-2-inscription)** - Inscription, vérification email
+3. **[User](#-3-gestion-utilisateurs)** - CRUD utilisateurs, profils
+4. **[Product CBD](#-4-produits-cbd)** - Catalogue produits, analytics, insights
+5. **[Category](#-5-catégories)** - Classification produits, statistiques
+6. **[Supplier](#-6-fournisseurs)** - Gestion fournisseurs
+7. **[Cart](#-7-panier)** - Panier utilisateur, suggestions
+8. **[Order](#-8-commandes)** - Processus commande, historique
+9. **[Arrival](#-9-arrivages)** - Gestion stock arrivages (Admin)
+10. **[Statistics](#-10-statistiques)** - Analytics business, KPIs
 
 ---
 
-## 🎯 RÉSUMÉ EXÉCUTIF
+## 🔐 1. Authentification
 
-### Problèmes identifiés et résolus :
-- ❌ **3 erreurs "Internal server error"** dans la console frontend
-- ❌ **API `getCustomerGrowth` non implémentée**  
-- ❌ **Erreurs de validation GraphQL**
-- ⚠️ **Restrictions d'accès admin sur les statistiques**
-
-### Solutions déployées :
-- ✅ **3 corrections spécifiques** dans `statsService.ts`
-- ✅ **API `customerGrowthTimeline` complètement implémentée**
-- ✅ **2 nouvelles APIs publiques** pour contourner les restrictions admin
-- ✅ **Schéma GraphQL validé** et fonctionnel
-
----
-
-## 🔧 CORRECTIONS FRONTEND REQUISES
-
-### Fichier cible : `statsService.ts`
-
-#### 1. Correction `getOrderStatistics` → `orderStatistics`
-**📍 Ligne ~181**
-
-```javascript
-// ❌ AVANT (incorrect)
-const query = `
-  query getOrderStatistics($startDate: Date, $endDate: Date) {
-    getOrderStatistics(startDate: $startDate, endDate: $endDate) {
-      totalOrders
-      totalRevenue
-      // ...
+### Connexion
+```graphql
+mutation Login($email: String!, $password: String!) {
+  login(email: $email, password: $password) {
+    access_token
+    token_type
+    expires_in
+    user {
+      id
+      name
+      email
+      is_admin
+      is_active
     }
   }
-`;
-
-// ✅ APRÈS (correct)  
-const query = `
-  query OrderStatistics($startDate: Date, $endDate: Date) {
-    orderStatistics(startDate: $startDate, endDate: $endDate) {
-      totalOrders
-      totalRevenue
-      // ...
-    }
-  }
-`;
-```
-
-#### 2. Correction `getUserOrderStatistics` → `userOrderStatistics`
-**📍 Ligne ~259**
-
-```javascript
-// ❌ AVANT (incorrect)
-const query = `
-  query getUserOrderStatistics($userId: ID, $startDate: Date, $endDate: Date) {
-    getUserOrderStatistics(userId: $userId, startDate: $startDate, endDate: $endDate) {
-      userId
-      totalOrders
-      // ...
-    }
-  }
-`;
-
-// ✅ APRÈS (correct)
-const query = `
-  query UserOrderStatistics($userId: ID, $startDate: Date, $endDate: Date) {
-    userOrderStatistics(userId: $userId, startDate: $startDate, endDate: $endDate) {
-      userId
-      totalOrders
-      // ...
-    }
-  }
-`;
-```
-
-#### 3. Implémentation complète `getCustomerGrowth`
-**📍 Ligne ~530**
-
-```javascript
-// ❌ AVANT (non implémentée)
-async getCustomerGrowth(startDate, endDate, groupBy = 'MONTH') {
-  throw new Error('API getCustomerGrowth non implémentée');
 }
+```
 
-// ✅ APRÈS (complètement implémentée)
-async getCustomerGrowth(startDate, endDate, groupBy = 'MONTH') {
-  const query = `
-    query CustomerGrowthTimeline($startDate: Date, $endDate: Date, $groupBy: TimeGrouping) {
-      customerGrowthTimeline(startDate: $startDate, endDate: $endDate, groupBy: $groupBy) {
-        periods {
-          period
-          newCustomers
-          returningCustomers
-          totalCustomers
-          growthRate
-        }
-        summary {
-          totalNewCustomers
-          averageGrowthRate
-          peakGrowthPeriod
-          projectedNextPeriod
-        }
-        trends {
-          isGrowing
-          trend
-          momentum
-          seasonality
-        }
-      }
-    }
-  `;
-  
-  const result = await this.request(query, { 
-    startDate, 
-    endDate, 
-    groupBy: groupBy || 'MONTH' 
-  });
-  
-  return {
-    periods: result.customerGrowthTimeline.periods.map(period => ({
-      month: period.period,
-      newCustomers: period.newCustomers,
-      returningCustomers: period.returningCustomers,
-      totalCustomers: period.totalCustomers,
-      growthRate: period.growthRate
-    })),
-    summary: result.customerGrowthTimeline.summary,
-    trends: result.customerGrowthTimeline.trends
-  };
+### Déconnexion
+```graphql
+mutation Logout {
+  logout {
+    message
+  }
+}
+```
+
+### Utilisateur Connecté
+```graphql
+query Me {
+  me {
+    id
+    name
+    email
+    phone
+    address
+    birth_date
+    avatar
+    is_admin
+    is_active
+    created_at
+  }
+}
+```
+
+**Headers requis** :
+```javascript
+{
+  "Authorization": "Bearer YOUR_JWT_TOKEN",
+  "Content-Type": "application/json"
 }
 ```
 
 ---
 
-## 🔐 GESTION DES PERMISSIONS
+## 📝 2. Inscription
 
-### Problème : Restrictions Admin
-Les APIs principales nécessitent des permissions administrateur :
-- `orderStatistics` 🔒
-- `revenueTimeline` 🔒  
-- `customerGrowthTimeline` 🔒
-
-### Solutions disponibles :
-
-#### Option A : 👑 Utilisation compte Admin
-```javascript
-// 3 utilisateurs admin disponibles en base : ID 1, 2, 3
-// Se connecter avec l'un d'eux pour accéder à toutes les fonctionnalités
-const adminUsers = [1, 2, 3]; // IDs des comptes admin
+### Créer un Compte
+```graphql
+mutation Register($name: String!, $email: String!, $password: String!, $password_confirmation: String!) {
+  register(
+    name: $name
+    email: $email
+    password: $password
+    password_confirmation: $password_confirmation
+  ) {
+    access_token
+    token_type
+    expires_in
+    user {
+      id
+      name
+      email
+    }
+  }
+}
 ```
 
-#### Option B : 🌍 APIs Publiques Alternatives
+### Vérifier Email
+```graphql
+mutation VerifyEmail($token: String!) {
+  verifyEmail(token: $token) {
+    success
+    message
+  }
+}
+```
 
-**🆕 API `basicOrderStats` (Remplace `orderStatistics`)**
-```javascript
-const BASIC_ORDER_STATS = gql`
-  query BasicOrderStats($startDate: Date!, $endDate: Date!) {
-    basicOrderStats(startDate: $startDate, endDate: $endDate) {
+### Renvoyer Email de Vérification
+```graphql
+mutation ResendVerificationEmail($email: String!) {
+  resendVerificationEmail(email: $email) {
+    success
+    message
+  }
+}
+```
+
+---
+
+## 👥 3. Gestion Utilisateurs
+
+### Lister Utilisateurs (Admin)
+```graphql
+query Users($first: Int, $page: Int) {
+  users(first: $first, page: $page) {
+    id
+    name
+    email
+    phone
+    address
+    is_admin
+    is_active
+    created_at
+  }
+}
+```
+
+### Détails Utilisateur
+```graphql
+query User($id: ID!) {
+  user(id: $id) {
+    id
+    name
+    email
+    phone
+    address
+    birth_date
+    avatar
+    is_admin
+    is_active
+    email_verified_at
+    created_at
+    updated_at
+  }
+}
+```
+
+### Modifier Utilisateur (Admin)
+```graphql
+mutation UpdateUser($id: ID!, $name: String, $email: String, $is_active: Boolean) {
+  updateUser(id: $id, name: $name, email: $email, is_active: $is_active) {
+    id
+    name
+    email
+    is_active
+  }
+}
+```
+
+### Modifier Profil
+```graphql
+mutation UpdateProfile($id: ID!, $name: String, $email: String, $phone: String) {
+  updateProfile(id: $id, name: $name, email: $email, phone: $phone) {
+    id
+    name
+    email
+    phone
+  }
+}
+```
+
+### Changer Mot de Passe
+```graphql
+mutation ChangePassword($current_password: String!, $new_password: String!) {
+  changePassword(current_password: $current_password, new_password: $new_password) {
+    success
+    message
+  }
+}
+```
+
+### Supprimer Utilisateur (Admin)
+```graphql
+mutation DeleteUser($id: ID!) {
+  deleteUser(id: $id) {
+    success
+    message
+  }
+}
+```
+
+---
+
+## 🌿 4. Produits CBD
+
+### Lister Produits
+```graphql
+query Products($first: Int, $page: Int, $search: String, $category_id: ID) {
+  products(first: $first, page: $page, search: $search, category_id: $category_id) {
+    id
+    name
+    description
+    price
+    stock
+    image_urls
+    categories {
+      id
+      name
+    }
+    suppliers {
+      id
+      name
+    }
+    created_at
+  }
+}
+```
+
+### Détails Produit
+```graphql
+query Product($id: ID!) {
+  product(id: $id) {
+    id
+    name
+    description
+    price
+    stock
+    image_urls
+    image_metadata
+    analysis_image_url
+    analysis_data
+    categories {
+      id
+      name
+      description
+    }
+    suppliers {
+      id
+      name
+      email
+      phone
+    }
+    created_at
+    updated_at
+  }
+}
+```
+
+### Créer Produit (Admin)
+```graphql
+mutation CreateProduct($input: CreateProductCBDInput!) {
+  createProductCBD(input: $input) {
+    id
+    name
+    price
+    stock
+    image_urls
+  }
+}
+```
+
+**Variables** :
+```json
+{
+  "input": {
+    "name": "Huile CBD 20%",
+    "description": "Huile CBD premium",
+    "price": 49.99,
+    "stock": 100,
+    "category_ids": ["1", "2"],
+    "images": ["file1", "file2"]
+  }
+}
+```
+
+### Modifier Produit (Admin)
+```graphql
+mutation UpdateProduct($id: ID!, $input: UpdateProductCBDInput!) {
+  updateProductCBD(id: $id, input: $input) {
+    id
+    name
+    price
+    stock
+  }
+}
+```
+
+### Supprimer Produit (Admin)
+```graphql
+mutation DeleteProduct($id: ID!) {
+  deleteProduct(id: $id) {
+    success
+    message
+  }
+}
+```
+
+### Analytics Produit (Admin)
+```graphql
+query ProductInsights($productId: ID, $startDate: Date, $endDate: Date) {
+  productPerformanceInsights(
+    productId: $productId
+    startDate: $startDate
+    endDate: $endDate
+  ) {
+    productId
+    productName
+    currentPrice
+    currentStock
+    baseMetrics {
       totalOrders
+      totalQuantitySold
       totalRevenue
-      averageOrderValue
-      popularProducts {
-        id
-        name
-        orderCount
+      averageUnitPrice
+      uniqueCustomers
+    }
+    timelinePerformance {
+      periods {
+        period
+        orders
+        quantitySold
         revenue
       }
+      trend
+      growthRate
+    }
+    recommendations {
+      type
+      priority
+      description
+      impact
     }
   }
-`;
-
-// Utilisation
-async getBasicOrderStats(startDate, endDate) {
-  const result = await this.request(BASIC_ORDER_STATS, { startDate, endDate });
-  return result.basicOrderStats;
 }
 ```
 
-**🆕 API `monthlyRevenue` (Remplace `revenueTimeline`)**
-```javascript
-const MONTHLY_REVENUE = gql`
-  query MonthlyRevenue($months: Int) {
-    monthlyRevenue(months: $months) {
-      month
+### Tendances Catégories (Admin)
+```graphql
+query CategoryTrends($startDate: Date, $endDate: Date, $groupBy: TrendGrouping) {
+  categoryTrends(startDate: $startDate, endDate: $endDate, groupBy: $groupBy) {
+    categoryId
+    categoryName
+    periods {
+      period
+      orders
       revenue
-      orderCount
+      growth
     }
+    totalRevenue
+    totalOrders
+    averageGrowth
   }
-`;
-
-// Utilisation
-async getMonthlyRevenue(months = 12) {
-  const result = await this.request(MONTHLY_REVENUE, { months });
-  return result.monthlyRevenue;
-}
-```
-
-#### Option C : 🔧 Modification des Permissions Backend
-```php
-// Dans app/Policies/OrderPolicy.php
-public function viewStatistics(User $user): bool
-{
-    return true; // Permet l'accès à tous les utilisateurs connectés
-    // Au lieu de : return $user->isAdmin();
 }
 ```
 
 ---
 
-## 📊 RÉFÉRENCE DES APIs
+## 📁 5. Catégories
 
-### APIs Statistiques Principales (Admin requis)
-
-#### 1. `orderStatistics`
+### Lister Catégories
 ```graphql
-query OrderStatistics($startDate: Date, $endDate: Date) {
-  orderStatistics(startDate: $startDate, endDate: $endDate) {
-    totalOrders
-    totalRevenue
-    averageOrderValue
-    topProducts {
-      productId
-      productName
-      quantitySold
-      revenue
+query Categories {
+  categories {
+    id
+    name
+    description
+    products {
+      id
+      name
+      price
     }
-    topCustomers {
-      userId
-      username
-      orderCount
-      totalSpent
+  }
+}
+```
+
+### Catégories Enrichies (Avec Stats)
+```graphql
+query CategoriesWithStats {
+  categoriesWithStats {
+    id
+    name
+    slug
+    description
+    productCount
+    parentId
+    level
+    children {
+      id
+      name
+      productCount
     }
-    dailyStats {
-      date
+    isActive
+    displayOrder
+    imageUrl
+  }
+}
+```
+
+### Créer Catégorie (Admin)
+```graphql
+mutation CreateCategory($input: CreateCategoryInput!) {
+  createCategory(input: $input) {
+    id
+    name
+    description
+  }
+}
+```
+
+### Modifier Catégorie (Admin)
+```graphql
+mutation UpdateCategory($id: ID!, $input: UpdateCategoryInput!) {
+  updateCategory(id: $id, input: $input) {
+    id
+    name
+    description
+  }
+}
+```
+
+### Supprimer Catégorie (Admin)
+```graphql
+mutation DeleteCategory($id: ID!) {
+  deleteCategory(id: $id) {
+    success
+    message
+  }
+}
+```
+
+### Produits Populaires par Catégorie
+```graphql
+query PopularProductsByCategory($categoryId: ID!, $period: PopularityPeriod, $limit: Int) {
+  popularProductsByCategory(
+    categoryId: $categoryId
+    period: $period
+    limit: $limit
+  ) {
+    id
+    name
+    price
+    stock
+    orderCount
+    revenue
+  }
+}
+```
+
+---
+
+## 🏭 6. Fournisseurs
+
+### Lister Fournisseurs (Admin)
+```graphql
+query Suppliers($first: Int, $page: Int) {
+  suppliers(first: $first, page: $page) {
+    id
+    name
+    email
+    phone
+    address
+    website
+    contact_person
+    description
+    products {
+      id
+      name
+    }
+  }
+}
+```
+
+### Détails Fournisseur (Admin)
+```graphql
+query Supplier($id: ID!) {
+  supplier(id: $id) {
+    id
+    name
+    email
+    phone
+    address
+    website
+    contact_person
+    description
+    products {
+      id
+      name
+      price
+      stock
+    }
+  }
+}
+```
+
+### Créer Fournisseur (Admin)
+```graphql
+mutation CreateSupplier(
+  $name: String!
+  $email: String
+  $phone: String
+  $address: String
+  $website: String
+  $contact_person: String
+  $description: String
+) {
+  createSupplier(
+    name: $name
+    email: $email
+    phone: $phone
+    address: $address
+    website: $website
+    contact_person: $contact_person
+    description: $description
+  ) {
+    id
+    name
+    email
+  }
+}
+```
+
+### Associer Fournisseur à Produit (Admin)
+```graphql
+mutation AttachSupplierToProduct($supplier_id: ID!, $product_id: ID!) {
+  attachSupplierToProduct(supplier_id: $supplier_id, product_id: $product_id) {
+    id
+    name
+    products {
+      id
+      name
+    }
+  }
+}
+```
+
+---
+
+## 🛒 7. Panier
+
+### Mon Panier
+```graphql
+query MyCart {
+  myCart {
+    id
+    quantity
+    product {
+      id
+      name
+      price
+      image_urls
+      stock
+    }
+    created_at
+  }
+}
+```
+
+### Total Panier
+```graphql
+query CartTotal {
+  cartTotal {
+    total
+    itemCount
+  }
+}
+```
+
+### Ajouter au Panier
+```graphql
+mutation AddToCart($input: AddToCartInput!) {
+  addToCart(input: $input) {
+    id
+    quantity
+    product {
+      id
+      name
+      price
+    }
+  }
+}
+```
+
+**Variables** :
+```json
+{
+  "input": {
+    "product_id": "1",
+    "quantity": 2
+  }
+}
+```
+
+### Modifier Quantité
+```graphql
+mutation UpdateCartItem($id: ID!, $input: UpdateCartItemInput!) {
+  updateCartItem(id: $id, input: $input) {
+    id
+    quantity
+    product {
+      name
+      price
+    }
+  }
+}
+```
+
+### Supprimer du Panier
+```graphql
+mutation RemoveFromCart($id: ID!) {
+  removeFromCart(id: $id) {
+    success
+    message
+  }
+}
+```
+
+### Vider le Panier
+```graphql
+mutation ClearCart {
+  clearCart {
+    success
+    message
+  }
+}
+```
+
+### Suggestions Panier
+```graphql
+query CartSuggestions($limit: Int, $type: SuggestionType) {
+  cartSuggestions(limit: $limit, type: $type) {
+    productId
+    productName
+    price
+    suggestionType
+    reason
+    score
+    frequency
+  }
+}
+```
+
+---
+
+## 📦 8. Commandes
+
+### Mes Commandes
+```graphql
+query MyOrders($first: Int, $page: Int) {
+  myOrders(first: $first, page: $page) {
+    id
+    total
+    status
+    formatted_status
+    total_items
+    product_count
+    created_at
+    products {
+      id
+      name
+      price
+      pivot {
+        quantity
+        unit_price
+      }
+    }
+  }
+}
+```
+
+### Toutes les Commandes (Admin)
+```graphql
+query Orders($first: Int, $page: Int) {
+  orders(first: $first, page: $page) {
+    id
+    total
+    status
+    user {
+      id
+      name
+      email
+    }
+    total_items
+    product_count
+    created_at
+  }
+}
+```
+
+### Détails Commande
+```graphql
+query Order($id: ID!) {
+  order(id: $id) {
+    id
+    total
+    status
+    formatted_status
+    user {
+      id
+      name
+      email
+      phone
+      address
+    }
+    products {
+      id
+      name
+      price
+      image_urls
+      pivot {
+        quantity
+        unit_price
+      }
+    }
+    orderProducts {
+      id
+      quantity
+      unit_price
+      product {
+        name
+      }
+    }
+    created_at
+    updated_at
+  }
+}
+```
+
+### Passer Commande
+```graphql
+mutation Checkout {
+  checkout {
+    id
+    total
+    status
+    products {
+      id
+      name
+      pivot {
+        quantity
+        unit_price
+      }
+    }
+  }
+}
+```
+
+### Annuler Commande
+```graphql
+mutation CancelOrder($id: ID!) {
+  cancelOrder(id: $id)
+}
+```
+
+### Modifier Statut (Admin)
+```graphql
+mutation UpdateOrderStatus($input: UpdateOrderStatusInput!) {
+  updateOrderStatus(input: $input) {
+    id
+    status
+    formatted_status
+  }
+}
+```
+
+**Variables** :
+```json
+{
+  "input": {
+    "id": "1",
+    "status": "shipped"
+  }
+}
+```
+
+---
+
+## 📈 9. Arrivages (Admin)
+
+### Lister Arrivages
+```graphql
+query Arrivals($first: Int, $page: Int) {
+  arrivals(first: $first, page: $page) {
+    id
+    amount
+    status
+    products {
+      id
+      arrival_id
+      product_id
+      quantity
+      unit_price
+    }
+    created_at
+    updated_at
+  }
+}
+```
+
+### Détails Arrivage
+```graphql
+query Arrival($arrival_id: ID!) {
+  arrival(arrival_id: $arrival_id) {
+    id
+    amount
+    status
+    products {
+      id
+      arrival_id
+      product_id
+      quantity
+      unit_price
+      total_price
+    }
+    created_at
+  }
+}
+```
+
+### Créer Arrivage
+```graphql
+mutation CreateArrival($input: CreateArrivalInput!) {
+  createArrival(input: $input) {
+    id
+    amount
+    status
+  }
+}
+```
+
+### Valider Arrivage
+```graphql
+mutation ValidateArrival($arrival_id: ID!) {
+  validateArrival(arrival_id: $arrival_id) {
+    id
+    status
+  }
+}
+```
+
+---
+
+## 📊 10. Statistiques (Admin)
+
+### Dashboard Principal
+```graphql
+query DashboardStats($period: TimeGrouping) {
+  dashboardStats(period: $period) {
+    currentMonth {
       orders
       revenue
-    }
-  }
-}
-```
-
-#### 2. `revenueTimeline`
-```graphql
-query RevenueTimeline($startDate: Date, $endDate: Date, $groupBy: TimeGrouping) {
-  revenueTimeline(startDate: $startDate, endDate: $endDate, groupBy: $groupBy) {
-    periods {
-      period
-      revenue
-      orderCount
-      averageOrderValue
-    }
-    growth {
-      totalGrowth
-      averageGrowth
-      isPositive
-    }
-    projections {
-      nextPeriodRevenue
-      confidence
-      trend
-    }
-  }
-}
-```
-
-#### 3. `customerGrowthTimeline`
-```graphql
-query CustomerGrowthTimeline($startDate: Date, $endDate: Date, $groupBy: TimeGrouping) {
-  customerGrowthTimeline(startDate: $startDate, endDate: $endDate, groupBy: $groupBy) {
-    periods {
-      period
-      newCustomers
-      returningCustomers
-      totalCustomers
-      growthRate
+      users
+      products
     }
     summary {
-      totalNewCustomers
-      averageGrowthRate
-      peakGrowthPeriod
-      projectedNextPeriod
-    }
-    trends {
-      isGrowing
-      trend
-      momentum
-      seasonality
+      totalOrders
+      totalRevenue
+      totalUsers
+      totalProducts
     }
   }
 }
 ```
 
-### APIs Utilisateur (Connecté requis)
+### Statistiques Commandes
+```graphql
+query OrderStatistics($startDate: Date!, $endDate: Date!) {
+  orderStatistics(startDate: $startDate, endDate: $endDate) {
+    totalRevenue
+    totalOrders
+    averageOrderValue
+    uniqueCustomers
+    topProducts
+    topCustomers
+  }
+}
+```
 
-#### 4. `userOrderStatistics`
+### Timeline Revenus
+```graphql
+query RevenueTimeline($startDate: Date!, $endDate: Date!, $groupBy: TimeGrouping) {
+  revenueTimeline(startDate: $startDate, endDate: $endDate, groupBy: $groupBy) {
+    periods
+    totalRevenue
+    totalOrders
+  }
+}
+```
+
+**Note importante** : `periods` est retourné en JSON string :
+```javascript
+const data = await client.query({ query: REVENUE_TIMELINE });
+const periods = JSON.parse(data.revenueTimeline.periods);
+```
+
+### Statistiques Utilisateur
 ```graphql
 query UserOrderStatistics($userId: ID, $startDate: Date, $endDate: Date) {
   userOrderStatistics(userId: $userId, startDate: $startDate, endDate: $endDate) {
     userId
+    userName
+    email
     totalOrders
-    totalSpent
+    totalAmount
     averageOrderValue
-    favoriteProducts {
-      productId
-      productName
-      orderCount
-    }
     orderFrequency
+    customerSegment
+    favoriteProducts
+    favoriteCategories
+    behaviorAnalysis
+    recommendations
     lastOrderDate
-    customerSince
+    memberSince
   }
 }
 ```
 
-### APIs Publiques (Nouvelles - Connecté requis)
-
-#### 5. `basicOrderStats`
-```graphql
-query BasicOrderStats($startDate: Date!, $endDate: Date!) {
-  basicOrderStats(startDate: $startDate, endDate: $endDate) {
-    totalOrders
-    totalRevenue
-    averageOrderValue
-    popularProducts {
-      id
-      name
-      orderCount
-      revenue
-    }
-  }
-}
-```
-
-#### 6. `monthlyRevenue`
+### Revenus Mensuels
 ```graphql
 query MonthlyRevenue($months: Int) {
   monthlyRevenue(months: $months) {
-    month
-    revenue
-    orderCount
-  }
-}
-```
-
----
-
-## 🚨 GESTION D'ERREURS
-
-### Erreurs courantes et solutions :
-
-#### 1. "Internal server error"
-```javascript
-// Cause : Nom de requête incorrect
-// Solution : Vérifier que les noms de requêtes correspondent exactement
-
-// ❌ Incorrect
-query getOrderStatistics { ... }
-
-// ✅ Correct  
-query OrderStatistics { ... }
-```
-
-#### 2. "Access denied" / Erreur 403
-```javascript
-// Cause : Permissions insuffisantes
-// Solutions :
-// 1. Se connecter avec un compte admin
-// 2. Utiliser les APIs publiques alternatives
-// 3. Modifier les permissions backend
-
-if (error.extensions?.code === 'UNAUTHORIZED') {
-  console.warn('Permissions admin requises. Utilisation de l\'API publique...');
-  return await this.getBasicOrderStats(startDate, endDate);
-}
-```
-
-#### 3. Gestion robuste des erreurs
-```javascript
-async safeApiCall(apiMethod, ...args) {
-  try {
-    return await apiMethod.call(this, ...args);
-  } catch (error) {
-    if (error.extensions?.code === 'UNAUTHORIZED') {
-      // Fallback vers API publique si disponible
-      return await this.getPublicAlternative(...args);
+    data {
+      month
+      revenue
+      orderCount
     }
-    
-    console.error('Erreur API:', error);
-    throw new Error(`Erreur lors de l'appel API: ${error.message}`);
+    total_revenue
+    total_orders
+  }
+}
+```
+
+### Croissance Clients
+```graphql
+query CustomerGrowthTimeline($startDate: Date, $endDate: Date, $groupBy: TimeGrouping) {
+  customerGrowthTimeline(startDate: $startDate, endDate: $endDate, groupBy: $groupBy) {
+    periods
+    summary
+    trends
   }
 }
 ```
 
 ---
 
-## ✅ CHECKLIST DE VALIDATION
+## 🔧 Configuration Frontend
 
-### Avant mise en production :
+### Installation Apollo Client
+```bash
+npm install @apollo/client graphql
+```
 
-- [ ] **Frontend** : 3 corrections appliquées dans `statsService.ts`
-- [ ] **Tests** : Toutes les APIs retournent des données sans erreur
-- [ ] **Permissions** : Stratégie d'accès définie (admin/public/mixte)
-- [ ] **Gestion d'erreurs** : Fallbacks implémentés pour les restrictions
-- [ ] **Performance** : Cache activé pour les statistiques lourdes
-
-### Tests recommandés :
-
+### Configuration de Base
 ```javascript
-// Test 1 : Utilisateur connecté (non-admin)
-await statsService.getUserOrderStatistics(userId, startDate, endDate);
-await statsService.getBasicOrderStats(startDate, endDate);
-await statsService.getMonthlyRevenue(12);
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 
-// Test 2 : Utilisateur admin
-await statsService.getOrderStatistics(startDate, endDate);
-await statsService.getRevenueTimeline(startDate, endDate);
-await statsService.getCustomerGrowth(startDate, endDate);
+const httpLink = createHttpLink({
+  uri: 'http://localhost:8000/graphql',
+});
 
-// Test 3 : Gestion d'erreurs
-// Tester avec token expiré, permissions insuffisantes, etc.
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem('jwt_token');
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : "",
+    }
+  }
+});
+
+export const client = new ApolloClient({
+  link: authLink.concat(httpLink),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          // Pagination pour les produits
+          products: {
+            keyArgs: ['search', 'category_id'],
+            merge(existing = [], incoming) {
+              return [...existing, ...incoming];
+            },
+          },
+          // Pagination pour les commandes
+          myOrders: {
+            merge(existing = [], incoming) {
+              return [...existing, ...incoming];
+            },
+          },
+        },
+      },
+    },
+  }),
+});
+```
+
+### Gestion d'Erreur
+```javascript
+import { onError } from '@apollo/client/link/error';
+
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) => {
+      console.error(`GraphQL error: ${message}`);
+      
+      // Redirection si non authentifié
+      if (message.includes('Unauthenticated')) {
+        localStorage.removeItem('jwt_token');
+        window.location.href = '/login';
+      }
+    });
+  }
+  
+  if (networkError) {
+    console.error(`Network error: ${networkError}`);
+  }
+});
+
+// Combiner avec authLink
+const link = from([errorLink, authLink, httpLink]);
+```
+
+### Hook Personnalisé Auth
+```javascript
+import { useQuery, useMutation } from '@apollo/client';
+import { ME_QUERY, LOGIN_MUTATION, LOGOUT_MUTATION } from './queries';
+
+export const useAuth = () => {
+  const { data, loading } = useQuery(ME_QUERY, {
+    errorPolicy: 'ignore'
+  });
+  
+  const [login] = useMutation(LOGIN_MUTATION, {
+    onCompleted: (data) => {
+      localStorage.setItem('jwt_token', data.login.access_token);
+      client.resetStore(); // Rafraîchir le cache
+    }
+  });
+  
+  const [logout] = useMutation(LOGOUT_MUTATION, {
+    onCompleted: () => {
+      localStorage.removeItem('jwt_token');
+      client.clearStore();
+    }
+  });
+  
+  return {
+    user: data?.me,
+    isAuthenticated: !!data?.me,
+    isAdmin: data?.me?.is_admin,
+    loading,
+    login,
+    logout
+  };
+};
 ```
 
 ---
 
-## 🔧 MAINTENANCE
+## 📋 Types de Données
 
-### Surveillance continue :
+### Énumérations Importantes
+```typescript
+enum TimeGrouping {
+  HOUR = "HOUR"
+  DAY = "DAY"
+  WEEK = "WEEK"
+  MONTH = "MONTH"
+  QUARTER = "QUARTER"
+  YEAR = "YEAR"
+}
 
-1. **Logs d'erreurs** : Monitorer les erreurs GraphQL côté frontend
-2. **Performance** : Surveiller les temps de réponse des APIs statistiques
-3. **Permissions** : Auditer régulièrement les accès aux données sensibles
-4. **Cache** : Optimiser la mise en cache des données statistiques
+enum CustomerSegment {
+  VIP = "VIP"
+  PREMIUM = "PREMIUM"
+  STANDARD = "STANDARD"
+  NEW = "NEW"
+  PROSPECT = "PROSPECT"
+  AT_RISK = "AT_RISK"
+}
 
-### Évolutions futures :
+enum SuggestionType {
+  ALL = "ALL"
+  CROSS_SELL = "CROSS_SELL"
+  UP_SELL = "UP_SELL"
+  FREQUENTLY_BOUGHT = "FREQUENTLY_BOUGHT"
+}
+```
 
-- **Real-time** : WebSocket pour statistiques en temps réel
-- **Pagination** : Implémentation pour les gros volumes de données
-- **Filtres avancés** : Ajout de filtres métier spécifiques
-- **Exports** : Fonctionnalités d'export CSV/PDF des statistiques
+### Interfaces TypeScript
+```typescript
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  is_admin: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface ProductCBD {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  image_urls: string[];
+  categories: Category[];
+  suppliers: Supplier[];
+}
+
+interface Order {
+  id: string;
+  total: number;
+  status: string;
+  formatted_status: string;
+  total_items: number;
+  product_count: number;
+  user: User;
+  products: ProductCBD[];
+  created_at: string;
+}
+
+interface CartItem {
+  id: string;
+  quantity: number;
+  product: ProductCBD;
+  created_at: string;
+}
+```
 
 ---
 
-## 📞 SUPPORT TECHNIQUE
+## 🚀 Exemples d'Utilisation
 
-### Base de données de test :
-- **Commandes :** 83 entrées disponibles
-- **Produits :** 189 références
-- **Utilisateurs :** 4 comptes (dont 3 admins : ID 1, 2, 3)
+### Authentification Complète
+```javascript
+// Connexion
+const loginUser = async (email, password) => {
+  try {
+    const { data } = await client.mutate({
+      mutation: LOGIN_MUTATION,
+      variables: { email, password }
+    });
+    
+    localStorage.setItem('jwt_token', data.login.access_token);
+    return data.login.user;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-### Contact et dépannage :
-1. Vérifier les logs Laravel dans `storage/logs/`
-2. Utiliser GraphQL Playground pour tester les requêtes
-3. Contrôler l'authentification JWT
-4. Valider le schéma avec `php artisan lighthouse:validate-schema`
+// Vérifier si connecté
+const getCurrentUser = async () => {
+  try {
+    const { data } = await client.query({
+      query: ME_QUERY,
+      fetchPolicy: 'network-only'
+    });
+    return data.me;
+  } catch (error) {
+    return null;
+  }
+};
+```
+
+### Gestion Panier
+```javascript
+// Composant Panier
+const CartPage = () => {
+  const { data, loading, refetch } = useQuery(MY_CART_QUERY);
+  const [addToCart] = useMutation(ADD_TO_CART_MUTATION);
+  const [updateQuantity] = useMutation(UPDATE_CART_ITEM_MUTATION);
+  
+  const handleAddToCart = async (productId, quantity) => {
+    await addToCart({
+      variables: { input: { product_id: productId, quantity } },
+      refetchQueries: ['MyCart', 'CartTotal']
+    });
+  };
+  
+  const handleUpdateQuantity = async (cartItemId, quantity) => {
+    await updateQuantity({
+      variables: { id: cartItemId, input: { quantity } },
+      refetchQueries: ['MyCart', 'CartTotal']
+    });
+  };
+  
+  if (loading) return <Spinner />;
+  
+  return (
+    <div>
+      {data.myCart.map(item => (
+        <CartItem 
+          key={item.id}
+          item={item}
+          onUpdateQuantity={handleUpdateQuantity}
+        />
+      ))}
+    </div>
+  );
+};
+```
+
+### Dashboard Admin
+```javascript
+const AdminDashboard = () => {
+  const { data: dashboardData } = useQuery(DASHBOARD_STATS_QUERY);
+  const { data: revenueData } = useQuery(REVENUE_TIMELINE_QUERY, {
+    variables: {
+      startDate: '2025-01-01',
+      endDate: '2025-08-26',
+      groupBy: 'DAY'
+    }
+  });
+  
+  const periods = useMemo(() => {
+    if (!revenueData?.revenueTimeline?.periods) return [];
+    try {
+      return JSON.parse(revenueData.revenueTimeline.periods);
+    } catch (error) {
+      console.error('Erreur parsing periods:', error);
+      return [];
+    }
+  }, [revenueData]);
+  
+  return (
+    <div className="dashboard">
+      <StatsCards data={dashboardData?.dashboardStats} />
+      <RevenueChart periods={periods} />
+      <TopProducts />
+      <RecentOrders />
+    </div>
+  );
+};
+```
 
 ---
 
-**🎯 Objectif atteint : Frontend sans erreurs, APIs complètes, documentation exhaustive !**
+## 🔍 Dépannage
 
-*Dernière mise à jour : Août 2025 | Version 2.0*
+### Erreurs Communes
+
+1. **Token expiré** :
+```javascript
+// Vérifier expiration token
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+};
+```
+
+2. **Permissions insuffisantes** :
+```javascript
+// Vérifier permissions
+if (error.message.includes('permissions')) {
+  // Rediriger ou afficher message
+  console.error('Permissions insuffisantes');
+}
+```
+
+3. **Parsing JSON fields** :
+```javascript
+// Pour les champs JSON comme 'periods'
+const safeJSONParse = (jsonString, fallback = []) => {
+  try {
+    return JSON.parse(jsonString || '[]');
+  } catch (error) {
+    console.error('Erreur parsing JSON:', error);
+    return fallback;
+  }
+};
+```
+
+### Performance Tips
+
+- Utiliser `fetchPolicy: 'cache-first'` pour les données statiques
+- Implémenter la pagination avec `first` et `page`
+- Utiliser `refetchQueries` pour synchroniser le cache
+- Optimiser les requêtes avec des fragments GraphQL
+
+---
+
+**Documentation mise à jour** : 26 août 2025  
+**Version API** : v1.0  
+**Modules couverts** : 10/10  
+**Endpoints documentés** : 50+ requêtes et mutations

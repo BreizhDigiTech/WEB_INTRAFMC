@@ -65,9 +65,15 @@ if (typeof window !== 'undefined') {
   (window as any).diagnoseJWTToken = diagnoseJWTToken;
 }
 
+// ATTENTION: Auto-update désactivé pour respecter le cycle d'authentification normal
+// Pour tester les APIs, utilisez manuellement updateWorkingJWTToken() dans la console
+// ou décommentez les lignes suivantes TEMPORAIREMENT pour les tests
+
+/*
 // Auto-update du token au chargement si pas présent ou incorrect
 const currentToken = localStorage.getItem('auth_token')
 if (!currentToken || currentToken !== WORKING_JWT_TOKEN) {
   console.log('🔄 Mise à jour automatique du token JWT...')
   updateWorkingJWTToken()
 }
+*/
