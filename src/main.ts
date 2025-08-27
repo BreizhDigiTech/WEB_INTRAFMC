@@ -6,6 +6,10 @@ import App from './App.vue'
 import './assets/styles/main.css'
 import router from './router'
 
+// Services globaux
+import { errorHandler } from '@/shared/errors/errorHandler'
+import { performanceMonitor } from '@/shared/monitoring/performance'
+
 // Stores
 import { useAuthStore } from '@/stores/auth'
 
@@ -18,6 +22,14 @@ async function bootstrap() {
 
   // Configuration du router
   app.use(router)
+
+  // Configuration globale des erreurs
+  app.config.errorHandler = (error, instance, info) => {
+    errorHandler.handleError(error as Error, {
+      vueComponent: instance?.$options.name || 'Unknown',
+      vueInfo: info
+    })
+  }
 
   // Configuration de Vue Query pour le cache
   setupVueQuery(app)
@@ -36,11 +48,39 @@ async function bootstrap() {
     })
   }
 
+  // Configuration du reporting d'erreurs (si endpoint configuré)
+  if (import.meta.env.VITE_ERROR_REPORTING_ENDPOINT) {
+    errorHandler.setReportingEndpoint(import.meta.env.VITE_ERROR_REPORTING_ENDPOINT)
+  }
+
+  // Enregistrement du Service Worker en production
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered: ', registration)
+        })
+        .catch((registrationError) => {
+          console.log('SW registration failed: ', registrationError)
+        })
+    })
+  }
+
   // Configuration des warnings Vue en développement
   if (import.meta.env.DEV) {
     app.config.warnHandler = (msg, instance, trace) => {
       console.warn(`Vue warning: ${msg}`, trace)
     }
+
+    // Monitoring des performances en développement
+    setInterval(() => {
+      const stats = performanceMonitor.getAllStats()
+      if (Object.keys(stats).length > 0) {
+        console.group('📊 Performance Stats')
+        console.table(stats)
+        console.groupEnd()
+      }
+    }, 30000)
   }
 
   // Initialisation de l'authentification
@@ -64,6 +104,12 @@ async function bootstrap() {
 // Démarrage de l'application avec gestion d'erreur
 bootstrap().catch(error => {
   console.error('❌ Erreur lors du démarrage de l\'application:', error)
+  
+  // Enregistrer l'erreur de démarrage
+  errorHandler.handleError(error, {
+    context: 'application-bootstrap',
+    timestamp: new Date().toISOString()
+  })
   
   // Affichage d'un message d'erreur basique si l'app ne peut pas démarrer
   document.body.innerHTML = `

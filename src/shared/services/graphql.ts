@@ -1,9 +1,33 @@
 // Service GraphQL centralisé pour WEB_INTRAFMC
 
+import { graphqlCache } from '@/shared/cache/graphqlCache'
 
 export class GraphQLService {
-  private endpoint = ((import.meta as any).env?.VITE_GRAPHQL_ENDPOINT as string) || 'http://localhost/graphql'
+  private endpoint: string
   private token: string | null = null
+  private useCache: boolean = true
+
+  constructor() {
+    this.endpoint = this.getEndpoint()
+  }
+
+  private getEndpoint(): string {
+    const envEndpoint = (import.meta as any).env?.VITE_GRAPHQL_ENDPOINT as string
+    
+    if (!envEndpoint) {
+      console.warn('VITE_GRAPHQL_ENDPOINT non défini, utilisation de la valeur par défaut')
+      return 'http://localhost/graphql'
+    }
+    
+    // Validation de l'URL
+    try {
+      new URL(envEndpoint)
+      return envEndpoint
+    } catch (error) {
+      console.error('VITE_GRAPHQL_ENDPOINT invalide:', envEndpoint)
+      throw new Error('Configuration GraphQL endpoint invalide')
+    }
+  }
 
   setToken(token: string | null) {
     this.token = token
@@ -86,18 +110,39 @@ export class GraphQLService {
     return headers
   }
 
-  async request<T = any>(query: string, variables?: any): Promise<T> {
+  async request<T = any>(query: string, variables?: any, options?: { useCache?: boolean, cacheTTL?: number }): Promise<T> {
+    const shouldUseCache = options?.useCache !== false && this.useCache && this.isQueryCacheable(query)
+    
+    // Vérifier le cache d'abord (seulement pour les queries, pas les mutations)
+    if (shouldUseCache) {
+      const cached = graphqlCache.get<T>(query, variables)
+      if (cached) {
+        return cached
+      }
+    }
+
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
       const response = await fetch(this.endpoint, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
           query,
           variables
-        })
+        }),
+        signal: controller.signal
       })
 
+      clearTimeout(timeoutId)
+
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expiré, nettoyer le stockage
+          this.setToken(null)
+          throw new GraphQLError('Session expirée, veuillez vous reconnecter')
+        }
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
       }
 
@@ -105,7 +150,16 @@ export class GraphQLService {
 
       if (result.errors) {
         const error = result.errors[0]
+        // Log détaillé pour debug en développement
+        if (import.meta.env.DEV) {
+          console.error('GraphQL Error:', error)
+        }
         throw new GraphQLError(error.message, error.extensions)
+      }
+
+      // Mettre en cache le résultat si applicable
+      if (shouldUseCache && result.data) {
+        graphqlCache.set(query, result.data, variables, options?.cacheTTL)
       }
 
       return result.data
@@ -113,10 +167,28 @@ export class GraphQLService {
       if (error instanceof GraphQLError) {
         throw error
       }
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new GraphQLError('Requête timeout - veuillez réessayer')
+      }
       throw new GraphQLError(
         error instanceof Error ? error.message : 'Une erreur inconnue est survenue'
       )
     }
+  }
+
+  /**
+   * Détermine si une requête peut être mise en cache
+   */
+  private isQueryCacheable(query: string): boolean {
+    const trimmedQuery = query.trim().toLowerCase()
+    return trimmedQuery.startsWith('query') || (!trimmedQuery.startsWith('mutation') && !trimmedQuery.startsWith('subscription'))
+  }
+
+  /**
+   * Invalide le cache pour un type d'entité
+   */
+  invalidateCache(entityType: string): void {
+    graphqlCache.invalidateByPattern(entityType.toLowerCase())
   }
 
   // Requête GraphQL en multipart/form-data (spec GraphQL multipart request)

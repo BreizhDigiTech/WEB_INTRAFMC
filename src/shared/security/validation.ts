@@ -1,28 +1,83 @@
 import { ValidationError } from '@/shared/errors/types'
 import DOMPurify from 'dompurify'
 import { z } from 'zod'
+import { sanitizeInput, validateUrl as isValidUrl } from './securityHeaders'
 
-// Schémas de validation pour les données sensibles
+// Schémas de validation renforcés pour les données sensibles
 export const LoginSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(6, 'Mot de passe trop court (min 6 caractères)')
+  email: z.string()
+    .email('Email invalide')
+    .transform(email => sanitizeInput(email.toLowerCase())),
+  password: z.string()
+    .min(8, 'Mot de passe trop court (min 8 caractères)')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+           'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial')
+})
+
+export const UserSchema = z.object({
+  name: z.string()
+    .min(2, 'Le nom doit contenir au moins 2 caractères')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères')
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le nom contient des caractères invalides')
+    .transform(name => sanitizeInput(name.trim())),
+  email: z.string()
+    .email('Email invalide')
+    .max(255, 'Email trop long')
+    .transform(email => sanitizeInput(email.toLowerCase())),
+  phone: z.string()
+    .regex(/^(?:\+33|0)[1-9](?:[0-9]{8})$/, 'Numéro de téléphone invalide')
+    .optional()
+    .transform(phone => phone ? sanitizeInput(phone) : undefined),
+  password: z.string()
+    .min(8, 'Mot de passe trop court (min 8 caractères)')
+    .max(128, 'Mot de passe trop long')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+           'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial')
+    .optional()
 })
 
 export const ProductSchema = z.object({
-  name: z.string().min(1, 'Le nom est requis').max(255, 'Nom trop long'),
-  description: z.string().optional(),
-  price: z.number().min(0, 'Le prix doit être positif'),
-  stock: z.number().int().min(0, 'Le stock doit être un entier positif'),
-  category_id: z.number().int().positive().optional()
+  name: z.string()
+    .min(2, 'Le nom doit contenir au moins 2 caractères')
+    .max(200, 'Le nom ne peut pas dépasser 200 caractères')
+    .transform(name => sanitizeInput(name.trim())),
+  description: z.string()
+    .max(2000, 'Description trop longue')
+    .optional()
+    .transform(desc => desc ? sanitizeInput(desc.trim()) : undefined),
+  price: z.number()
+    .min(0.01, 'Le prix doit être positif')
+    .max(999999.99, 'Prix trop élevé'),
+  stock: z.number()
+    .int('Le stock doit être un entier')
+    .min(0, 'Le stock doit être positif'),
+  category_id: z.number()
+    .int('ID de catégorie invalide')
+    .positive('ID de catégorie doit être positif')
+    .optional()
+})
+
+export const CategorySchema = z.object({
+  name: z.string()
+    .min(2, 'Le nom doit contenir au moins 2 caractères')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères')
+    .transform(name => sanitizeInput(name.trim())),
+  description: z.string()
+    .max(500, 'Description trop longue')
+    .optional()
+    .transform(desc => desc ? sanitizeInput(desc.trim()) : undefined)
 })
 
 export const FileUploadSchema = z.object({
-  name: z.string(),
-  size: z.number().max(10 * 1024 * 1024, 'Fichier trop volumineux (max 10MB)'),
-  type: z.string().refine(
-    (type) => type.startsWith('image/') || type === 'application/pdf',
-    'Type de fichier non supporté'
-  )
+  name: z.string()
+    .transform(name => sanitizeInput(name)),
+  size: z.number()
+    .max(10 * 1024 * 1024, 'Fichier trop volumineux (max 10MB)'),
+  type: z.string()
+    .refine(
+      (type) => ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'].includes(type),
+      'Type de fichier non supporté'
+    )
 })
 
 // Fonction de validation générique
