@@ -145,6 +145,27 @@ const routes: RouteRecordRaw[] = [
                 }
             },
 
+            // Gestion des utilisateurs - Admin uniquement
+            {
+                path: '/admin/users',
+                name: 'Users',
+                component: () => import('@/modules/users/views/UsersListView.vue'),
+                beforeEnter: requireAdmin,
+                meta: {
+                    title: 'Gestion des Utilisateurs - WEB IntraFMC'
+                }
+            },
+
+            // Profil utilisateur - Accessible à tous les utilisateurs connectés
+            {
+                path: '/profile',
+                name: 'Profile',
+                component: () => import('@/modules/profile/views/ProfileView.vue'),
+                meta: {
+                    title: 'Mon Profil - WEB IntraFMC'
+                }
+            },
+
             // Module E-commerce - Utilisateurs non-admin
             {
                 path: '/ecommerce',

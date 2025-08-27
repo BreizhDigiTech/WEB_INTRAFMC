@@ -105,7 +105,7 @@ export function usePermissions() {
     }
 
     // Routes admin uniquement
-    const adminRoutes = ['/arrivals', '/products', '/categories']
+    const adminRoutes = ['/arrivals', '/products', '/categories', '/stats', '/admin']
     if (adminRoutes.some(route => routePath.startsWith(route))) {
       return isAdmin.value
     }
@@ -117,6 +117,13 @@ export function usePermissions() {
     }
 
     return false
+  }
+
+  // Guard de redirection pour admin
+  const requireAdmin = () => {
+    if (!isAdmin.value) {
+      throw new Error('Accès refusé : droits administrateur requis')
+    }
   }
 
   return {
@@ -153,6 +160,7 @@ export function usePermissions() {
     getAccessibleRoutes,
     getDefaultRoute,
     hasPermission,
-    canAccessRoute
+    canAccessRoute,
+    requireAdmin
   }
 }

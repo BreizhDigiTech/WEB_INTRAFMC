@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useProducts } from '../composables/useProducts'
 import type { Product } from '../types'
 
@@ -201,7 +201,8 @@ const {
   getSearchSuggestions,
   quickSearchByName,
   advancedSearch,
-  clearSearchResults
+  clearSearchResults,
+  fetchCategories
 } = useProducts()
 
 // État local
@@ -227,6 +228,10 @@ const hasActiveFilters = computed(() => {
 })
 
 // Watchers
+watch(categories, (newCategories) => {
+  console.log('🏷️ AdvancedSearchBar: Categories updated:', newCategories)
+}, { immediate: true })
+
 watch(searchQuery, async (newQuery) => {
   if (newQuery.length >= 2) {
     await getSearchSuggestions(newQuery)
@@ -336,6 +341,19 @@ const formatPrice = (price: number) => {
     currency: 'EUR'
   }).format(price)
 }
+
+// Lifecycle
+onMounted(async () => {
+  console.log('🚀 AdvancedSearchBar: Component mounted, checking categories...')
+  console.log('🏷️ Current categories:', categories.value)
+  
+  // Si les catégories ne sont pas encore chargées, les charger
+  if (!categories.value || categories.value.length === 0) {
+    console.log('📥 AdvancedSearchBar: Fetching categories...')
+    await fetchCategories()
+    console.log('✅ AdvancedSearchBar: Categories fetched:', categories.value)
+  }
+})
 
 // Exposer les méthodes publiques
 defineExpose({

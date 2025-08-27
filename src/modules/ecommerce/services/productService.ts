@@ -221,18 +221,103 @@ export class ProductService extends GraphQLService {
    * Récupère toutes les catégories
    */
   async getCategories(): Promise<Category[]> {
-    const query = `
-      query GetCategories {
+    // Testons différentes structures comme pour les users
+    const queries = [
+      // Structure Laravel Lighthouse standard
+      `query Categories {
+        categories {
+          data {
+            id
+            name
+            description
+            products {
+              id
+              name
+              price
+            }
+          }
+          paginatorInfo {
+            currentPage
+            lastPage
+            total
+            perPage
+          }
+        }
+      }`,
+      // Structure simple avec pagination intégrée
+      `query Categories {
+        categories {
+          current_page
+          last_page
+          total
+          per_page
+          data {
+            id
+            name
+            description
+            products {
+              id
+              name
+              price
+            }
+          }
+        }
+      }`,
+      // Structure directe tableau
+      `query Categories {
         categories {
           id
           name
           description
+          products {
+            id
+            name
+            price
+          }
         }
-      }
-    `
+      }`
+    ]
 
-    const response = await this.request(query)
-    return response.categories
+    for (let i = 0; i < queries.length; i++) {
+      try {
+        console.log(`🔍 Test categories structure ${i + 1}/3...`)
+        const response = await this.request(queries[i])
+        console.log(`✅ Categories structure ${i + 1} - Réponse:`, response)
+        
+        if (response.categories) {
+          let categories = []
+
+          // Structure 1: avec paginatorInfo
+          if (response.categories.data && response.categories.paginatorInfo) {
+            categories = response.categories.data
+          }
+          // Structure 2: pagination intégrée
+          else if (response.categories.data && response.categories.current_page) {
+            categories = response.categories.data
+          }
+          // Structure 3: tableau direct
+          else if (Array.isArray(response.categories)) {
+            categories = response.categories
+          }
+          else {
+            console.log(`❌ Categories structure ${i + 1} non reconnue, continue...`)
+            continue
+          }
+
+          console.log(`🎉 Categories structure ${i + 1} fonctionne! Catégories trouvées:`, categories.length)
+          return categories
+        }
+      } catch (error: any) {
+        console.log(`❌ Categories structure ${i + 1} échouée:`, error.message)
+        if (i === queries.length - 1) {
+          // Dernier essai échoué
+          throw error
+        }
+        continue
+      }
+    }
+
+    throw new Error('Aucune structure de requête categories ne fonctionne')
   }
 
   /**
