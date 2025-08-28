@@ -1,4 +1,3 @@
-import { optimizedStatsService } from '@/shared/services/optimizedStatsService'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { orderService } from '../services/orderService'
@@ -114,20 +113,17 @@ export const useOrderStore = defineStore('orders', () => {
     async function fetchGlobalStats() {
         statsLoading.value = true
         try {
-
-            
-            // Essayer d'abord la nouvelle API optimisée
-            const ordersSummary = await optimizedStatsService.getOrdersSummary()
-            
-            globalStats.value = {
-                total: ordersSummary.totalOrders,
-                pending: ordersSummary.pendingOrders,
-                validated: ordersSummary.validatedOrders,
-                cancelled: ordersSummary.cancelledOrders,
-                totalRevenue: ordersSummary.totalRevenue
+            // Calculer les stats à partir des commandes actuelles
+            const stats = {
+                total: orders.value.length,
+                pending: pendingOrders.value.length,
+                validated: validatedOrders.value.length,
+                cancelled: cancelledOrders.value.length,
+                totalRevenue: orders.value.reduce((sum, order) => sum + order.total, 0)
             }
             
-            console.log('✅ Statistiques optimisées chargées:', globalStats.value)
+            globalStats.value = stats
+            console.log('✅ Statistiques calculées localement:', globalStats.value)
             return globalStats.value
             
         } catch (optimizedError) {

@@ -135,17 +135,6 @@ const routes: RouteRecordRaw[] = [
                 }
             },
 
-            // Statistiques avancées - Admin uniquement
-            {
-                path: '/stats',
-                name: 'Stats',
-                component: () => import('@/modules/stats/views/StatsView.vue'),
-                beforeEnter: requireAdmin,
-                meta: {
-                    title: 'Statistiques Avancées - WEB IntraFMC'
-                }
-            },
-
             // Gestion des utilisateurs - Admin uniquement
             {
                 path: '/admin/users',

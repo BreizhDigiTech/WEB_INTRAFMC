@@ -288,31 +288,6 @@
                 </router-link>
               </li>
 
-              <!-- Statistiques - Admin uniquement -->
-              <li v-if="authStore.isAdmin">
-                <router-link to="/stats"
-                  class="flex items-center space-x-3 p-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-indigo-500/20 hover:to-cyan-600/20 transition-all duration-200 group"
-                  :class="{ 'bg-gradient-to-r from-indigo-500/20 to-cyan-600/20 text-indigo-400 shadow-lg': $route.path.startsWith('/stats') }">
-                  <div
-                    class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors duration-200"
-                    :class="{ 'bg-indigo-500/30': $route.path.startsWith('/stats') }">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <span class="font-semibold">Statistiques</span>
-                    <div class="text-xs text-gray-500">Analytics avancés</div>
-                  </div>
-                  <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    :class="{ 'opacity-100': $route.path.startsWith('/stats') }" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </router-link>
-              </li>
-
               <!-- Gestion des utilisateurs - Admin uniquement -->
               <li v-if="authStore.isAdmin">
                 <router-link to="/admin/users"

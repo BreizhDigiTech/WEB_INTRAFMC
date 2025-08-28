@@ -18,9 +18,6 @@ export { useOrderStore } from './stores/orderStore'
 // Utils
 export * from './utils/formatters'
 
-// Composables
-export { useOrderIntelligence } from './composables/useOrderIntelligence'
-
 // Components
 export { default as InvoicePreviewModal } from './components/InvoicePreviewModal.vue'
 

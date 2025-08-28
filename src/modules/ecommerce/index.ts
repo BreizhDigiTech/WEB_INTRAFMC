@@ -15,7 +15,6 @@ export { useProductStore } from './stores/productStore'
 
 // Composables
 export { useCart } from './composables/useCart'
-export { useIntelligenceRecommendations } from './composables/useIntelligenceRecommendations'
 export { useProductIntelligence } from './composables/useProductIntelligence'
 export { useProducts } from './composables/useProducts'
 

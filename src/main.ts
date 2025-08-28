@@ -93,11 +93,9 @@ async function bootstrap() {
 
 
   
-  // Helper JWT disponible en développement (pour tests manuels uniquement)
-  // Pour utiliser un token de test, appelez updateWorkingJWTToken() dans la console
+  // JWT Helper supprimé car module stats supprimé
   if (import.meta.env.MODE === 'development') {
-    import('@/modules/stats/utils/jwtTokenHelper')
-    console.log('💡 Helper JWT disponible: updateWorkingJWTToken(), verifyCurrentToken(), diagnoseJWTToken()')
+    console.log('💡 Module stats supprimé')
   }
 }
 
