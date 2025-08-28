@@ -52,7 +52,6 @@ export class OptimizedUserService extends GraphQLService {
      * 🚀 Recherche utilisateurs optimisée avec filtres côté serveur
      */
     async searchUsers(filters: UserFilters = {}, page = 1, limit = 20): Promise<PaginatedResponse<User>> {
-        console.log('🔍 Recherche utilisateurs optimisée:', { filters, page, limit })
         
         const query = `
             query UsersSearch($search: String, $role: String, $status: String, $first: Int, $page: Int) {
@@ -92,7 +91,6 @@ export class OptimizedUserService extends GraphQLService {
             const response = await this.request(query, variables)
             const usersData = response.usersSearch
             
-            console.log(`✅ Trouvé ${usersData.data.length} utilisateurs (${usersData.paginatorInfo.total} total)`)
             
             return {
                 data: usersData.data,
@@ -106,7 +104,6 @@ export class OptimizedUserService extends GraphQLService {
                 }
             }
         } catch (error) {
-            console.error('❌ Erreur recherche utilisateurs:', error)
             throw error
         }
     }
@@ -115,7 +112,6 @@ export class OptimizedUserService extends GraphQLService {
      * 👤 Profil utilisateur complet
      */
     async getMyProfile(): Promise<UserProfile> {
-        console.log('👤 Récupération profil complet...')
         
         const query = `
             query MyProfileComplete {
@@ -144,10 +140,8 @@ export class OptimizedUserService extends GraphQLService {
         
         try {
             const response = await this.request(query)
-            console.log('✅ Profil complet reçu:', response.myProfileComplete)
             return response.myProfileComplete
         } catch (error) {
-            console.error('❌ Erreur profil complet:', error)
             throw error
         }
     }
@@ -165,7 +159,6 @@ export class OptimizedUserService extends GraphQLService {
             is_admin: boolean
         }
     }> {
-        console.log('🔐 Validation du token...')
         
         const query = `
             query ValidateToken {
@@ -184,10 +177,8 @@ export class OptimizedUserService extends GraphQLService {
         
         try {
             const response = await this.request(query)
-            console.log('✅ Token validé:', response.validateToken)
             return response.validateToken
         } catch (error) {
-            console.error('❌ Erreur validation token:', error)
             return { valid: false }
         }
     }

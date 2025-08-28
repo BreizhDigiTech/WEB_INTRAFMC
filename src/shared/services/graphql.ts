@@ -15,7 +15,6 @@ export class GraphQLService {
     const envEndpoint = (import.meta as any).env?.VITE_GRAPHQL_ENDPOINT as string
     
     if (!envEndpoint) {
-      console.warn('VITE_GRAPHQL_ENDPOINT non défini, utilisation de la valeur par défaut')
       return 'http://localhost/graphql'
     }
     
@@ -197,18 +196,11 @@ export class GraphQLService {
     variables: any,
     filesMap: Record<string, File>
   ): Promise<T> {
-    console.log('=== REQUÊTE MULTIPART GRAPHQL ===')
-    console.log('Endpoint:', this.endpoint)
-    console.log('Query:', query)
-    console.log('Variables:', variables)
-    console.log('Files map:', Object.keys(filesMap))
-    
     try {
       const form = new FormData()
 
       // operations
       const operations = { query, variables }
-      console.log('Operations à envoyer:', operations)
       form.append('operations', JSON.stringify(operations))
 
       // map: { "0": ["variables.input.images.0"], ... }
@@ -217,12 +209,10 @@ export class GraphQLService {
       entries.forEach(([path], idx) => {
         map[String(idx)] = [path]
       })
-      console.log('Map à envoyer:', map)
       form.append('map', JSON.stringify(map))
 
       // fichiers indexés
       entries.forEach(([path, file], idx) => {
-        console.log(`Fichier ${idx} (${path}):`, file.name, `${file.size} bytes, type: ${file.type}`)
         form.append(String(idx), file)
       })
 
@@ -230,45 +220,28 @@ export class GraphQLService {
       const token = this.getToken()
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
-        console.log('Token inclus dans la requête')
       }
 
-      console.log('Envoi de la requête multipart...')
       const response = await fetch(this.endpoint, {
         method: 'POST',
         headers, // ne pas définir Content-Type pour laisser le boundary
         body: form
       })
-
-      console.log('Réponse reçue - Status:', response.status, response.statusText)
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('Erreur HTTP - Body:', errorText)
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
       }
 
       const result = await response.json()
-      console.log('Résultat parsé:', result)
 
       if (result.errors) {
-        console.error('❌ Erreurs GraphQL détaillées:', result.errors)
-        result.errors.forEach((err: any, index: number) => {
-          console.error(`Erreur ${index + 1}:`, {
-            message: err.message,
-            locations: err.locations,
-            path: err.path,
-            extensions: err.extensions
-          })
-        })
         const error = result.errors[0]
         throw new GraphQLError(error.message, error.extensions)
       }
 
-      console.log('✅ Requête multipart réussie')
       return result.data
     } catch (error) {
-      console.error('❌ Erreur dans requestMultipart:', error)
       if (error instanceof GraphQLError) {
         throw error
       }

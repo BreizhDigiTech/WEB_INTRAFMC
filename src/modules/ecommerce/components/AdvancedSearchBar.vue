@@ -145,7 +145,7 @@
         >
           <figure class="px-4 pt-4">
             <img
-              :src="product.image_urls[0] || '/images/placeholder-product.svg'"
+              :src="product.images[0] || '/images/placeholder-product.svg'"
               :alt="product.name"
               class="rounded-lg w-full h-32 object-cover"
             />
@@ -344,14 +344,14 @@ const formatPrice = (price: number) => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('🚀 AdvancedSearchBar: Component mounted, checking categories...')
+
   console.log('🏷️ Current categories:', categories.value)
   
   // Si les catégories ne sont pas encore chargées, les charger
   if (!categories.value || categories.value.length === 0) {
     console.log('📥 AdvancedSearchBar: Fetching categories...')
     await fetchCategories()
-    console.log('✅ AdvancedSearchBar: Categories fetched:', categories.value)
+
   }
 })
 

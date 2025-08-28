@@ -33,8 +33,6 @@ export class OptimizedEcommerceService extends GraphQLService {
      * 🛒 Liste simplifiée des catégories avec nombre de produits
      */
     async getCategoriesList(): Promise<Category[]> {
-        console.log('🛒 Récupération de la liste des catégories...')
-        
         const query = `
             query CategoriesList {
                 categoriesList {
@@ -49,10 +47,8 @@ export class OptimizedEcommerceService extends GraphQLService {
         
         try {
             const response = await this.request(query)
-            console.log(`✅ ${response.categoriesList.length} catégories chargées`)
             return response.categoriesList
         } catch (error) {
-            console.error('❌ Erreur chargement catégories:', error)
             throw error
         }
     }
@@ -61,8 +57,6 @@ export class OptimizedEcommerceService extends GraphQLService {
      * 🔍 Recherche produits avancée avec filtres côté serveur
      */
     async searchProducts(filters: ProductFilters = {}, page = 1, limit = 20): Promise<PaginatedResponse<Product>> {
-        console.log('🔍 Recherche produits optimisée:', { filters, page, limit })
-        
         const query = `
             query ProductsSearch(
                 $search: String
@@ -120,8 +114,6 @@ export class OptimizedEcommerceService extends GraphQLService {
             const response = await this.request(query, variables)
             const productsData = response.productsSearch
             
-            console.log(`✅ Trouvé ${productsData.data.length} produits (${productsData.paginatorInfo.total} total)`)
-            
             return {
                 data: productsData.data,
                 pagination: {
@@ -134,7 +126,6 @@ export class OptimizedEcommerceService extends GraphQLService {
                 }
             }
         } catch (error) {
-            console.error('❌ Erreur recherche produits:', error)
             throw error
         }
     }
@@ -154,8 +145,6 @@ export class OptimizedEcommerceService extends GraphQLService {
             averagePrice: number
         }
     }> {
-        console.log('🛒 Chargement page e-commerce complète...')
-        
         const query = `
             query EcommercePage(
                 $search: String
@@ -228,12 +217,6 @@ export class OptimizedEcommerceService extends GraphQLService {
             const response = await this.request(query, variables)
             const productsData = response.productsSearch
             
-            console.log('✅ Page e-commerce complète chargée:', {
-                categories: response.categoriesList.length,
-                products: productsData.data.length,
-                summary: response.ecommerceSummary
-            })
-            
             return {
                 categories: response.categoriesList,
                 products: {
@@ -250,7 +233,6 @@ export class OptimizedEcommerceService extends GraphQLService {
                 summary: response.ecommerceSummary
             }
         } catch (error) {
-            console.error('❌ Erreur page e-commerce:', error)
             throw error
         }
     }

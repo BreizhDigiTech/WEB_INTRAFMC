@@ -46,7 +46,7 @@
         <!-- Image du produit -->
         <figure class="px-4 pt-4">
           <img
-            :src="product.image_urls[0] || '/images/placeholder-product.svg'"
+            :src="(product.image_urls && product.image_urls[0]) || product.images?.[0] || '/images/placeholder-product.svg'"
             :alt="product.name"
             class="rounded-lg w-full h-48 object-cover"
           />

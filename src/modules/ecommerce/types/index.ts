@@ -1,16 +1,22 @@
 // Types pour le module e-commerce basés sur l'API GraphQL
 
+import type { DateTime } from '@/shared/types'
+
+// ==================== TYPES PRODUITS ====================
 export interface Product {
   id: string
   name: string
   description?: string
   price: number
   stock: number
-  image_urls: string[]  // URLs publiques pour l'affichage
-  images?: string[]     // Chemins internes (backend)
-  image_metadata?: any  // Métadonnées JSON
-  analysis_file_url?: string
+  images: string[]
+  image_urls?: string[] // Alias for GraphQL compatibility
+  analysis_file?: string
+  analysis_image?: string
   categories: Category[]
+  suppliers?: Supplier[]
+  created_at?: DateTime
+  updated_at?: DateTime
 }
 
 export interface Category {
@@ -19,25 +25,71 @@ export interface Category {
   description?: string
 }
 
-export interface CartItem {
+export interface Supplier {
   id: string
-  quantity: number
-  product: Product
+  name: string
+  email?: string
+  phone?: string
+  address?: string
+  website?: string
+  contact_person?: string
+  description?: string
+  products?: Product[]
 }
 
+// ==================== TYPES PANIER ====================
 export interface Cart {
   id: string
-  items: CartItem[]
-  created_at: string
-  updated_at: string
+  user_id: string
+  product_id: string
+  quantity: number
+  product: Product
+  created_at?: DateTime
 }
 
 export interface CartSummary {
-  itemCount: number
-  totalAmount: number
+  totalItems: number
+  totalPrice: number
+  totalAmount?: number // Alias pour compatibility
+  itemCount?: number // Alias pour compatibility
+  estimatedShipping?: number
+  totalWithShipping: number
   items: CartItem[]
 }
 
+export interface CartItem {
+  id: string
+  quantity: number
+  subtotal: number
+  product: Product
+}
+
+export interface ProductSuggestion {
+  id: string
+  name: string
+  price: number
+  images: string[]
+  reason: string
+  confidence: number
+}
+
+// ==================== TYPES D'ENTRÉE (INPUT) ====================
+export interface AddToCartInput {
+  product_id: string
+  quantity: number
+}
+
+export interface UpdateCartItemInput {
+  quantity: number
+}
+
+// Interface interne pour le frontend (avec l'ID)
+export interface UpdateCartItemRequest {
+  id: string
+  quantity: number
+}
+
+// ==================== RÉPONSES ET PAGINATION ====================
 export interface ProductFilters {
   search?: string
   categoryId?: string
@@ -53,21 +105,6 @@ export interface ProductPagination {
   lastPage: number
   total: number
   perPage: number
-}
-
-export interface AddToCartInput {
-  product_id: string
-  quantity: number
-}
-
-export interface UpdateCartItemInput {
-  quantity: number
-}
-
-// Interface interne pour le frontend (avec l'ID)
-export interface UpdateCartItemRequest {
-  id: string
-  quantity: number
 }
 
 export interface ApiResponse<T> {

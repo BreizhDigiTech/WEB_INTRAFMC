@@ -33,14 +33,14 @@
         <!-- Image principale -->
         <div class="bg-base-200 rounded-lg overflow-hidden">
           <img
-            :src="selectedImage || currentProduct.image_urls[0] || '/images/placeholder-product.svg'"
+            :src="selectedImage || (currentProduct.image_urls && currentProduct.image_urls[0]) || currentProduct.images?.[0] || '/images/placeholder-product.svg'"
             :alt="currentProduct.name"
             class="w-full h-96 object-cover"
           />
         </div>
 
         <!-- Miniatures -->
-        <div v-if="currentProduct.image_urls.length > 1" class="grid grid-cols-4 gap-2">
+        <div v-if="currentProduct.image_urls && currentProduct.image_urls.length > 1" class="grid grid-cols-4 gap-2">
           <button
             v-for="(image, index) in currentProduct.image_urls"
             :key="index"
@@ -203,7 +203,7 @@
         >
           <figure class="px-4 pt-4">
             <img
-              :src="product.image_urls[0] || '/images/placeholder-product.svg'"
+              :src="(product.image_urls && product.image_urls[0]) || product.images?.[0] || '/images/placeholder-product.svg'"
               :alt="product.name"
               class="rounded-lg w-full h-32 object-cover"
             />
@@ -326,8 +326,10 @@ watch(() => route.params.id, async (newId) => {
 })
 
 watch(currentProduct, (newProduct) => {
-  if (newProduct && newProduct.image_urls.length > 0) {
+  if (newProduct && newProduct.image_urls && newProduct.image_urls.length > 0) {
     selectedImage.value = newProduct.image_urls[0]
+  } else if (newProduct && newProduct.images && newProduct.images.length > 0) {
+    selectedImage.value = newProduct.images[0]
   }
 })
 

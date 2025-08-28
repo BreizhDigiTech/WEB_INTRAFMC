@@ -14,7 +14,7 @@ export class StatsService extends GraphQLService {
     totalOrders: number
     averageOrderValue: number
   }> {
-    console.log('🚀 Récupération des statistiques de base optimisées...')
+
     
     try {
       // Essayer d'abord l'API dashboard optimisée
@@ -505,6 +505,12 @@ export class StatsService extends GraphQLService {
       const avgOrderValue = userOrders > 0 ? parseFloat((userRevenue / userOrders).toFixed(2)) : 0
       
       return {
+        id: `${index + 1}-stats`,
+        total: userRevenue,
+        date: filters.end_date || new Date().toISOString().split('T')[0],
+        status: 'active',
+        customer: user.name,
+        amount: userRevenue,
         user_id: (index + 1).toString(),
         user: {
           id: (index + 1).toString(),
@@ -518,6 +524,7 @@ export class StatsService extends GraphQLService {
         average_order_value: avgOrderValue,
         first_order_date: filters.start_date || '2024-01-01',
         last_order_date: filters.end_date || new Date().toISOString().split('T')[0],
+        customer_segment: userOrders >= 10 ? 'VIP' : userOrders >= 5 ? 'PREMIUM' : 'STANDARD',
         // Propriétés étendues
         userId: (index + 1).toString(),
         userName: user.name,
@@ -548,6 +555,12 @@ export class StatsService extends GraphQLService {
     // Générer des données realistes conformes au type OrderStats
     const mockUserStats: OrderStats[] = [
       {
+        id: '1',
+        total: 1245.50,
+        date: endDate,
+        status: 'delivered',
+        customer: 'Alice Martin',
+        amount: 1245.50,
         user_id: '1',
         user: { 
           id: '1', 
@@ -561,21 +574,18 @@ export class StatsService extends GraphQLService {
         average_order_value: 83.03,
         first_order_date: startDate,
         last_order_date: endDate,
-        // Propriétés étendues
-        userId: '1',
-        userName: 'Alice Martin',
-        userEmail: 'alice.martin@example.com',
-        userPhone: '+33 6 12 34 56 78',
-        registrationDate: startDate,
-        lastOrderDate: endDate,
-        daysSinceLastOrder: 5,
-        orderFrequency: 0.5,
-        customerSegment: 'VIP',
+        customer_segment: 'VIP',
         loyaltyScore: 85,
         riskLevel: 'LOW',
         churnProbability: 0.1
       },
       {
+        id: '2',
+        total: 890.25,
+        date: endDate,
+        status: 'validated',
+        customer: 'Bob Durant',
+        amount: 890.25,
         user_id: '2',
         user: { 
           id: '2', 
@@ -589,20 +599,18 @@ export class StatsService extends GraphQLService {
         average_order_value: 81.28,
         first_order_date: startDate,
         last_order_date: endDate,
-        userId: '2',
-        userName: 'Bob Dupont',
-        userEmail: 'bob.dupont@example.com',
-        userPhone: '+33 6 23 45 67 89',
-        registrationDate: startDate,
-        lastOrderDate: endDate,
-        daysSinceLastOrder: 7,
-        orderFrequency: 0.4,
-        customerSegment: 'PREMIUM',
+        customer_segment: 'PREMIUM',
         loyaltyScore: 72,
         riskLevel: 'LOW',
         churnProbability: 0.15
       },
       {
+        id: '3',
+        total: 425.75,
+        date: endDate,
+        status: 'pending',
+        customer: 'Claire Dubois',
+        amount: 425.75,
         user_id: '3',
         user: { 
           id: '3', 
@@ -616,15 +624,7 @@ export class StatsService extends GraphQLService {
         average_order_value: 81.73,
         first_order_date: startDate,
         last_order_date: endDate,
-        userId: '3',
-        userName: 'Claire Rousseau',
-        userEmail: 'claire.rousseau@example.com',
-        userPhone: '+33 6 34 56 78 90',
-        registrationDate: startDate,
-        lastOrderDate: endDate,
-        daysSinceLastOrder: 10,
-        orderFrequency: 0.45,
-        customerSegment: 'PREMIUM',
+        customer_segment: 'PREMIUM',
         loyaltyScore: 78,
         riskLevel: 'LOW',
         churnProbability: 0.12

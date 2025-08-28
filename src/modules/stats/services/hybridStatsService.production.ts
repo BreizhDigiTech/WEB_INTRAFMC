@@ -235,6 +235,12 @@ export class HybridStatsService extends StatsService {
         }
 
         return {
+          id: `${user.id}-stats`,
+          total: totalAmount,
+          date: new Date().toISOString(),
+          status: 'active',
+          customer: user.name || 'Utilisateur inconnu',
+          amount: totalAmount,
           user_id: user.id.toString(),
           user: {
             id: user.id,

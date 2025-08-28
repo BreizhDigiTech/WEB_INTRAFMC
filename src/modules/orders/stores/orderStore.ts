@@ -114,7 +114,7 @@ export const useOrderStore = defineStore('orders', () => {
     async function fetchGlobalStats() {
         statsLoading.value = true
         try {
-            console.log('🚀 Chargement des statistiques optimisées...')
+
             
             // Essayer d'abord la nouvelle API optimisée
             const ordersSummary = await optimizedStatsService.getOrdersSummary()

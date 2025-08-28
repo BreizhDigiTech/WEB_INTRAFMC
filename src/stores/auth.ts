@@ -1,9 +1,9 @@
 // Store d'authentification global
 
 import router from '@/router'; // 🆕 Import du router pour la redirection
-import { graphqlService } from '@/shared/services/graphql'
-import type { AuthResponse, AuthState, LoginCredentials, User } from '@/shared/types'
-import { defineStore } from 'pinia'
+import { graphqlService } from '@/shared/services/graphql';
+import type { AuthResponse, AuthState, LoginCredentials, User } from '@/shared/types';
+import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore('auth', {
     state: (): AuthState => ({
@@ -33,12 +33,10 @@ export const useAuthStore = defineStore('auth', {
                     const isExpired = payload.exp && payload.exp < Date.now() / 1000
                     
                     if (isExpired) {
-                        console.log('🕐 Token expiré détecté, nettoyage automatique')
                         this.logout()
                         return
                     }
                 } catch (error) {
-                    console.log('🔍 Token invalide détecté, nettoyage automatique')
                     this.logout()
                     return
                 }
@@ -49,7 +47,6 @@ export const useAuthStore = defineStore('auth', {
                     await this.fetchUser()
                 } catch (error) {
                     // Token invalide côté serveur, on nettoie
-                    console.log('🚫 Échec de validation serveur, déconnexion')
                     this.logout()
                 }
             }
@@ -109,7 +106,6 @@ export const useAuthStore = defineStore('auth', {
                 localStorage.removeItem('auth_token')
 
                 // 🆕 Redirection automatique vers la page de connexion
-                console.log('🚪 Déconnexion réussie, redirection vers la page de connexion')
                 await router.push('/login')
             }
         },
@@ -144,12 +140,10 @@ export const useAuthStore = defineStore('auth', {
                 const isExpired = payload.exp && payload.exp < Date.now() / 1000
                 
                 if (isExpired) {
-                    console.log('🕐 Token expiré détecté dans checkAuth')
                     this.logout()
                     return false
                 }
             } catch (error) {
-                console.log('🔍 Token invalide détecté dans checkAuth')
                 this.logout()
                 return false
             }
@@ -159,7 +153,6 @@ export const useAuthStore = defineStore('auth', {
                 await this.fetchUser()
                 return true
             } catch (error) {
-                console.log('🚫 Échec de validation serveur dans checkAuth')
                 this.logout()
                 return false
             }

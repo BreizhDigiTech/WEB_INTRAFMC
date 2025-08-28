@@ -3,14 +3,14 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { hybridStatsService } from '../services'
 import type {
-    CustomerGrowth,
-    DailyStats,
-    DateRange,
-    MonthlyStats,
-    OrderStats,
-    PeriodStats,
-    ProductStats,
-    StatsFilters
+  CustomerGrowth,
+  DailyStats,
+  DateRange,
+  MonthlyStats,
+  OrderStats,
+  PeriodStats,
+  ProductStats,
+  StatsFilters
 } from '../types'
 
 export const useStatsStore = defineStore('stats', () => {
@@ -115,7 +115,7 @@ export const useStatsStore = defineStore('stats', () => {
     error.value.globalStats = null
 
     try {
-      console.log('🚀 Chargement des statistiques globales optimisées...')
+
       
       // Essayer d'abord les nouvelles APIs optimisées
       try {
@@ -128,7 +128,6 @@ export const useStatsStore = defineStore('stats', () => {
             dashboardStats.revenue.total / dashboardStats.orders.total : 0
         }
         
-        console.log('✅ Stats globales optimisées chargées:', globalStats.value)
         return
         
       } catch (optimizedError) {
@@ -145,7 +144,6 @@ export const useStatsStore = defineStore('stats', () => {
               ordersSummary.totalRevenue / ordersSummary.totalOrders : 0
           }
           
-          console.log('✅ Stats via ordersSummary chargées:', globalStats.value)
           return
           
         } catch (summaryError) {
@@ -165,7 +163,6 @@ export const useStatsStore = defineStore('stats', () => {
         averageOrderValue: stats.averageOrderValue || 0
       }
       
-      console.log('✅ Stats globales via fallback chargées:', globalStats.value)
       
     } catch (err) {
       error.value.globalStats = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques globales'
@@ -184,7 +181,7 @@ export const useStatsStore = defineStore('stats', () => {
 
   // 🚀 Nouvelle fonction pour charger toutes les statistiques optimisées
   async function fetchAllStatsOptimized() {
-    console.log('🚀 Chargement de toutes les statistiques optimisées...')
+
     
     try {
       // Charger toutes les statistiques en une seule requête
@@ -197,13 +194,6 @@ export const useStatsStore = defineStore('stats', () => {
         averageOrderValue: allStats.orders.totalOrders > 0 ? 
           allStats.orders.totalRevenue / allStats.orders.totalOrders : 0
       }
-      
-      console.log('✅ Toutes les statistiques optimisées chargées:', {
-        orders: allStats.orders,
-        users: allStats.users,
-        ecommerce: allStats.ecommerce,
-        globalStats: globalStats.value
-      })
       
       return allStats
       
@@ -322,7 +312,6 @@ export const useStatsStore = defineStore('stats', () => {
     error.value.export = null
 
     try {
-      console.log('StatsStore: exportStats called with filters:', filters)
       const blob = await hybridStatsService.exportStats(filters)
       
       // Créer un lien de téléchargement
@@ -335,7 +324,6 @@ export const useStatsStore = defineStore('stats', () => {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
       
-      console.log('StatsStore: export completed successfully')
     } catch (err) {
       error.value.export = err instanceof Error ? err.message : 'Erreur lors de l\'export des statistiques'
       console.error('Erreur exportStats:', err)

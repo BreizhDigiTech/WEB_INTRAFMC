@@ -386,6 +386,7 @@ async function createArrival() {
   try {
     // Transformer les données du formulaire vers le format API
     const createArrivalInput: CreateArrivalInput = {
+      supplier_id: '1', // TODO: Récupérer depuis le formulaire
       amount: totalAmount.value,
       status: 'pending',
       products: formData.value.products.map(product => ({

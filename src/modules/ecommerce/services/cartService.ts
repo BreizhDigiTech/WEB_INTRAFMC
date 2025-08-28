@@ -1,11 +1,11 @@
 import { GraphQLService } from '@/shared/services/graphql'
 import type {
-  AddToCartInput,
-  CartActionResponse,
-  CartItem,
-  CartSummary,
-  CheckoutResponse,
-  UpdateCartItemRequest
+    AddToCartInput,
+    CartActionResponse,
+    CartItem,
+    CartSummary,
+    CheckoutResponse,
+    UpdateCartItemRequest
 } from '../types'
 
 export class CartService extends GraphQLService {
@@ -65,7 +65,10 @@ export class CartService extends GraphQLService {
 
     return {
       items,
+      totalItems: itemCount,
+      totalPrice: total,
       totalAmount: total,
+      totalWithShipping: total, // Pour l'instant sans frais de port
       itemCount
     }
   }

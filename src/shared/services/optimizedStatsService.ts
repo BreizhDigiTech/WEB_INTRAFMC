@@ -56,8 +56,6 @@ export class OptimizedStatsService extends GraphQLService {
      * 🚀 Dashboard complet optimisé - Toutes les stats en une requête
      */
     async getDashboardStats(): Promise<DashboardStats> {
-        console.log('🚀 Chargement dashboard optimisé...')
-        
         const query = `
             query DashboardOptimized {
                 dashboardStatsOptimized {
@@ -89,10 +87,8 @@ export class OptimizedStatsService extends GraphQLService {
         
         try {
             const response = await this.request(query)
-            console.log('✅ Dashboard stats reçues:', response.dashboardStatsOptimized)
             return response.dashboardStatsOptimized
         } catch (error) {
-            console.error('❌ Erreur dashboard optimisé:', error)
             throw error
         }
     }

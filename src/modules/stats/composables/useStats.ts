@@ -25,17 +25,17 @@ export function useStats() {
   const totalCustomers = computed(() => orderStats.value.length)
   
   const totalRevenue = computed(() => 
-    orderStats.value.reduce((sum, stat) => sum + stat.total_amount, 0)
+    orderStats.value.reduce((sum, stat) => sum + (stat.total_amount || 0), 0)
   )
   
   const averageOrderValue = computed(() => {
-    const totalOrders = orderStats.value.reduce((sum, stat) => sum + stat.total_orders, 0)
+    const totalOrders = orderStats.value.reduce((sum, stat) => sum + (stat.total_orders || 0), 0)
     return totalOrders > 0 ? totalRevenue.value / totalOrders : 0
   })
 
   const topCustomers = computed(() => 
     orderStats.value
-      .sort((a, b) => b.total_amount - a.total_amount)
+      .sort((a, b) => (b.total_amount || 0) - (a.total_amount || 0))
       .slice(0, 10)
   )
 

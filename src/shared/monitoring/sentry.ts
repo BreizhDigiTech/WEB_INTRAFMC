@@ -35,7 +35,7 @@ export function setupSentry(app: App) {
       }
     })
 
-    console.log('🔍 Sentry monitoring activé')
+
   } else {
     console.log('⚠️ Sentry désactivé (dev mode ou DSN manquant)')
   }

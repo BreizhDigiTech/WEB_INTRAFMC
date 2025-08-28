@@ -294,7 +294,7 @@ const errors = reactive({
 const isFormValid = computed(() => {
   return form.name.trim() !== '' &&
     form.price > 0 &&
-    form.stock >= 0 &&
+    (form.stock === undefined || form.stock >= 0) &&
     Object.values(errors).every(error => error === '')
 })
 
@@ -378,7 +378,7 @@ const formatFileSize = (bytes: number): string => {
 const validateForm = () => {
   errors.name = form.name.trim() === '' ? 'Le nom est requis' : ''
   errors.price = form.price <= 0 ? 'Le prix doit être supérieur à 0' : ''
-  errors.stock = form.stock < 0 ? 'Le stock ne peut pas être négatif' : ''
+  errors.stock = (form.stock !== undefined && form.stock < 0) ? 'Le stock ne peut pas être négatif' : ''
 }
 
 // Sauvegarde du produit

@@ -1,111 +1,89 @@
-// Types pour le module de gestion des arrivages (basé sur les schémas GraphQL backend)
+// Types pour le module arrivées
 
-// Type principal CbdArrival selon la spécification
+import type { ProductCBD } from '@/modules/products/types'
+import type { DateTime } from '@/shared/types'
 
-export interface Arrival {
+export interface CbdArrival {
     id: string
-    amount: number           // Montant total de l'arrivage
-    status: 'pending' | 'validated'  // Statut de l'arrivage
-    created_at: string
-    updated_at: string
-    products: ArrivalProduct[]
+    reference: string
+    supplier_id: string
+    amount: number
+    status: 'pending' | 'validated' | 'cancelled'
+    expected_date?: string | DateTime
+    notes?: string
+    created_at: DateTime
+    updated_at?: DateTime
+    products: ArrivalProductCbd[]
 }
 
-export interface ArrivalProduct {
+export interface ArrivalProductCbd {
     id: string
+    arrival_id: string
     product_id: string
-    quantity: number         // Quantité du produit dans l'arrivage
-    unit_price: number      // Prix unitaire du produit dans l'arrivage
-    product: {
-        id: string
-        name: string
-        price: number
-        stock: number
-        description?: string
-        images?: string[]
-        category?: {
-            id: string
-            name: string
-        }
-    }
+    quantity: number
+    unit_price: number
+    total_price: number
+    product: ProductCBD
 }
 
-export interface ProductDetail {
+export interface CreateArrivalInput {
+    supplier_id: string
+    reference?: string
+    expected_date?: string
+    amount?: number
+    notes?: string
+    status?: string
+    products: CreateArrivalProductData[]
+}
+
+export interface CreateArrivalProductData {
+    product_id: string
+    quantity: number
+    unit_price: number
+    product?: ProductCBD // Pour afficher les infos du produit
+}
+
+export interface CreateArrivalData {
+    supplier_id: string
+    reference?: string
+    expected_date?: string
+    notes?: string
+    products: CreateArrivalProductData[]
+}
+
+export interface UpdateArrivalInput {
     id: string
-    name: string
-    description?: string
-    price: number
-    stock: number
-    category?: {
-        id: string
-        name: string
-    }
-    // Suppression des suppliers selon consigne
+    supplier_id?: string
+    reference?: string
+    expected_date?: string
+    amount?: number
+    notes?: string
+    status?: string
+    products?: CreateArrivalProductData[]
 }
 
-// Interface pour compatibilité avec les autres modules
-export interface ProductCBD {
-    id: string
-    name: string
-    images?: string[]       // Images du produit (nouvelle API)
-    stock?: number          // Stock actuel du produit
-}
-
-export type ArrivalStatus = 'pending' | 'validated'
-
-// Interface pour la pagination Lighthouse
-export interface PaginatorInfo {
-    currentPage: number
-    hasMorePages: boolean
-    total: number
-    perPage: number
-}
-
-export interface ArrivalsResponse {
-    paginatorInfo: PaginatorInfo
-    data: Arrival[]
-}
-
-// Interface pour les filtres
 export interface ArrivalFilters {
-    status?: ArrivalStatus[]
+    supplier_id?: string
+    status?: string | string[]
+    start_date?: string
+    end_date?: string
     date_from?: string
     date_to?: string
+    search?: string
     min_amount?: number
     max_amount?: number
 }
 
-// Interfaces pour créer un arrivage (selon GraphQL mutations)
-export interface CreateArrivalInput {
-    amount: number           // Obligatoire selon l'API GraphQL
-    status: ArrivalStatus    // Obligatoire selon l'API GraphQL
-    products: CreateArrivalProductInput[]
-}
-
-export interface CreateArrivalProductInput {
-    product_id: string
-    quantity: number
-    unit_price: number
-}
-
-// Interfaces pour mettre à jour un arrivage
-export interface UpdateArrivalInput {
-    amount?: number
-    status?: ArrivalStatus
-    products?: UpdateArrivalProductInput[]
-}
-
-export interface UpdateArrivalProductInput {
-    product_id?: string
-    quantity?: number
-    unit_price?: number
-}
-
-// Variables pour les queries GraphQL
 export interface ArrivalsQueryVariables {
-    first?: number
-    page?: number
-    filters?: ArrivalFilters
+    limit?: number
+    offset?: number
+    first?: number // Pour pagination GraphQL
+    page?: number  // Pour pagination simple
+    supplier_id?: string
+    status?: string
+    start_date?: string
+    end_date?: string
+    search?: string
 }
 
 export interface ArrivalDetailQueryVariables {
@@ -114,25 +92,27 @@ export interface ArrivalDetailQueryVariables {
 
 export interface ValidateArrivalVariables {
     id: string
+    validated_quantities?: {
+        product_id: string
+        quantity: number
+    }[]
 }
 
-// Interfaces pour le modal de création (formulaire)
-export interface CreateArrivalData {
-    supplier_id: string
-    reference: string
-    expected_date: string
-    notes?: string
-    products: CreateArrivalProductData[]
-}
-
-export interface CreateArrivalProductData {
-    product_id: string
-    quantity: number
-    unit_price: number
-    product?: {
-        id: string
-        name: string
-        price: number
-        stock: number
+export interface ArrivalsResponse {
+    data: CbdArrival[]
+    pagination?: {
+        current_page: number
+        total_pages: number
+        total_items: number
+        per_page: number
+    }
+    paginatorInfo?: { // Alias pour GraphQL
+        currentPage: number
+        perPage: number
+        total: number
+        hasMorePages: boolean
     }
 }
+
+// Alias pour compatibilité
+export type Arrival = CbdArrival

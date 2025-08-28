@@ -308,7 +308,10 @@ function onProductSelected(product: CreateArrivalProductData, productId: string)
       id: selectedProduct.id,
       name: selectedProduct.name,
       price: selectedProduct.price,
-      stock: selectedProduct.stock
+      stock: selectedProduct.stock,
+      images: selectedProduct.images || [],
+      categories: selectedProduct.categories || [],
+      suppliers: selectedProduct.suppliers || []
     }
   }
 }
@@ -391,6 +394,7 @@ async function createArrival() {
   try {
     // Transformer les données du formulaire vers le format API
     const createArrivalInput: CreateArrivalInput = {
+      supplier_id: formData.value.supplier_id,
       amount: formData.value.products.reduce((total, product) =>
         total + (product.quantity * product.unit_price), 0),
       status: 'pending', // Par défaut en attente

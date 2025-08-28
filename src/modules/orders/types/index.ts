@@ -1,47 +1,38 @@
 // Types pour le module de gestion des commandes
 
+import type { ProductCBD as BaseProductCBD } from '@/modules/products/types'
+import type { DateTime, User } from '@/shared/types'
+
+// ==================== TYPES COMMANDES ====================
 export interface Order {
     id: string
     user_id: string
+    user: User
     total: number
-    status: OrderStatus
-    created_at: string
-    updated_at: string
-    // Relations (si chargées par GraphQL)
-    user?: OrderUser
-    products?: OrderProduct[]
-    formatted_status?: string
-    // Nouveaux champs
-    notes?: string
-    payment_method?: PaymentMethod
-    shipping_address?: ShippingAddress
-    billing_address?: BillingAddress
-    discount_amount?: number
-    tax_amount?: number
-    shipping_cost?: number
+    status: OrderStatus // pending, validated, shipped, delivered, cancelled
+    created_at: DateTime // Requis car utilisé pour le formatage
+    updated_at?: DateTime
+    products: OrderProductItem[]
+    formatted_status?: string // Pour l'affichage formaté
+}
+
+export interface OrderProductPivot {
+    quantity: number
+    unit_price: number
+}
+
+// Type spécialisé pour les produits dans les commandes
+export interface OrderProductItem extends BaseProductCBD {
+    pivot: OrderProductPivot
 }
 
 export interface OrderProduct {
     id: string
     name: string
     price: number
-    description?: string
-    image_url?: string
-    category?: ProductCategory
-    pivot: {
-        quantity: number
-        unit_price: number
-        discount_amount?: number
-        tax_rate?: number
-    }
-}
-
-export interface OrderUser {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    company?: string
+    stock: number
+    images: string[]
+    pivot: OrderProductPivot // Requis car utilisé partout
 }
 
 export interface OrderStats {
@@ -50,25 +41,65 @@ export interface OrderStats {
     product_count: number
     total_amount: number
     average_item_price: number
-    created_at: string
+    created_at: DateTime
     status: string
-    // Statistiques étendues
-    discount_percentage?: number
-    tax_percentage?: number
-    profit_margin?: number
+    formatted_status: string
 }
 
+export interface OrderSummary {
+    id: string
+    total: number
+    status: string
+    user_name: string
+    product_count: number
+    total_items: number
+    created_at: DateTime
+}
+
+// ==================== TYPES D'ENTRÉE (INPUT) ====================
 export interface UpdateOrderStatusInput {
     id: string
-    status: OrderStatus
-    notes?: string
-    notify_user?: boolean
+    status: string
 }
 
+// ==================== ENUMS ET CONSTANTES ====================
 export type OrderStatus =
     | 'pending'     // En attente
     | 'validated'   // Validée
+    | 'shipped'     // Expédiée
+    | 'delivered'   // Livrée
     | 'cancelled'   // Annulée
+
+// ==================== LEGACY TYPES ====================
+export interface OrderUser {
+    id: string
+    name: string
+    email: string
+    phone?: string
+    company?: string
+}
+
+export interface ProductCategory {
+    id: string
+    name: string
+    description?: string
+}
+
+export interface ProductCBD {
+    id: string
+    name: string
+    description?: string
+    price: number
+    stock: number
+    images: string[]
+    analysis_file?: string
+    analysis_image?: string
+    categories?: ProductCategory[]
+    suppliers?: any[]
+    created_at?: DateTime
+    updated_at?: DateTime
+    pivot?: OrderProductPivot
+}
 
 export interface OrderFilters {
     status?: OrderStatus[]
@@ -113,12 +144,6 @@ export interface BillingAddress extends ShippingAddress {
     tax_number?: string
 }
 
-export interface ProductCategory {
-    id: string
-    name: string
-    slug: string
-}
-
 // Types pour les actions en lot
 export interface BulkOrderAction {
     order_ids: string[]
@@ -149,4 +174,21 @@ export interface OrderAnalytics {
     top_products: Array<{ product_id: string; name: string; quantity_sold: number }>
     customer_retention_rate?: number
     conversion_rate?: number
+}
+
+// ==================== TYPES INTELLIGENCE ====================
+export interface OrderIntelligence {
+    id: string
+    total_items: number
+    product_count: number
+    total_amount: number
+    average_item_price: number
+    created_at: DateTime
+    status: string
+    formatted_status: string
+    priority_score?: number
+    risk_level?: string
+    customer_segment?: string
+    predicted_completion?: DateTime
+    fulfillment_complexity?: number
 }

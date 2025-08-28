@@ -180,13 +180,13 @@
                     <div class="h-10 w-10 flex-shrink-0">
                       <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                         <span class="text-sm font-medium text-gray-700">
-                          {{ getUserInitials(userStat.user.name) }}
+                          {{ getUserInitials(userStat.user?.name || userStat.customer || 'User') }}
                         </span>
                       </div>
                     </div>
                     <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">{{ userStat.user.name }}</div>
-                      <div class="text-sm text-gray-500">{{ userStat.user.email }}</div>
+                      <div class="text-sm font-medium text-gray-900">{{ userStat.user?.name || userStat.customer || 'Utilisateur inconnu' }}</div>
+                      <div class="text-sm text-gray-500">{{ userStat.user?.email || 'Email non disponible' }}</div>
                     </div>
                   </div>
                 </td>
@@ -198,21 +198,21 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div class="flex items-center">
-                    <span class="text-lg font-medium">{{ userStat.total_orders }}</span>
+                    <span class="text-lg font-medium">{{ userStat.total_orders || 0 }}</span>
                     <span class="ml-2 text-xs text-gray-500">commandes</span>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ formatCurrency(userStat.total_amount) }}
+                  {{ formatCurrency(userStat.total_amount || 0) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatCurrency(userStat.average_order_value) }}
+                  {{ formatCurrency(userStat.average_order_value || 0) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(userStat.first_order_date) }}
+                  {{ formatDate(userStat.first_order_date || null) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(userStat.last_order_date) }}
+                  {{ formatDate(userStat.last_order_date || null) }}
                 </td>
               </tr>
             </tbody>

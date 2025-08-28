@@ -45,7 +45,10 @@ export class HybridStatsService extends StatsService {
         
         if (topCustomerData) {
           return {
+            id: `${user.id}-stats`,
             user_id: user.id.toString(),
+            customer: user.name,
+            amount: parseFloat(topCustomerData.total_spent || '0'),
             user: {
               id: user.id,
               name: user.name,
@@ -54,6 +57,9 @@ export class HybridStatsService extends StatsService {
               is_admin: user.is_admin || false,
               is_active: user.is_active !== false
             },
+            total: parseFloat(topCustomerData.total_spent || '0'),
+            date: new Date().toISOString(),
+            status: 'active',
             total_orders: topCustomerData.total_orders || 0,
             total_amount: parseFloat(topCustomerData.total_spent || '0'),
             average_order_value: topCustomerData.total_orders > 0 
@@ -73,7 +79,10 @@ export class HybridStatsService extends StatsService {
           } as OrderStats
         } else {
           return {
+            id: `${user.id}-stats`,
             user_id: user.id.toString(),
+            customer: user.name,
+            amount: 0,
             user: {
               id: user.id,
               name: user.name,
@@ -82,6 +91,9 @@ export class HybridStatsService extends StatsService {
               is_admin: user.is_admin || false,
               is_active: user.is_active !== false
             },
+            total: 0,
+            date: new Date().toISOString(),
+            status: 'inactive',
             total_orders: 0,
             total_amount: 0,
             average_order_value: 0,

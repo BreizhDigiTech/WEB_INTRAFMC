@@ -90,8 +90,8 @@ async function bootstrap() {
   // Montage de l'application
   app.mount('#app')
 
-  console.log('🚀 Application WEB_INTRAFMC démarrée')
-  console.log(`📊 Mode: ${import.meta.env.MODE}`)
+
+
   
   // Helper JWT disponible en développement (pour tests manuels uniquement)
   // Pour utiliser un token de test, appelez updateWorkingJWTToken() dans la console

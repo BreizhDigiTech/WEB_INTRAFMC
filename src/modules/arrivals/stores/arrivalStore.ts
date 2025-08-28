@@ -46,10 +46,10 @@ export const useArrivalStore = defineStore('arrivals', () => {
             const response: ArrivalsResponse = await arrivalService.getArrivals(variables)
 
             arrivals.value = response.data
-            currentPage.value = response.paginatorInfo.currentPage
-            perPage.value = response.paginatorInfo.perPage
-            totalArrivals.value = response.paginatorInfo.total
-            hasMorePages.value = response.paginatorInfo.hasMorePages
+            currentPage.value = response.paginatorInfo?.currentPage || response.pagination?.current_page || 1
+            perPage.value = response.paginatorInfo?.perPage || response.pagination?.per_page || 15
+            totalArrivals.value = response.paginatorInfo?.total || response.pagination?.total_items || 0
+            hasMorePages.value = response.paginatorInfo?.hasMorePages || false
 
             // Calculer les statistiques
             calculateStats()

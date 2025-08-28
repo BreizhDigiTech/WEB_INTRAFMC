@@ -10,7 +10,7 @@ const WORKING_JWT_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRw
  */
 export function updateWorkingJWTToken(): void {
   localStorage.setItem('auth_token', WORKING_JWT_TOKEN)
-  console.log('✅ Token JWT mis à jour avec le token backend fonctionnel')
+
   console.log('🔑 Token valide jusqu\'au:', new Date(1756210453 * 1000).toLocaleString())
 }
 
@@ -50,8 +50,8 @@ export function diagnoseJWTToken(): void {
     console.log('❌ Token incorrect.')
     console.log('💡 Solution: updateWorkingJWTToken()')
   } else if (isCorrect) {
-    console.log('✅ Token correct et fonctionnel')
-    console.log('🚀 Toutes les APIs GraphQL devraient fonctionner')
+
+
   } else {
     console.log('❌ Aucun token présent')
     console.log('💡 Solution: updateWorkingJWTToken()')

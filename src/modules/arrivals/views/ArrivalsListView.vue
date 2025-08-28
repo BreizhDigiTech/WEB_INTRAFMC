@@ -212,7 +212,7 @@
             <!-- Filtres de statut -->
             <span v-if="appliedFilters.status && appliedFilters.status.length > 0"
               class="badge badge-sm bg-green-600/20 text-green-400 border-green-600/30">
-              Statut: {{ appliedFilters.status.join(', ') }}
+              Statut: {{ Array.isArray(appliedFilters.status) ? appliedFilters.status.join(', ') : appliedFilters.status }}
             </span>
 
             <!-- Filtre de montant -->
@@ -467,9 +467,12 @@ const filteredArrivals = computed(() => {
 
   // Filtrage par statut
   if (appliedFilters.value.status && appliedFilters.value.status.length > 0) {
-    result = result.filter(arrival =>
-      appliedFilters.value.status!.includes(arrival.status)
-    )
+    result = result.filter(arrival => {
+      const statusFilter = appliedFilters.value.status!
+      return Array.isArray(statusFilter) 
+        ? statusFilter.includes(arrival.status)
+        : statusFilter === arrival.status
+    })
   }
 
   // Filtrage par montant minimum

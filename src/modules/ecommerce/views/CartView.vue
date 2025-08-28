@@ -53,7 +53,7 @@
               <!-- Image du produit -->
               <div class="flex-shrink-0">
                 <img
-                  :src="item.product.image_urls[0] || '/images/placeholder-product.svg'"
+                  :src="(item.product.image_urls && item.product.image_urls[0]) || item.product.images?.[0] || '/images/placeholder-product.svg'"
                   :alt="item.product.name"
                   class="w-24 h-24 object-cover rounded-lg"
                 />

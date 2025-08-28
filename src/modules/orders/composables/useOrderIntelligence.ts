@@ -144,7 +144,7 @@ export function useOrderIntelligence() {
       isVip: customer.customerSegment === 'VIP',
       isPremium: customer.customerSegment === 'PREMIUM',
       isAtRisk: customer.riskLevel === 'HIGH' || (customer.churnProbability && customer.churnProbability > 0.7),
-      needsAttention: (customer.daysSinceLastOrder && customer.daysSinceLastOrder > 30) && customer.total_orders > 1,
+      needsAttention: (customer.daysSinceLastOrder && customer.daysSinceLastOrder > 30) && (customer.total_orders || 0) > 1,
       isNewCustomer: customer.customerSegment === 'NEW',
       isInactive: customer.customerSegment === 'INACTIVE'
     }

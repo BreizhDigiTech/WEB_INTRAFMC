@@ -1,22 +1,42 @@
 /**
- * Types pour la gestion des utilisateurs (Admin)
+ * Types pour la gestion des utilisateurs (Admin) - Alignés avec API GraphQL
  */
 
+import type { JSON } from '@/shared/types'
+
 export interface User {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  address?: string
-  birth_date?: string
-  avatar?: string
-  avatar_original_name?: string
-  avatar_size?: number
-  is_admin: boolean
-  is_active: boolean
-  email_verified_at?: string
-  created_at: string
-  updated_at: string
+    id: string
+    name: string
+    email: string
+    phone?: string
+    address?: string
+    birth_date?: string
+    avatar?: string
+    avatar_original_name?: string
+    avatar_size?: number
+    is_admin: boolean
+    is_active: boolean
+    email_verified_at?: string
+    created_at: string
+    updated_at: string
+}
+
+export interface UserStatistics {
+    userId: string
+    userName: string
+    email: string
+    totalOrders: number
+    totalAmount: number
+    averageOrderValue: number
+    orderFrequency: number
+    daysSinceFirstOrder: number
+    favoriteProducts: JSON
+    orderHistory: JSON
+}
+
+export interface UserFilterInput {
+    is_active?: boolean
+    is_admin?: boolean
 }
 
 export interface CreateUserInput {

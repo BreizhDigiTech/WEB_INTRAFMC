@@ -282,7 +282,7 @@ function validateForm() {
   if (form.price <= 0) {
     errors.price = 'Le prix doit être supérieur à 0'
   }
-  if (form.stock < 0) {
+  if (form.stock !== undefined && form.stock < 0) {
     errors.stock = 'Le stock ne peut pas être négatif'
   }
   if (form.barcode && !validateBarcode(form.barcode)) {
@@ -348,7 +348,7 @@ function generateAutoSKU() {
     errors.price = 'Le prix doit être supérieur à 0'
   }
 
-  if (form.stock < 0) {
+  if (form.stock !== undefined && form.stock < 0) {
     errors.stock = 'Le stock ne peut pas être négatif'
   }
 
@@ -368,7 +368,9 @@ async function handleSubmit() {
     // Upload de l'image si présente
     if (imageFile.value) {
       try {
-        form.image_url = await productService.uploadSingleProductImage(imageFile.value)
+        const imageUrl = await productService.uploadSingleProductImage(imageFile.value)
+        form.image_urls = form.image_urls || []
+        form.image_urls.push(imageUrl)
       } catch (error) {
         console.warn('Erreur lors de l\'upload de l\'image:', error)
         // Continue sans image
