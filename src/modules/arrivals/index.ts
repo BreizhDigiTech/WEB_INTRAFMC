@@ -1,12 +1,24 @@
-// Export principal du module arrivals
-export { arrivalService } from './services/arrivalService'
-export { useArrivalStore } from './stores/arrivalStore'
+/**
+ * Module Arrivals - Gestion des arrivages
+ */
+
+// Types
 export * from './types'
-export * from './utils/formatters'
+
+// Constants
 export * from './constants'
 
-// Composants
+// Services
+export { arrivalService } from './services/arrivalService'
+
+// Stores
+export { useArrivalStore } from './stores/arrivalStore'
+
+// Utils
+export * from './utils/formatters'
+
+// Components
 export { default as CreateArrivalModal } from './components/CreateArrivalModal.vue'
 
-// Vues
+// Views
 export { default as ArrivalsListView } from './views/ArrivalsListView.vue'

@@ -19,7 +19,7 @@ export const productService = {
         })
         
         try {
-            const result = await graphqlService.requestMultipart(mutation, variables, filesMap)
+            const _result = await graphqlService.requestMultipart(mutation, variables, filesMap)
             
             // Recharger le produit pour obtenir les nouvelles URLs d'images
             const getProductQuery = `
@@ -48,22 +48,18 @@ export const productService = {
                 filesMap2[`variables.files.${index}`] = file
             })
             
-            try {
-                const result2 = await graphqlService.requestMultipart(mutation2, variables2, filesMap2)
-                
-                // Recharger le produit pour obtenir les nouvelles URLs d'images
-                const getProductQuery = `
-                    query GetProduct($id: ID!) {
-                        productCBD(id: $id) {
-                            image_urls
-                        }
+            const _result2 = await graphqlService.requestMultipart(mutation2, variables2, filesMap2)
+            
+            // Recharger le produit pour obtenir les nouvelles URLs d'images
+            const getProductQuery = `
+                query GetProduct($id: ID!) {
+                    productCBD(id: $id) {
+                        image_urls
                     }
-                `
-                const updatedProduct = await graphqlService.request(getProductQuery, { id: productId })
-                return updatedProduct.productCBD.image_urls || []
-            } catch (error2) {
-                throw error2
-            }
+                }
+            `
+            const updatedProduct = await graphqlService.request(getProductQuery, { id: productId })
+            return updatedProduct.productCBD.image_urls || []
         }
     },
     
@@ -77,12 +73,8 @@ export const productService = {
         const variables = { file: null }
         const filesMap = { 'variables.file': file }
         
-        try {
-            const result = await graphqlService.requestMultipart(mutation, variables, filesMap)
-            return result.uploadSingleImage
-        } catch (error) {
-            throw error
-        }
+        const result = await graphqlService.requestMultipart(mutation, variables, filesMap)
+        return result.uploadSingleImage
     },
 
     async uploadAnalysisFile(productId: string, file: File): Promise<string> {
@@ -98,12 +90,8 @@ export const productService = {
         const variables = { product_id: productId, file: null }
         const filesMap = { 'variables.file': file }
         
-        try {
-            const result = await graphqlService.requestMultipart(mutation, variables, filesMap)
-            return result.uploadProductAnalysisFile.analysis_file_url || ''
-        } catch (error) {
-            throw error
-        }
+        const result = await graphqlService.requestMultipart(mutation, variables, filesMap)
+        return result.uploadProductAnalysisFile.analysis_file_url || ''
     },
     async createProductWithFiles(input: Omit<CreateProductInput, 'images' | 'analysis_image'> & { images?: File[]; analysis_file?: File | null }): Promise<Product> {
         const mutation = `
@@ -147,18 +135,14 @@ export const productService = {
             filesMap['variables.input.analysis_image'] = input.analysis_file
         }
 
-        try {
-            const data = await graphqlService.requestMultipart<{ createProduct: Product }>(
-                mutation,
-                variables,
-                filesMap
-            )
-            return (data as any).createProduct
-        } catch (error) {
-            throw error
-        }
+        const data = await graphqlService.requestMultipart<{ createProduct: Product }>(
+            mutation,
+            variables,
+            filesMap
+        )
+        return (data as any).createProduct
     },
-  async getProducts(first: number = 10, page: number = 1): Promise<ProductsResponse> {
+  async getProducts(_first: number = 10, _page: number = 1): Promise<ProductsResponse> {
     const query = `
             query GetProducts($first: Int, $page: Int) {
                 productsCBD(first: $first, page: $page) {
@@ -189,11 +173,11 @@ export const productService = {
             }
         `
 
-    const response = await graphqlService.request(query, { first, page })
+    const response = await graphqlService.request(query, { first: _first, page: _page })
     return response.productsCBD
   },
 
-  async searchProducts(searchQuery: string, categoryId?: string, first: number = 20, page: number = 1): Promise<ProductsResponse> {
+  async searchProducts(searchQuery: string, categoryId?: string, _first: number = 20, _page: number = 1): Promise<ProductsResponse> {
     // Pour la recherche côté client, nous devons récupérer tous les produits
     // Commençons par récupérer une grande quantité de produits
     const query = `

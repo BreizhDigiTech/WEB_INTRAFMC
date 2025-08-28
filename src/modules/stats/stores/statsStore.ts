@@ -1,15 +1,16 @@
+import { optimizedStatsService } from '@/shared/services/optimizedStatsService'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { statsService } from '../services'
+import { hybridStatsService } from '../services'
 import type {
-  CustomerGrowth,
-  DailyStats,
-  DateRange,
-  MonthlyStats,
-  OrderStats,
-  PeriodStats,
-  ProductStats,
-  StatsFilters
+    CustomerGrowth,
+    DailyStats,
+    DateRange,
+    MonthlyStats,
+    OrderStats,
+    PeriodStats,
+    ProductStats,
+    StatsFilters
 } from '../types'
 
 export const useStatsStore = defineStore('stats', () => {
@@ -108,17 +109,55 @@ export const useStatsStore = defineStore('stats', () => {
   })
 
   // Actions
-  // 🆕 Fonction pour charger les vraies stats globales
+  // 🚀 Fonction optimisée pour charger les vraies stats globales
   async function fetchGlobalStats() {
     loading.value.globalStats = true
     error.value.globalStats = null
 
     try {
-      // On prend une date range très large pour avoir TOUTES les données
-      const startDate = '2020-01-01'
-      const endDate = new Date().toISOString().split('T')[0] // Aujourd'hui
+      console.log('🚀 Chargement des statistiques globales optimisées...')
       
-      const stats = await statsService.getBasicOrderStats(startDate, endDate)
+      // Essayer d'abord les nouvelles APIs optimisées
+      try {
+        const dashboardStats = await optimizedStatsService.getDashboardStats()
+        
+        globalStats.value = {
+          totalRevenue: dashboardStats.revenue.total || 0,
+          totalOrders: dashboardStats.orders.total || 0,
+          averageOrderValue: dashboardStats.orders.total > 0 ? 
+            dashboardStats.revenue.total / dashboardStats.orders.total : 0
+        }
+        
+        console.log('✅ Stats globales optimisées chargées:', globalStats.value)
+        return
+        
+      } catch (optimizedError) {
+        console.warn('⚠️ API optimisée indisponible, fallback vers ordersSummary:', optimizedError)
+        
+        // Fallback vers ordersSummary
+        try {
+          const ordersSummary = await optimizedStatsService.getOrdersSummary()
+          
+          globalStats.value = {
+            totalRevenue: ordersSummary.totalRevenue || 0,
+            totalOrders: ordersSummary.totalOrders || 0,
+            averageOrderValue: ordersSummary.totalOrders > 0 ? 
+              ordersSummary.totalRevenue / ordersSummary.totalOrders : 0
+          }
+          
+          console.log('✅ Stats via ordersSummary chargées:', globalStats.value)
+          return
+          
+        } catch (summaryError) {
+          console.warn('⚠️ ordersSummary indisponible, fallback vers ancienne méthode:', summaryError)
+        }
+      }
+      
+      // Fallback final vers l'ancienne méthode
+      const startDate = '2020-01-01'
+      const endDate = new Date().toISOString().split('T')[0]
+      
+      const stats = await hybridStatsService.getBasicOrderStats(startDate, endDate)
       
       globalStats.value = {
         totalRevenue: stats.totalRevenue || 0,
@@ -126,7 +165,8 @@ export const useStatsStore = defineStore('stats', () => {
         averageOrderValue: stats.averageOrderValue || 0
       }
       
-      console.log('✅ Stats globales chargées:', globalStats.value)
+      console.log('✅ Stats globales via fallback chargées:', globalStats.value)
+      
     } catch (err) {
       error.value.globalStats = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques globales'
       console.error('❌ Erreur fetchGlobalStats:', err)
@@ -142,13 +182,47 @@ export const useStatsStore = defineStore('stats', () => {
     }
   }
 
+  // 🚀 Nouvelle fonction pour charger toutes les statistiques optimisées
+  async function fetchAllStatsOptimized() {
+    console.log('🚀 Chargement de toutes les statistiques optimisées...')
+    
+    try {
+      // Charger toutes les statistiques en une seule requête
+      const allStats = await optimizedStatsService.getAllSummaries()
+      
+      // Mettre à jour les stats globales depuis les commandes
+      globalStats.value = {
+        totalRevenue: allStats.orders.totalRevenue || 0,
+        totalOrders: allStats.orders.totalOrders || 0,
+        averageOrderValue: allStats.orders.totalOrders > 0 ? 
+          allStats.orders.totalRevenue / allStats.orders.totalOrders : 0
+      }
+      
+      console.log('✅ Toutes les statistiques optimisées chargées:', {
+        orders: allStats.orders,
+        users: allStats.users,
+        ecommerce: allStats.ecommerce,
+        globalStats: globalStats.value
+      })
+      
+      return allStats
+      
+    } catch (error) {
+      console.warn('⚠️ Chargement optimisé échoué, fallback vers méthodes individuelles:', error)
+      
+      // Fallback vers les méthodes individuelles
+      await fetchGlobalStats()
+      throw error
+    }
+  }
+
   async function fetchOrderStatsByUser(filters: StatsFilters = {}) {
     loading.value.orderStats = true
     error.value.orderStats = null
     currentFilters.value = { ...filters }
 
     try {
-      const stats = await statsService.getOrderStatsByUser(filters)
+      const stats = await hybridStatsService.getOrderStatsByUser(filters)
       orderStats.value = stats
     } catch (err) {
       error.value.orderStats = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques'
@@ -164,7 +238,7 @@ export const useStatsStore = defineStore('stats', () => {
     currentDateRange.value = { ...dateRange }
 
     try {
-      const stats = await statsService.getRevenueTimeline({
+      const stats = await hybridStatsService.getRevenueTimeline({
         start_date: dateRange.start_date,
         end_date: dateRange.end_date,
         groupBy: 'MONTH' // Par défaut pour les stats de période
@@ -183,7 +257,7 @@ export const useStatsStore = defineStore('stats', () => {
     error.value.monthlyStats = null
 
     try {
-      const stats = await statsService.getMonthlyStats(year)
+      const stats = await hybridStatsService.getMonthlyStats(year)
       monthlyStats.value = stats
     } catch (err) {
       error.value.monthlyStats = err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques mensuelles'
@@ -198,7 +272,7 @@ export const useStatsStore = defineStore('stats', () => {
     error.value.dailyStats = null
 
     try {
-      const stats = await statsService.getRevenueTimeline({
+      const stats = await hybridStatsService.getRevenueTimeline({
         start_date: dateRange.start_date,
         end_date: dateRange.end_date,
         groupBy: 'DAY' // Groupement par jour pour les stats journalières
@@ -217,7 +291,7 @@ export const useStatsStore = defineStore('stats', () => {
     error.value.customerGrowth = null
 
     try {
-      const growth = await statsService.getCustomerGrowth(months)
+      const growth = await hybridStatsService.getCustomerGrowth(months)
       // Extraire les périodes si on a la nouvelle structure
       customerGrowth.value = growth.periods || growth
     } catch (err) {
@@ -233,7 +307,7 @@ export const useStatsStore = defineStore('stats', () => {
     error.value.topProducts = null
 
     try {
-      const products = await statsService.getTopProducts(filters)
+      const products = await hybridStatsService.getTopProducts(filters)
       topProducts.value = products
     } catch (err) {
       error.value.topProducts = err instanceof Error ? err.message : 'Erreur lors du chargement des produits les plus vendus'
@@ -249,7 +323,7 @@ export const useStatsStore = defineStore('stats', () => {
 
     try {
       console.log('StatsStore: exportStats called with filters:', filters)
-      const blob = await statsService.exportStats(filters)
+      const blob = await hybridStatsService.exportStats(filters)
       
       // Créer un lien de téléchargement
       const url = window.URL.createObjectURL(blob)
@@ -340,6 +414,7 @@ export const useStatsStore = defineStore('stats', () => {
 
     // Actions
     fetchGlobalStats,
+    fetchAllStatsOptimized,
     fetchOrderStatsByUser,
     fetchPeriodStats,
     fetchMonthlyStats,

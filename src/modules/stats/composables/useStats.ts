@@ -1,230 +1,134 @@
-import { computed } from 'vue'
-import { useStatsStore } from '../stores/statsStore'
-import type { DateRange, StatsFilters } from '../types'
+import { computed, onMounted, ref } from 'vue'
+import { HybridStatsService } from '../services/hybridStatsService'
+import type { OrderStats, StatsFilters } from '../types'
 
-/**
- * Composable pour la gestion des statistiques
- * Facilite l'utilisation du store stats dans les composants
- */
+const hybridStatsService = new HybridStatsService()
+
 export function useStats() {
-  const statsStore = useStatsStore()
-
   // État réactif
-  const orderStats = computed(() => statsStore.orderStats)
-  const periodStats = computed(() => statsStore.periodStats)
-  const monthlyStats = computed(() => statsStore.monthlyStats)
-  const dailyStats = computed(() => statsStore.dailyStats)
-  const customerGrowth = computed(() => statsStore.customerGrowth)
-  const topProducts = computed(() => statsStore.topProducts)
-  const loading = computed(() => statsStore.loading)
-  const error = computed(() => statsStore.error)
-  const currentFilters = computed(() => statsStore.currentFilters)
-  const currentDateRange = computed(() => statsStore.currentDateRange)
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+  const orderStats = ref<OrderStats[]>([])
+  const lastUpdate = ref<Date | null>(null)
 
-  // Getters calculés
-  const totalRevenue = computed(() => statsStore.totalRevenue)
-  const totalOrders = computed(() => statsStore.totalOrders)
-  const averageOrderValue = computed(() => statsStore.averageOrderValue)
-  const topCustomers = computed(() => statsStore.topCustomers)
-  const activeCustomers = computed(() => statsStore.activeCustomers)
+  // Filtres par défaut
+  const filters = ref<StatsFilters>({
+    start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0],
+    user_id: undefined,
+    min_amount: undefined,
+    max_amount: undefined,
+    limit: 100
+  })
 
-  // Actions
-  const fetchGlobalStats = async () => {
-    await statsStore.fetchGlobalStats()
-  }
+  // Computed properties
+  const totalCustomers = computed(() => orderStats.value.length)
+  
+  const totalRevenue = computed(() => 
+    orderStats.value.reduce((sum, stat) => sum + stat.total_amount, 0)
+  )
+  
+  const averageOrderValue = computed(() => {
+    const totalOrders = orderStats.value.reduce((sum, stat) => sum + stat.total_orders, 0)
+    return totalOrders > 0 ? totalRevenue.value / totalOrders : 0
+  })
 
-  const fetchOrderStatsByUser = async (filters: StatsFilters = {}) => {
-    await statsStore.fetchOrderStatsByUser(filters)
-  }
+  const topCustomers = computed(() => 
+    orderStats.value
+      .sort((a, b) => b.total_amount - a.total_amount)
+      .slice(0, 10)
+  )
 
-  const fetchPeriodStats = async (dateRange: DateRange) => {
-    await statsStore.fetchPeriodStats(dateRange)
-  }
+  const customerSegments = computed(() => {
+    const segments = {
+      VIP: 0,
+      STANDARD: 0,
+      NEW: 0
+    }
+    
+    orderStats.value.forEach(stat => {
+      if (stat.customer_segment && stat.customer_segment in segments) {
+        segments[stat.customer_segment as keyof typeof segments]++
+      }
+    })
+    
+    return segments
+  })
 
-  const fetchMonthlyStats = async (year?: number) => {
-    await statsStore.fetchMonthlyStats(year)
-  }
-
-  const fetchDailyStats = async (dateRange: DateRange) => {
-    await statsStore.fetchDailyStats(dateRange)
-  }
-
-  const fetchCustomerGrowth = async (months = 12) => {
-    await statsStore.fetchCustomerGrowth(months)
-  }
-
-  const fetchTopProducts = async (filters: { start_date?: string, end_date?: string, limit?: number } = {}) => {
-    await statsStore.fetchTopProducts(filters)
-  }
-
-  const exportStats = async (filters: StatsFilters) => {
-    await statsStore.exportStats(filters)
-  }
-
-  const clearStats = () => {
-    statsStore.clearStats()
-  }
-
-  const clearErrors = () => {
-    statsStore.clearErrors()
-  }
-
-  const setDateRange = (startDate: string, endDate: string) => {
-    statsStore.setDateRange(startDate, endDate)
-  }
-
-  const getQuickDateRange = (period: 'week' | 'month' | 'quarter' | 'year') => {
-    return statsStore.getQuickDateRange(period)
-  }
-
-  // Utilitaires
-  const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined || isNaN(amount)) return '0,00 €'
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'Non disponible'
+  // Méthodes
+  const loadStats = async (customFilters?: Partial<StatsFilters>) => {
     try {
-      return new Date(dateString).toLocaleDateString('fr-FR')
-    } catch {
-      return 'Date invalide'
+      isLoading.value = true
+      error.value = null
+      
+      const currentFilters = customFilters 
+        ? { ...filters.value, ...customFilters }
+        : filters.value
+
+      console.log('📊 Chargement des statistiques avec filtres:', currentFilters)
+      
+      const stats = await hybridStatsService.getOrderStatistics(currentFilters)
+      orderStats.value = stats
+      lastUpdate.value = new Date()
+      
+      console.log(`✅ ${stats.length} statistiques chargées`)
+      
+    } catch (err) {
+      console.error('❌ Erreur lors du chargement des stats:', err)
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue'
+    } finally {
+      isLoading.value = false
     }
   }
 
-  const formatDateTime = (dateString: string | null | undefined) => {
-    if (!dateString) return 'Non disponible'
-    try {
-      return new Date(dateString).toLocaleString('fr-FR')
-    } catch {
-      return 'Date invalide'
-    }
+  const refreshStats = () => loadStats()
+
+  const updateFilters = (newFilters: Partial<StatsFilters>) => {
+    filters.value = { ...filters.value, ...newFilters }
+    loadStats()
   }
 
-  const calculateGrowthPercentage = (current: number, previous: number) => {
-    // Vérifier que les valeurs sont valides
-    if (isNaN(current) || isNaN(previous) || previous === 0) {
-      return 0
+  const resetFilters = () => {
+    filters.value = {
+      start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      end_date: new Date().toISOString().split('T')[0],
+      user_id: undefined,
+      min_amount: undefined,
+      max_amount: undefined,
+      limit: 100
     }
-    const percentage = ((current - previous) / previous) * 100
-    return isNaN(percentage) ? 0 : percentage
+    loadStats()
   }
 
-  const getPerformanceColor = (percentage: number) => {
-    if (isNaN(percentage)) return 'text-gray-500'
-    if (percentage > 10) return 'text-green-500'
-    if (percentage > 0) return 'text-blue-500'
-    if (percentage > -10) return 'text-yellow-500'
-    return 'text-red-500'
+  const getCustomersBySegment = (segment: 'VIP' | 'STANDARD' | 'NEW') => {
+    return orderStats.value.filter(stat => stat.customer_segment === segment)
   }
 
-  const getCustomerRank = (userId: string) => {
-    const sorted = [...orderStats.value].sort((a, b) => b.total_amount - a.total_amount)
-    return sorted.findIndex(stat => stat.user_id === userId) + 1
-  }
-
-  const getCustomerSegment = (totalAmount: number) => {
-    if (totalAmount > 1000) return { label: 'VIP', color: 'bg-purple-500' }
-    if (totalAmount > 500) return { label: 'Fidèle', color: 'bg-blue-500' }
-    if (totalAmount > 100) return { label: 'Régulier', color: 'bg-green-500' }
-    return { label: 'Nouveau', color: 'bg-gray-500' }
-  }
-
-  const getRevenueTrend = () => {
-    if (!monthlyStats.value || monthlyStats.value.length < 2) {
-      return { trend: 0, isPositive: false, hasData: false }
-    }
-    
-    const current = monthlyStats.value[monthlyStats.value.length - 1]
-    const previous = monthlyStats.value[monthlyStats.value.length - 2]
-    
-    if (!current || !previous) {
-      return { trend: 0, isPositive: false, hasData: false }
-    }
-    
-    const trend = calculateGrowthPercentage(current.total_revenue, previous.total_revenue)
-    return { trend, isPositive: trend > 0, hasData: true }
-  }
-
-  const getOrdersTrend = () => {
-    if (!monthlyStats.value || monthlyStats.value.length < 2) {
-      return { trend: 0, isPositive: false, hasData: false }
-    }
-    
-    const current = monthlyStats.value[monthlyStats.value.length - 1]
-    const previous = monthlyStats.value[monthlyStats.value.length - 2]
-    
-    if (!current || !previous) {
-      return { trend: 0, isPositive: false, hasData: false }
-    }
-    
-    const trend = calculateGrowthPercentage(current.total_orders, previous.total_orders)
-    return { trend, isPositive: trend > 0, hasData: true }
-  }
-
-  const getCustomersTrend = () => {
-    if (!customerGrowth.value || customerGrowth.value.length < 2) {
-      return { trend: 0, isPositive: false, hasData: false }
-    }
-    
-    const current = customerGrowth.value[customerGrowth.value.length - 1]
-    const previous = customerGrowth.value[customerGrowth.value.length - 2]
-    
-    if (!current || !previous) {
-      return { trend: 0, isPositive: false, hasData: false }
-    }
-    
-    const trend = calculateGrowthPercentage(current.total_customers, previous.total_customers)
-    return { trend, isPositive: trend > 0, hasData: true }
-  }
+  // Chargement initial automatique
+  onMounted(() => {
+    loadStats()
+  })
 
   return {
     // État
-    orderStats,
-    periodStats,
-    monthlyStats,
-    dailyStats,
-    customerGrowth,
-    topProducts,
-    loading,
+    isLoading,
     error,
-    currentFilters,
-    currentDateRange,
-
-    // Getters
+    orderStats,
+    lastUpdate,
+    filters,
+    
+    // Computed
+    totalCustomers,
     totalRevenue,
-    totalOrders,
     averageOrderValue,
     topCustomers,
-    activeCustomers,
-
-    // Actions
-    fetchGlobalStats,
-    fetchOrderStatsByUser,
-    fetchPeriodStats,
-    fetchMonthlyStats,
-    fetchDailyStats,
-    fetchCustomerGrowth,
-    fetchTopProducts,
-    exportStats,
-    clearStats,
-    clearErrors,
-    setDateRange,
-    getQuickDateRange,
-
-    // Utilitaires
-    formatCurrency,
-    formatDate,
-    formatDateTime,
-    calculateGrowthPercentage,
-    getPerformanceColor,
-    getCustomerRank,
-    getCustomerSegment,
-    getRevenueTrend,
-    getOrdersTrend,
-    getCustomersTrend
+    customerSegments,
+    
+    // Méthodes
+    loadStats,
+    refreshStats,
+    updateFilters,
+    resetFilters,
+    getCustomersBySegment
   }
 }

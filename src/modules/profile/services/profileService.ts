@@ -1,9 +1,9 @@
 import { GraphQLService } from '@/shared/services/graphql'
 import type {
-  ApiResponse,
-  ChangePasswordInput,
-  UpdateProfileInput,
-  UserProfile
+    ApiResponse,
+    ChangePasswordInput,
+    UpdateProfileInput,
+    UserProfile
 } from '../types'
 
 /**
@@ -132,7 +132,7 @@ export class ProfileService extends GraphQLService {
     // Pour l'instant, on simule un upload
     // TODO: Implémenter l'upload réel quand l'API sera disponible
     
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       setTimeout(() => {
         // Simulation d'un upload réussi
         const avatarUrl = URL.createObjectURL(file)

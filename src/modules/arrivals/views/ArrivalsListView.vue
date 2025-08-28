@@ -334,7 +334,7 @@
                   <td>
                     <div class="flex items-center gap-2">
                       <div v-if="arrival.products && arrival.products.length > 0" class="flex -space-x-2">
-                        <div v-for="(product, index) in arrival.products.slice(0, 3)" :key="product.id"
+                        <div v-for="product in arrival.products.slice(0, 3)" :key="product.id"
                           class="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-600 flex items-center justify-center">
                           <img v-if="product.product && getProductImage(product.product)"
                             :src="getProductImage(product.product)" :alt="product.product.name"
@@ -417,12 +417,12 @@ import { STATUS_OPTIONS } from '../constants'
 import { useArrivalStore } from '../stores/arrivalStore'
 import type { ArrivalFilters } from '../types'
 import {
-  formatCurrency,
-  formatDate,
-  getProductImage,
-  getStatusBadgeClass,
-  getStatusLabel,
-  handleImageError
+    formatCurrency,
+    formatDate,
+    getProductImage,
+    getStatusBadgeClass,
+    getStatusLabel,
+    handleImageError
 } from '../utils/formatters'
 
 // Composables
@@ -496,7 +496,7 @@ const displayStats = computed(() => {
   return arrivalStore.stats
 })
 
-const statsType = computed(() => {
+const _statsType = computed(() => {
   return Object.keys(appliedFilters.value).length > 0 ? 'résultats filtrés' : 'arrivages'
 })
 
@@ -515,7 +515,7 @@ const validatedPercentage = computed(() => {
 
 // Watchers pour la recherche avec debounce
 let searchTimeout: ReturnType<typeof setTimeout>
-watch(searchQuery, (newQuery) => {
+watch(searchQuery, (_newQuery) => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
     applyFilters()
@@ -558,7 +558,7 @@ async function refreshArrivals() {
   }
 }
 
-async function loadGlobalStats() {
+async function _loadGlobalStats() {
   // Les statistiques sont calculées automatiquement lors du fetchArrivals
 }
 

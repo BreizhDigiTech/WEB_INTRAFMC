@@ -2,6 +2,7 @@ import { requireAdmin, requireAuth, requireGuest, requireNonAdmin } from '@/shar
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 
+// Import des modules pour les routes
 const routes: RouteRecordRaw[] = [
     // Redirection racine vers dashboard
     {

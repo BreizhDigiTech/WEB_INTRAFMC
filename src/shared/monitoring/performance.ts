@@ -126,7 +126,7 @@ export const performanceMonitor = new PerformanceMonitor()
 /**
  * Décorateur pour mesurer automatiquement les performances
  */
-export function measurePerformance(key: string) {
+export function measurePerformance(_key: string) {
   return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value
 

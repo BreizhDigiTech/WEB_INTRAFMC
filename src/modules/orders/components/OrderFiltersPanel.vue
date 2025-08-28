@@ -130,7 +130,7 @@ interface Props {
   modelValue?: any
 }
 
-const props = defineProps<Props>()
+const _props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{

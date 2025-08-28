@@ -1,5 +1,6 @@
-// Module E-commerce - Point d'entrée principal
-// Ce module fournit une interface de commerce électronique pour les utilisateurs non-admin
+/**
+ * Module Ecommerce - Interface utilisateur boutique
+ */
 
 // Types
 export * from './types'
@@ -22,8 +23,6 @@ export { useProducts } from './composables/useProducts'
 export { default as CartView } from './views/CartView.vue'
 export { default as ProductCatalogView } from './views/ProductCatalogView.vue'
 export { default as ProductDetailView } from './views/ProductDetailView.vue'
-
-// Components (à créer)
 // export { default as ProductCard } from './components/ProductCard.vue'
 // export { default as ProductFilters } from './components/ProductFilters.vue'
 // export { default as CartItem } from './components/CartItem.vue'

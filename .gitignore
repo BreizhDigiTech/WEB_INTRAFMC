@@ -17,6 +17,26 @@ dist
 dist-ssr
 build
 
+# Cache files
+*.tsbuildinfo
+.cache/
+.vite/
+
+# Temporary files
+temp_*
+temp.*
+*_temp.*
+*_backup.*
+*_old.*
+*.temp.*
+*.backup.*
+*.old.*
+*.bak
+
+# Test files temporaires
+test-*
+debug-*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

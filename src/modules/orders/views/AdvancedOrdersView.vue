@@ -73,61 +73,88 @@
 
     <!-- Contenu principal -->
     <div class="container mx-auto px-4 py-8">
-      <!-- Statistiques -->
+      <!-- Statistiques Globales -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="stats-card bg-blue-600/20 border-blue-500/30">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-blue-200 text-sm font-medium">Total Commandes</p>
-              <p class="text-2xl font-bold text-white">{{ pagination?.total || 0 }}</p>
-            </div>
-            <div class="p-3 bg-blue-500/30 rounded-lg">
-              <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+        <!-- Loading des stats -->
+        <div v-if="statsLoading" class="col-span-full flex justify-center py-8">
+          <span class="loading loading-spinner loading-lg"></span>
+          <span class="ml-3 text-gray-400">Chargement des statistiques globales...</span>
+        </div>
+        
+        <!-- Statistiques -->
+        <template v-else>
+          <div class="stats-card bg-blue-600/20 border-blue-500/30">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-blue-200 text-sm font-medium">Total Commandes</p>
+                <p class="text-2xl font-bold text-white">{{ totalOrders.toLocaleString() }}</p>
+                <p class="text-xs text-blue-300 mt-1">Base de données complète</p>
+              </div>
+              <div class="p-3 bg-blue-500/30 rounded-lg">
+                <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="stats-card bg-yellow-600/20 border-yellow-500/30">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-yellow-200 text-sm font-medium">En Attente</p>
-              <p class="text-2xl font-bold text-white">{{ pendingOrders.length }}</p>
-            </div>
-            <div class="p-3 bg-yellow-500/30 rounded-lg">
-              <svg class="w-6 h-6 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div class="stats-card bg-yellow-600/20 border-yellow-500/30">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-yellow-200 text-sm font-medium">En Attente</p>
+                <p class="text-2xl font-bold text-white">{{ pendingCount.toLocaleString() }}</p>
+                <p class="text-xs text-yellow-300 mt-1">{{ pendingPercentage }}% du total</p>
+              </div>
+              <div class="p-3 bg-yellow-500/30 rounded-lg">
+                <svg class="w-6 h-6 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="stats-card bg-green-600/20 border-green-500/30">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-green-200 text-sm font-medium">Validées</p>
-              <p class="text-2xl font-bold text-white">{{ validatedOrders.length }}</p>
-            </div>
-            <div class="p-3 bg-green-500/30 rounded-lg">
-              <svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
+          <div class="stats-card bg-green-600/20 border-green-500/30">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-green-200 text-sm font-medium">Validées</p>
+                <p class="text-2xl font-bold text-white">{{ validatedCount.toLocaleString() }}</p>
+                <p class="text-xs text-green-300 mt-1">{{ validatedPercentage }}% du total</p>
+              </div>
+              <div class="p-3 bg-green-500/30 rounded-lg">
+                <svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="stats-card bg-purple-600/20 border-purple-500/30">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-purple-200 text-sm font-medium">Chiffre d'Affaires</p>
-              <p class="text-2xl font-bold text-white">{{ totalRevenue }}</p>
+          <div class="stats-card bg-purple-600/20 border-purple-500/30">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-purple-200 text-sm font-medium">Chiffre d'Affaires</p>
+                <p class="text-2xl font-bold text-white">{{ totalRevenue }}</p>
+                <p class="text-xs text-purple-300 mt-1">Commandes validées uniquement</p>
+              </div>
+              <div class="p-3 bg-purple-500/30 rounded-lg">
+                <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
             </div>
-            <div class="p-3 bg-purple-500/30 rounded-lg">
-              <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Statistiques détaillées (si disponibles) -->
+      <div v-if="!statsLoading && totalOrders > 0" class="card mb-6 p-4">
+        <div class="flex justify-between items-center text-sm text-gray-400">
+          <div class="flex space-x-6">
+            <span>En attente: {{ pendingCount }} ({{ pendingPercentage }}%)</span>
+            <span>Validées: {{ validatedCount }} ({{ validatedPercentage }}%)</span>
+            <span>Annulées: {{ cancelledCount }} ({{ cancelledPercentage }}%)</span>
+          </div>
+          <div class="text-purple-400 font-semibold">
+            CA: {{ totalRevenue }}
           </div>
         </div>
       </div>
@@ -499,6 +526,7 @@
 <script setup lang="ts">
 import { checkoutService, type OrderStats } from '@/modules/orders/services/checkoutService'
 import { OrderService } from '@/modules/orders/services/orderService'
+import { useOrderStore } from '@/modules/orders/stores/orderStore'
 import type { Order, OrderFilters, OrderStatus } from '@/modules/orders/types'
 import { getStatusBadgeClass, getStatusLabel } from '@/modules/orders/utils/formatters'
 import PermissionAlert from '@/shared/components/PermissionAlert.vue'
@@ -512,6 +540,9 @@ const router = useRouter()
 
 // Services
 const api = new OrderService()
+
+// Store
+const orderStore = useOrderStore()
 
 // Permissions
 const { hasPermission } = usePermissions()
@@ -567,12 +598,34 @@ const filteredOrders = computed(() => {
   return filtered
 })
 
-const pendingOrders = computed(() => orders.value.filter(o => o.status === 'pending'))
-const validatedOrders = computed(() => orders.value.filter(o => o.status === 'validated'))
+// Statistiques globales du store
+const globalStats = computed(() => orderStore.globalStats)
+const statsLoading = computed(() => orderStore.statsLoading)
 
+// Statistiques calculées avec pourcentages
+const totalOrders = computed(() => globalStats.value?.total || 0)
+const pendingCount = computed(() => globalStats.value?.pending || 0)
+const validatedCount = computed(() => globalStats.value?.validated || 0)
+const cancelledCount = computed(() => globalStats.value?.cancelled || 0)
 const totalRevenue = computed(() => {
-  const total = validatedOrders.value.reduce((sum, order) => sum + order.total, 0)
-  return checkoutService.formatPrice(total)
+  const revenue = globalStats.value?.totalRevenue || 0
+  return checkoutService.formatPrice(revenue)
+})
+
+// Pourcentages
+const pendingPercentage = computed(() => {
+  if (totalOrders.value === 0) return 0
+  return Math.round((pendingCount.value / totalOrders.value) * 100 * 10) / 10
+})
+
+const validatedPercentage = computed(() => {
+  if (totalOrders.value === 0) return 0
+  return Math.round((validatedCount.value / totalOrders.value) * 100 * 10) / 10
+})
+
+const cancelledPercentage = computed(() => {
+  if (totalOrders.value === 0) return 0
+  return Math.round((cancelledCount.value / totalOrders.value) * 100 * 10) / 10
 })
 
 const hasCartItems = computed(() => cartItems.value.length > 0)
@@ -634,6 +687,7 @@ async function loadCart() {
 function refresh() {
   loadOrders()
   loadCart()
+  orderStore.fetchGlobalStats() // Rafraîchir aussi les statistiques globales
 }
 
 function clearFilters() {
@@ -673,7 +727,10 @@ async function onValidate(orderId: string) {
   actionLoading.value = true
   try {
     await api.updateOrderStatus({ id: orderId, status: 'validated' })
-    await loadOrders()
+    await Promise.all([
+      loadOrders(),
+      orderStore.fetchGlobalStats()
+    ])
   } catch (error) {
     console.error('Erreur lors de la validation:', error)
     alert('Erreur lors de la validation de la commande. Veuillez réessayer.')
@@ -692,7 +749,10 @@ async function onCancel(orderId: string) {
   actionLoading.value = true
   try {
     await checkoutService.cancelOrder(orderId)
-    await loadOrders()
+    await Promise.all([
+      loadOrders(),
+      orderStore.fetchGlobalStats()
+    ])
   } catch (error) {
     console.error('Erreur lors de l\'annulation:', error)
     alert('Erreur lors de l\'annulation de la commande. Veuillez réessayer.')
@@ -719,9 +779,26 @@ function formatDate(date: string) {
   return checkoutService.formatDate(date)
 }
 
-onMounted(() => {
-  loadOrders()
-  loadCart()
+onMounted(async () => {
+  // Charger les données en parallèle
+  await Promise.all([
+    loadOrders(),
+    loadCart(),
+    orderStore.fetchGlobalStats() // Charger les statistiques globales
+  ])
+  
+  // Debug: Afficher les statistiques réelles
+  console.log('🔍 Debug Statistics:')
+  console.log('Global Stats from store:', orderStore.globalStats)
+  console.log('Computed values:', {
+    totalOrders: totalOrders.value,
+    pendingCount: pendingCount.value,
+    validatedCount: validatedCount.value,
+    cancelledCount: cancelledCount.value,
+    pendingPercentage: pendingPercentage.value,
+    validatedPercentage: validatedPercentage.value,
+    cancelledPercentage: cancelledPercentage.value
+  })
 })
 
 // Gestion du panier

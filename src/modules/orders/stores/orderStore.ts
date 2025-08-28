@@ -1,3 +1,4 @@
+import { optimizedStatsService } from '@/shared/services/optimizedStatsService'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { orderService } from '../services/orderService'
@@ -113,38 +114,46 @@ export const useOrderStore = defineStore('orders', () => {
     async function fetchGlobalStats() {
         statsLoading.value = true
         try {
-            let allOrders: Order[] = []
-            let currentPageNum = 1
-            let hasMorePages = true
-
-            // Charger toutes les commandes par chunks de 50 (limite GraphQL)
-            while (hasMorePages) {
-                const response = await orderService.getOrders({}, currentPageNum, 50)
-                allOrders.push(...response.data)
-
-                hasMorePages = response.pagination.current_page < response.pagination.last_page
-                currentPageNum++
-
-                // Sécurité pour éviter les boucles infinies
-                if (currentPageNum > 1000) break
-            }
-
-            // Calculer les statistiques
+            console.log('🚀 Chargement des statistiques optimisées...')
+            
+            // Essayer d'abord la nouvelle API optimisée
+            const ordersSummary = await optimizedStatsService.getOrdersSummary()
+            
             globalStats.value = {
-                total: allOrders.length,
-                pending: allOrders.filter(o => o.status === 'pending').length,
-                validated: allOrders.filter(o => o.status === 'validated').length,
-                cancelled: allOrders.filter(o => o.status === 'cancelled').length,
-                totalRevenue: allOrders
-                    .filter(o => o.status === 'validated')
-                    .reduce((sum, o) => sum + o.total, 0)
+                total: ordersSummary.totalOrders,
+                pending: ordersSummary.pendingOrders,
+                validated: ordersSummary.validatedOrders,
+                cancelled: ordersSummary.cancelledOrders,
+                totalRevenue: ordersSummary.totalRevenue
             }
-
+            
+            console.log('✅ Statistiques optimisées chargées:', globalStats.value)
             return globalStats.value
-        } catch (err) {
-            error.value = err instanceof Error ? err.message : 'Erreur lors du calcul des statistiques'
-            console.error('Erreur fetchGlobalStats:', err)
-            throw err
+            
+        } catch (optimizedError) {
+            console.warn('⚠️ API optimisée indisponible, fallback vers orderService:', optimizedError)
+            
+            try {
+                // Fallback vers l'ancienne méthode
+                const stats = await orderService.getGlobalOrderStats()
+                globalStats.value = stats
+                console.log('✅ Statistiques chargées via fallback:', globalStats.value)
+                return globalStats.value
+            } catch (fallbackError) {
+                error.value = fallbackError instanceof Error ? fallbackError.message : 'Erreur lors du calcul des statistiques'
+                console.error('❌ Erreur complete fetchGlobalStats:', fallbackError)
+                
+                // Dernière tentative avec des valeurs par défaut
+                globalStats.value = {
+                    total: 0,
+                    pending: 0,
+                    validated: 0,
+                    cancelled: 0,
+                    totalRevenue: 0
+                }
+                
+                throw fallbackError
+            }
         } finally {
             statsLoading.value = false
         }

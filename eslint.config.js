@@ -16,10 +16,10 @@ export default [
     // Vue 3 essential rules
     ...vue.configs['flat/essential'],
 
-    // Global defaults (browser)
+    // Global defaults (browser + node)
     {
         languageOptions: {
-            globals: globals.browser,
+            globals: { ...globals.browser, ...globals.node },
             ecmaVersion: 'latest',
             sourceType: 'module'
         }

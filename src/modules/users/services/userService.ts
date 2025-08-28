@@ -1,11 +1,11 @@
 import { GraphQLService } from '@/shared/services/graphql'
 import type {
-  ApiResponse,
-  CreateUserInput,
-  PaginatedUsers,
-  UpdateUserInput,
-  User,
-  UserListFilters
+    ApiResponse,
+    CreateUserInput,
+    PaginatedUsers,
+    UpdateUserInput,
+    User,
+    UserListFilters
 } from '../types'
 
 /**
@@ -245,7 +245,7 @@ export class UserService extends GraphQLService {
 
     try {
       // Exclure le champ avatar des variables car l'API ne le supporte pas
-      const { avatar, ...updateVariables } = input
+      const { avatar: _avatar, ...updateVariables } = input
       const response = await this.request(mutation, updateVariables)
       return response.updateUser
     } catch (error: any) {

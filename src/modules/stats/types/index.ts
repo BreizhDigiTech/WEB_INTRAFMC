@@ -176,6 +176,29 @@ export interface OrderStats {
   riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH'
   churnProbability?: number
   
+  // 📋 NOUVELLES PROPRIÉTÉS pour la version simplifiée avec récaps
+  customer_segment?: 'VIP' | 'STANDARD' | 'NEW'
+  orders_recap?: Array<{
+    id: string
+    total: string
+    status: string
+    created_at: string
+    items_count?: number
+  }>
+  orders_summary?: {
+    total_orders: number
+    pending_orders: number
+    completed_orders: number
+    cancelled_orders: number
+    total_value: number
+    latest_order: {
+      id: string
+      total: string
+      status: string
+      created_at: string
+    } | null
+  }
+  
   // Analyse comportementale
   favoriteCategory?: {
     id: string

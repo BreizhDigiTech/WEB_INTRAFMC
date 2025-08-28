@@ -1,15 +1,36 @@
-// Export principal du module de statistiques
-export { useStats } from './composables/useStats'
+/**
+ * Module Stats - Statistiques et analytics
+ */
 
-// Services - APIs réelles uniquement
-export { hybridStatsService, statsService, StatsService } from './services'
-
-export { useStatsStore } from './stores/statsStore'
-export { default as StatsView } from './views/StatsView.vue'
-
-// Types exports
+// Types
 export type {
-  BasicOrderStatsResponse, CustomerGrowth, CustomerGrowthPeriod, CustomerGrowthSummary, CustomerGrowthTimelineResponse, CustomerGrowthTrends,
-  DailyStats, MonthlyRevenueResponse, MonthlyStats, OrderStats, PeriodStats, PopularProduct, ProductStats, StatsError, StatsFilters
+    BasicOrderStatsResponse,
+    CustomerGrowth,
+    CustomerGrowthPeriod,
+    CustomerGrowthSummary,
+    CustomerGrowthTimelineResponse,
+    CustomerGrowthTrends,
+    DailyStats,
+    MonthlyRevenueResponse,
+    MonthlyStats,
+    OrderStats,
+    PeriodStats,
+    PopularProduct,
+    ProductStats,
+    StatsError,
+    StatsFilters
 } from './types'
+
+// Services
+export { StatsService, hybridStatsService } from './services'
+
+// Stores
+export { useStatsStore } from './stores/statsStore'
+
+// Composables
+export { useStats } from './composables/useStats'
+export { useStatsProduction } from './composables/useStatsProduction'
+
+// Views
+export { default as StatsView } from './views/StatsView.vue'
 

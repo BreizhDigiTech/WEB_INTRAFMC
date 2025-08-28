@@ -1,7 +1,7 @@
 import { ValidationError } from '@/shared/errors/types'
 import DOMPurify from 'dompurify'
 import { z } from 'zod'
-import { sanitizeInput, validateUrl as isValidUrl } from './securityHeaders'
+import { sanitizeInput } from './securityHeaders'
 
 // Schémas de validation renforcés pour les données sensibles
 export const LoginSchema = z.object({

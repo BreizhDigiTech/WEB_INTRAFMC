@@ -229,7 +229,7 @@ import { computed, ref } from 'vue';
 import type { PasswordFormData } from '../types';
 
 // Props
-const props = defineProps<{
+const _props = defineProps<{
   loading: boolean
   error: string | null
 }>()

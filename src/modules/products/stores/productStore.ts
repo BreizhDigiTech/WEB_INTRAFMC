@@ -128,7 +128,7 @@ export const useProductStore = defineStore('products', () => {
         }
     }
 
-    async function loadMoreSearchResults(searchQuery?: string, categoryId?: string) {
+    async function loadMoreSearchResults(_searchQuery?: string, _categoryId?: string) {
         // Avec le filtrage côté client, il n'y a pas de "plus de résultats" à charger
         // Tous les résultats sont déjà affichés après la recherche initiale
         return

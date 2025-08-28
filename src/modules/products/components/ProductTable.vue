@@ -167,19 +167,19 @@
 import { ref } from 'vue';
 import type { Product } from '../types';
 import {
-  calculateStockValue,
-  formatNumber,
-  formatPrice,
-  formatShortDate,
-  getProductImage,
-  getProductStatus,
-  getStatusBadgeClass,
-  getStatusLabel,
-  handleImageError
+    calculateStockValue,
+    formatNumber,
+    formatPrice,
+    formatShortDate,
+    getProductImage,
+    getProductStatus,
+    getStatusBadgeClass,
+    getStatusLabel,
+    handleImageError
 } from '../utils/formatters';
 
 // Props
-const props = defineProps<{
+const _props = defineProps<{
   products: Product[]
 }>()
 
@@ -237,7 +237,7 @@ function updateStockValue() {
 
 // duplication désactivée
 
-function toggleActive(product: Product) {
+function _toggleActive(product: Product) {
   // TODO: Implémenter le toggle actif/inactif
   console.log('Toggle active for:', product.name)
 }

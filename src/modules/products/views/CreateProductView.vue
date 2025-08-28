@@ -262,7 +262,7 @@ import type { CreateProductInput } from '../types'
 // Router et stores
 const router = useRouter()
 const categoryStore = useCategoryStore()
-const productStore = useProductStore()
+const _productStore = useProductStore()
 
 // État local
 const loading = ref(false)
@@ -393,7 +393,7 @@ const saveProduct = async () => {
 
   try {
     // Préparer les données
-    const baseInput = {
+    const _baseInput = {
       name: form.name,
       description: form.description,
       price: form.price,

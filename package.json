@@ -8,15 +8,17 @@
         "build": "vue-tsc && vite build",
         "preview": "vite preview",
         "serve": "vite preview",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "type-check": "vue-tsc --noEmit",
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:run": "vitest run",
-        "test:coverage": "vitest --coverage"
+        "test:coverage": "vitest --coverage",
+        "validate:structure": "tsx scripts/validate-structure.ts",
+        "cleanup": "node scripts/cleanup.js"
     },
     "dependencies": {
         "@sentry/vue": "^10.5.0",

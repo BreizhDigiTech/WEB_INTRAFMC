@@ -259,7 +259,7 @@ export function getProductImages(product: Product): string[] {
 /**
  * Détermine si un produit est en promotion (prix réduit)
  */
-export function isOnSale(product: Product): boolean {
+export function isOnSale(_product: Product): boolean {
     // Suppression des tags non existants dans le type Product
     return false
 }
@@ -300,14 +300,14 @@ export function hasAnalysisFile(product: Product): boolean {
 /**
  * Récupère le nom d'affichage du fichier d'analyse
  */
-export function getAnalysisFileName(product: Product): string {
+export function getAnalysisFileName(_product: Product): string {
     return 'Fichier d\'analyse'
 }
 
 /**
  * Récupère les métadonnées d'image formatées
  */
-export function getImageMetadata(product: Product): any {
+export function getImageMetadata(_product: Product): any {
     // Suppression des métadonnées image non existantes dans le type Product
     return null
 }

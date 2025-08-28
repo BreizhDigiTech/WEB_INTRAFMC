@@ -3,8 +3,8 @@
  * Élimine la duplication de code entre les services
  */
 
-import { GraphQLService } from './graphql'
 import { performanceMonitor } from '@/shared/monitoring/performance'
+import { GraphQLService } from './graphql'
 
 export interface PaginatedResponse<T> {
   data: T[]

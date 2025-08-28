@@ -807,7 +807,7 @@ const removeCategoryFromProduct = async (categoryId: string) => {
 }
 
 // Ajouter une catégorie au produit
-const addCategoryToProduct = async () => {
+const _addCategoryToProduct = async () => {
   if (!product.value || !selectedCategoryToAdd.value) return
   
   try {
@@ -981,7 +981,7 @@ const handleImageUpload = async (event: Event) => {
     const { productService } = await import('../services/productService')
     
     // Upload des images
-    const newImageUrls = await productService.uploadProductImages(
+    const _newImageUrls = await productService.uploadProductImages(
       product.value.id, 
       Array.from(files)
     )

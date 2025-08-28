@@ -12,6 +12,9 @@ export interface UserProfile {
   avatar?: string
   is_admin: boolean
   is_active: boolean
+  email_verified_at?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface UpdateProfileInput {

@@ -107,9 +107,6 @@
                   <span :class="profile?.is_active ? 'badge-success' : 'badge-error'" class="badge">
                     {{ profile?.is_active ? 'Actif' : 'Inactif' }}
                   </span>
-                  <span class="text-sm text-gray-400">
-                    Membre depuis {{ getMembershipDuration(profile?.created_at) }}
-                  </span>
                 </div>
               </div>
             </div>
@@ -177,7 +174,7 @@ import ProfileSecurityForm from '../components/ProfileSecurityForm.vue'
 import { useProfile } from '../composables/useProfile'
 import type { PasswordFormData, ProfileFormData } from '../types'
 
-const router = useRouter()
+const _router = useRouter()
 
 // Composable
 const {
@@ -191,10 +188,10 @@ const {
   uploadAvatar,
   clearErrors,
   clearError,
-  formatDate,
+  formatDate: _formatDate,
   getInitials,
   getAvatarUrl,
-  getMembershipDuration
+  getMembershipDuration: _getMembershipDuration
 } = useProfile()
 
 // État local

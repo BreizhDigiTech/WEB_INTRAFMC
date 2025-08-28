@@ -121,8 +121,7 @@ export function useOrderIntelligence() {
     try {
       const result = await statsService.getRevenueTimeline({
         ...filters,
-        groupBy: filters.groupBy || 'DAY',
-        includeComparison: filters.includeComparison ?? true
+        groupBy: filters.groupBy || 'DAY'
       })
       revenueTimeline.value = result
       return result

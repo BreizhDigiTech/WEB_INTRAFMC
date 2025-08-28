@@ -236,7 +236,7 @@ const {
   fetchProduct,
   clearErrors,
   formatPrice,
-  getProductsByCategory
+  getProductsByCategory: _getProductsByCategory
 } = useProducts()
 
 const {

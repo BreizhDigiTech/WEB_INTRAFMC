@@ -24,7 +24,7 @@ import { useAuthStore } from '@/stores/auth'
 import { computed, onMounted } from 'vue'
 
 const authStore = useAuthStore()
-const { totalItems, cartItems, fetchCart } = useCart()
+const { totalItems: _totalItems, cartItems, fetchCart } = useCart()
 
 // Calculer le nombre de produits différents (pas la quantité totale)
 const numberOfProducts = computed(() => cartItems.value.length)

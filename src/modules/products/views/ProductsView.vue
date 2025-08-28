@@ -66,7 +66,7 @@
           <div class="space-y-1">
             <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Produits en alerte</h3>
             <p class="text-3xl font-bold text-yellow-400">{{ lowStockProducts.length }}</p>
-            <p class="text-xs text-yellow-300/70">Stock < 30 unités</p>
+            <p class="text-xs text-yellow-300/70">Stock &lt; 30 unités</p>
           </div>
         </div>
 
@@ -180,7 +180,7 @@
               {{ filteredProducts.length }} résultat(s) trouvé(s)
               <span v-if="searchQuery"> pour "{{ searchQuery }}"</span>
               <span v-if="selectedCategory && categoryStore.categories.length"> dans la catégorie "{{ categoryStore.categories.find(c => c.id.toString() === selectedCategory)?.name }}"</span>
-              <span v-if="stockFilter === 'alert'"> - Produits en alerte (stock < 30)</span>
+              <span v-if="stockFilter === 'alert'"> - Produits en alerte (stock &lt; 30)</span>
               <span v-if="stockFilter === 'outofstock'"> - Produits en rupture de stock</span>
             </span>
           </div>
@@ -315,7 +315,7 @@ const selectedCategory = ref('')
 const stockFilter = ref('') // '' = tous, 'alert' = en alerte, 'outofstock' = rupture
 const scrollTrigger = ref<HTMLElement | null>(null)
 const showScrollToTop = ref(false)
-const searchTimeout = ref<NodeJS.Timeout | null>(null)
+const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 
 // Computed
 const emptyStateMessage = computed(() => {
@@ -344,7 +344,7 @@ const filteredProducts = computed(() => {
   return productStore.products
 })
 
-const totalStockValue = computed(() => {
+const _totalStockValue = computed(() => {
   return productStore.allProducts.reduce((total, product) => {
     return total + (product.price * product.stock)
   }, 0)

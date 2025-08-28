@@ -325,7 +325,7 @@ export const validateStandards = {
   /**
    * Vérifie la structure d'un module
    */
-  checkModuleStructure(modulePath: string): boolean {
+  checkModuleStructure(_modulePath: string): boolean {
     // Implementation pour vérifier la structure
     return true
   },
@@ -333,7 +333,7 @@ export const validateStandards = {
   /**
    * Vérifie les conventions de nommage
    */
-  checkNamingConventions(filePath: string): boolean {
+  checkNamingConventions(_filePath: string): boolean {
     // Implementation pour vérifier le nommage
     return true
   }

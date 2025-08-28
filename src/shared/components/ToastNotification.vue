@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { h, onUnmounted, ref } from 'vue'
 
 // Types
 interface ToastAction {

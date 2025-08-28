@@ -285,7 +285,7 @@ const addingToCart = ref(false)
 const productQuantities = ref<Record<string, number>>({})
 
 // Getters calculés
-const hasActiveFilters = computed(() => {
+const _hasActiveFilters = computed(() => {
   return searchTerm.value !== '' || selectedCategory.value !== '' || inStockOnly.value
 })
 
@@ -347,7 +347,7 @@ const handleAdvancedFilters = (filters: any) => {
   })
 }
 
-const handleCategoryFilter = () => {
+const _handleCategoryFilter = () => {
   if (selectedCategory.value) {
     filterByCategory(selectedCategory.value)
   } else {
@@ -355,7 +355,7 @@ const handleCategoryFilter = () => {
   }
 }
 
-const handleStockFilter = () => {
+const _handleStockFilter = () => {
   fetchProducts(1, {
     search: searchTerm.value,
     categoryId: selectedCategory.value || undefined,
@@ -446,8 +446,8 @@ watch(products, (newProducts) => {
 }, { immediate: true })
 
 // Watchers pour un debounce sur la recherche
-let searchTimeout: NodeJS.Timeout | null = null
-watch(searchTerm, (newValue) => {
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+watch(searchTerm, (_newValue) => {
   if (searchTimeout) {
     clearTimeout(searchTimeout)
   }

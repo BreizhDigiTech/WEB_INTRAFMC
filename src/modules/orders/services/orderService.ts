@@ -1,4 +1,4 @@
-// Service GraphQL pour la gestion des commandes
+﻿// Service GraphQL pour la gestion des commandes
 import { GraphQLService } from '@/shared/services/graphql'
 import type { PaginatedResponse } from '@/shared/types'
 import { useAuthStore } from '@/stores/auth'
@@ -15,7 +15,7 @@ export class OrderService extends GraphQLService {
      * Utilise la query admin si l'utilisateur est admin (avec détails des produits)
      * Applique les filtres côté client si l'API GraphQL ne les supporte pas
      */
-    async getOrders(filters: OrderFilters = {}, page = 1, limit = 20): Promise<PaginatedResponse<Order>> {
+    async getOrders(_filters: OrderFilters = {}, page = 1, limit = 20): Promise<PaginatedResponse<Order>> {
         // Vérifier la limite maximale autorisée par l'API GraphQL
         if (limit > 50) {
             console.warn(`Limite de ${limit} éléments réduite à 50 (limite maximale de l'API GraphQL)`)
@@ -588,6 +588,174 @@ export class OrderService extends GraphQLService {
         return {
             url: url,
             filename: filename
+        }
+    }
+
+    /**
+     * Récupère les VRAIES statistiques globales via la nouvelle API ordersSummary
+     * 🚀 OPTIMISÉ: Une seule requête au lieu de charger toutes les commandes
+     */
+    async getGlobalOrderStats(): Promise<{
+        total: number;
+        pending: number;
+        validated: number;
+        cancelled: number;
+        totalRevenue: number;
+    }> {
+        console.log('� Récupération des statistiques via ordersSummary (API optimisée)...')
+        
+        try {
+            const query = `
+                query OrdersSummary {
+                    ordersSummary {
+                        totalOrders
+                        pendingOrders
+                        validatedOrders
+                        cancelledOrders
+                        totalRevenue
+                    }
+                }
+            `
+            
+            const response = await this.request(query)
+            const stats = response.ordersSummary
+            
+            console.log('✅ OrdersSummary response:', stats)
+            
+            const finalStats = {
+                total: stats.totalOrders,
+                pending: stats.pendingOrders,
+                validated: stats.validatedOrders,
+                cancelled: stats.cancelledOrders,
+                totalRevenue: stats.totalRevenue
+            }
+            
+            console.log('🎯 STATISTIQUES RÉELLES depuis API optimisée:', {
+                ...finalStats,
+                pourcentages: {
+                    pending: `${((finalStats.pending / finalStats.total) * 100).toFixed(1)}%`,
+                    validated: `${((finalStats.validated / finalStats.total) * 100).toFixed(1)}%`,
+                    cancelled: `${((finalStats.cancelled / finalStats.total) * 100).toFixed(1)}%`
+                }
+            })
+            
+            return finalStats
+            
+        } catch (error) {
+            console.error('❌ Erreur ordersSummary, fallback vers ancienne méthode:', error)
+            return await this.fallbackMethod()
+        }
+    }
+
+    /**
+     * Calcule les statistiques par statut en chargeant toutes les commandes
+     */
+    private async calculateStatusStats(expectedTotal: number, expectedRevenue: number): Promise<{
+        total: number;
+        pending: number;
+        validated: number;
+        cancelled: number;
+        totalRevenue: number;
+    }> {
+        console.log(`📊 Calcul des statuts pour ${expectedTotal} commandes...`)
+        
+        const allOrders: Order[] = []
+        const batchSize = 50
+        const maxPages = Math.ceil(expectedTotal / batchSize)
+        
+        console.log(`📄 Chargement de ${maxPages} pages...`)
+        
+        for (let page = 1; page <= maxPages; page++) {
+            try {
+                console.log(`⏳ Page ${page}/${maxPages}...`)
+                const response = await this.getOrders({}, page, batchSize)
+                allOrders.push(...response.data)
+                
+                console.log(`📄 Page ${page}: +${response.data.length} commandes (Total: ${allOrders.length}/${expectedTotal})`)
+                
+                // Vérification de cohérence avec la pagination
+                if (page === 1) {
+                    const totalFromPagination = response.pagination.total
+                    console.log(`🔍 Pagination indique ${totalFromPagination} commandes vs ${expectedTotal} de orderStatistics`)
+                    
+                    if (totalFromPagination !== expectedTotal) {
+                        console.warn(`⚠️ INCOHÉRENCE: Pagination=${totalFromPagination} vs OrderStats=${expectedTotal}`)
+                    }
+                }
+                
+                // Arrêter si on a atteint le total attendu
+                if (allOrders.length >= expectedTotal) {
+                    console.log('🎯 Total attendu atteint!')
+                    break
+                }
+                
+            } catch (pageError) {
+                console.error(`❌ Erreur page ${page}:`, pageError)
+            }
+        }
+        
+        console.log(`✅ Chargé ${allOrders.length} commandes`)
+        
+        // Calculer les statistiques par statut
+        const pending = allOrders.filter(o => o.status === 'pending')
+        const validated = allOrders.filter(o => o.status === 'validated')
+        const cancelled = allOrders.filter(o => o.status === 'cancelled')
+        const calculatedRevenue = validated.reduce((sum, o) => sum + (o.total || 0), 0)
+        
+        const finalStats = {
+            total: allOrders.length,
+            pending: pending.length,
+            validated: validated.length,
+            cancelled: cancelled.length,
+            totalRevenue: calculatedRevenue
+        }
+        
+        console.log('🎯 STATISTIQUES FINALES:', {
+            ...finalStats,
+            pourcentages: {
+                pending: `${((finalStats.pending / finalStats.total) * 100).toFixed(1)}%`,
+                validated: `${((finalStats.validated / finalStats.total) * 100).toFixed(1)}%`,
+                cancelled: `${((finalStats.cancelled / finalStats.total) * 100).toFixed(1)}%`
+            },
+            revenus: {
+                calculé: `${calculatedRevenue}€`,
+                attendu: `${expectedRevenue}€`,
+                différence: `${Math.abs(calculatedRevenue - expectedRevenue)}€`
+            }
+        })
+        
+        return finalStats
+    }
+
+    /**
+     * Méthode de fallback si orderStatistics échoue
+     */
+    private async fallbackMethod(): Promise<{
+        total: number;
+        pending: number;
+        validated: number;
+        cancelled: number;
+        totalRevenue: number;
+    }> {
+        console.log('🆘 Méthode de fallback - chargement direct...')
+        
+        // Essayer de charger la première page pour avoir le total de pagination
+        const firstPage = await this.getOrders({}, 1, 1)
+        const totalFromPagination = firstPage.pagination.total
+        
+        console.log(`📊 Pagination indique ${totalFromPagination} commandes`)
+        
+        if (totalFromPagination > 0) {
+            return await this.calculateStatusStats(totalFromPagination, 0)
+        }
+        
+        // Dernier recours
+        return {
+            total: 0,
+            pending: 0,
+            validated: 0,
+            cancelled: 0,
+            totalRevenue: 0
         }
     }
 }

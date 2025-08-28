@@ -1,5 +1,5 @@
 // Export simple et direct du service de statistiques
-export { hybridStatsService, statsService } from './hybridStatsService'
+export { hybridStatsService } from './hybridStatsService'
 export { StatsService } from './statsService'
 
 // Re-export pour compatibilité

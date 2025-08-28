@@ -246,7 +246,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '../composables/useCart'
 
-const router = useRouter()
+const _router = useRouter()
 
 // État local
 const removingItems = ref<Set<string>>(new Set())
@@ -255,7 +255,7 @@ const removingItems = ref<Set<string>>(new Set())
 const {
   cartItems,
   totalItems,
-  totalPrice,
+  totalPrice: _totalPrice,
   isEmpty,
   loading,
   error,
@@ -341,7 +341,7 @@ const createOrder = async () => {
   }
 }
 
-const saveForLater = () => {
+const _saveForLater = () => {
   // TODO: Implémenter la sauvegarde du panier
   console.log('Sauvegarde du panier non encore implémentée')
 }

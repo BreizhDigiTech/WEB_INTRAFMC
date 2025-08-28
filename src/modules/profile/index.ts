@@ -1,13 +1,17 @@
 /**
- * Module Profile - Point d'entrée
+ * Module Profile - Gestion du profil utilisateur
  */
 
-// Vues
-export { default as ProfileView } from './views/ProfileView.vue'
-
-// Composants
-export { default as ProfileInfoForm } from './components/ProfileInfoForm.vue'
-export { default as ProfileSecurityForm } from './components/ProfileSecurityForm.vue'
+// Types
+export type {
+    ApiResponse,
+    ChangePasswordInput,
+    PasswordFormData,
+    ProfileFormData,
+    ProfileState,
+    UpdateProfileInput,
+    UserProfile
+} from './types'
 
 // Services
 export { profileService } from './services/profileService'
@@ -15,8 +19,10 @@ export { profileService } from './services/profileService'
 // Composables
 export { useProfile } from './composables/useProfile'
 
-// Types
-export type {
-    ApiResponse, ChangePasswordInput, PasswordFormData, ProfileFormData, ProfileState, UpdateProfileInput, UserProfile
-} from './types'
+// Components
+export { default as ProfileInfoForm } from './components/ProfileInfoForm.vue'
+export { default as ProfileSecurityForm } from './components/ProfileSecurityForm.vue'
+
+// Views
+export { default as ProfileView } from './views/ProfileView.vue'
 

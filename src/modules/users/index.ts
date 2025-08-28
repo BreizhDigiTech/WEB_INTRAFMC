@@ -1,12 +1,5 @@
 /**
- * Module de gestion des utilisateurs (Admin)
- * 
- * Ce module permet aux administrateurs de :
- * - Lister tous les utilisateurs
- * - Créer de nouveaux utilisateurs
- * - Modifier les utilisateurs existants
- * - Supprimer des utilisateurs
- * - Filtrer et rechercher dans la liste
+ * Module Users - Gestion des utilisateurs (Admin)
  */
 
 // Types
@@ -24,17 +17,3 @@ export { default as UserModal } from './components/UserModal.vue'
 
 // Views
 export { default as UsersListView } from './views/UsersListView.vue'
-
-// Routes du module
-export const usersRoutes = [
-  {
-    path: '/admin/users',
-    name: 'AdminUsers',
-    component: () => import('./views/UsersListView.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Gestion des Utilisateurs'
-    }
-  }
-]
